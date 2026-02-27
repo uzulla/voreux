@@ -2,10 +2,9 @@
   "name": "stagehand_test",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "e2e": "tsx src/e2e-cfe.ts",
-    "e2e:self-heal": "SELF_HEAL=1 tsx src/e2e-cfe.ts"
+    "e2e": "vitest run",
+    "e2e:self-heal": "SELF_HEAL=1 vitest run"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +20,7 @@
     "@types/node": "^25.2.1",
     "@types/pngjs": "^6.0.5",
     "playwright": "^1.58.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

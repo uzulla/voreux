@@ -36,27 +36,6 @@ function resolveElement(selector: string): string {
   return `document.querySelector(${JSON.stringify(selector)})`;
 }
 
-function ensureContainerScript(): string {
-  return `
-    (function() {
-      let c = document.getElementById(${JSON.stringify(HIGHLIGHT_CONTAINER_ID)});
-      if (!c) {
-        c = document.createElement('div');
-        c.id = ${JSON.stringify(HIGHLIGHT_CONTAINER_ID)};
-        c.style.position = 'absolute';
-        c.style.top = '0';
-        c.style.left = '0';
-        c.style.width = document.documentElement.scrollWidth + 'px';
-        c.style.height = document.documentElement.scrollHeight + 'px';
-        c.style.pointerEvents = 'none';
-        c.style.zIndex = '2147483647';
-        document.documentElement.appendChild(c);
-      }
-      return c;
-    })()
-  `;
-}
-
 /**
  * 単一要素をハイライト + オプションでカーソル表示。
  * act() のクリック対象の可視化用。
@@ -88,7 +67,6 @@ export async function highlightElement(
 
       (el as HTMLElement).scrollIntoView?.({ block: "center", behavior: "instant" });
 
-      // Wait a tick for scroll to settle
       const rect = el.getBoundingClientRect();
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
