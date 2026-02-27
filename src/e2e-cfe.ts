@@ -21,8 +21,6 @@ import { highlightElement, highlightElements, removeHighlights } from "./helpers
  */
 
 async function main() {
-  console.log("=== Stagehand E2E Test: https://cfe.jp/ ===\n");
-
   const { ctx, recorder } = await setupTestEnv();
   const results: TestResult[] = [];
 
@@ -30,17 +28,14 @@ async function main() {
     // --------------------------------------------------
     // Test 1: Navigate to the page
     // --------------------------------------------------
-    console.log("[Test 1] Navigating to https://cfe.jp/ ...");
     await ctx.page.goto("https://cfe.jp/");
     await ctx.page.waitForLoadState("networkidle");
     const ss1 = await ctx.screenshot("01-page-loaded");
     results.push({ step: "Test 1: Page navigation", passed: true, screenshot: ss1 });
-    console.log("[Test 1] PASSED: Page loaded successfully.\n");
 
     // --------------------------------------------------
     // Test 2: Extract profile information
     // --------------------------------------------------
-    console.log("[Test 2] Extracting profile information ...");
     const profileSchema = z.object({
       name: z.string().describe("The person's name"),
       description: z
@@ -54,21 +49,13 @@ async function main() {
       "Extract the person's name, their job title or description, and a list of their SNS/social media link labels (e.g., Twitter, GitHub, etc.)",
       profileSchema
     );
-    console.log("  Name:", profile.name);
-    console.log("  Description:", profile.description);
-    console.log("  SNS Links:", profile.snsLinks.join(", "));
-
     const ss2 = await ctx.screenshot("02-profile-extracted");
     const test2Passed = profile.name.length > 0 && profile.snsLinks.length > 0;
     results.push({ step: "Test 2: Profile extraction", passed: test2Passed, screenshot: ss2 });
-    console.log(
-      `[Test 2] ${test2Passed ? "PASSED" : "FAILED"}: Profile extraction.\n`
-    );
 
     // --------------------------------------------------
     // Test 3: Extract book (著書) information
     // --------------------------------------------------
-    console.log("[Test 3] Extracting book information ...");
     const booksSchema = z.object({
       books: z.array(
         z.object({
@@ -83,32 +70,16 @@ async function main() {
       "Extract information about the books (著書) listed on this page, including the title and a short description for each book.",
       booksSchema
     );
-    console.log(`  Found ${books.books.length} book(s):`);
-    for (const book of books.books) {
-      console.log(`    - "${book.title}": ${book.description}`);
-    }
-
     const ss3 = await ctx.screenshot("03-books-extracted");
     const test3Passed = books.books.length > 0;
     results.push({ step: "Test 3: Book extraction", passed: test3Passed, screenshot: ss3 });
-    console.log(
-      `[Test 3] ${test3Passed ? "PASSED" : "FAILED"}: Book extraction.\n`
-    );
 
     // --------------------------------------------------
     // Test 4: Observe clickable links on the page
     // --------------------------------------------------
-    console.log("[Test 4] Observing clickable links on the page ...");
     const actions = await ctx.stagehand.observe(
       "Find all clickable links on this page"
     );
-    console.log(`  Found ${actions.length} actionable elements.`);
-    for (const action of actions.slice(0, 5)) {
-      console.log(`    - ${action.description} [${action.method}]`);
-    }
-    if (actions.length > 5) {
-      console.log(`    ... and ${actions.length - 5} more.`);
-    }
 
     await highlightElements(ctx.page, actions);
     const ss4 = await ctx.screenshot("04-links-observed");
@@ -116,20 +87,14 @@ async function main() {
     await removeHighlights(ctx.page);
     const test4Passed = actions.length > 0;
     results.push({ step: "Test 4: Link observation", passed: test4Passed, screenshot: ss4 });
-    console.log(
-      `[Test 4] ${test4Passed ? "PASSED" : "FAILED"}: Link observation.\n`
-    );
 
     // --------------------------------------------------
     // Test 5: Click a link using act() + assert destination
     //         (ビジュアルリグレッション検知 + セルフヒール付き)
     // --------------------------------------------------
-    console.log("[Test 5] Clicking the GitHub link using act() ...");
-
     // ビューポートサイズのスクリーンショット (fullPage なし) でベースライン比較
     const comparisonSsPath = path.join(SCREENSHOT_DIR, "05a-before-click.png");
     await ctx.page.screenshot({ path: comparisonSsPath });
-    console.log(`  Pre-click screenshot: ${comparisonSsPath}`);
 
     // ベースラインとの比較
     const diffPath = path.join(SCREENSHOT_DIR, "05a-diff.png");
@@ -139,20 +104,8 @@ async function main() {
     });
 
     let pageVisuallyBroken = false;
-    if (comparison.skipped) {
-      console.log("  No baseline found — first run, will save baseline on success.");
-    } else {
-      const pct = (comparison.mismatchRatio * 100).toFixed(2);
-      console.log(`  Visual diff against baseline: ${pct}%`);
-      if (comparison.mismatchRatio > VISUAL_DIFF_THRESHOLD) {
-        pageVisuallyBroken = true;
-        console.log(`  VISUAL REGRESSION DETECTED (threshold: ${VISUAL_DIFF_THRESHOLD * 100}%)`);
-        if (comparison.diffSaved) {
-          console.log(`  Diff image saved: ${diffPath}`);
-        }
-      } else {
-        console.log("  Page looks visually OK.");
-      }
+    if (!comparison.skipped && comparison.mismatchRatio > VISUAL_DIFF_THRESHOLD) {
+      pageVisuallyBroken = true;
     }
 
     // クリック対象を可視化したスクリーンショット（ベースライン比較とは別）
@@ -174,7 +127,6 @@ async function main() {
         passed: false,
         screenshot: diffPath,
       });
-      console.log("[Test 5] FAILED: Visual regression detected — page appears broken.\n");
     } else {
       // act() 実行 + アサーション (セルフヒール付き)
       const actAndAssert = async (): Promise<{
@@ -212,8 +164,6 @@ async function main() {
 
       if (!attempt.success && selfHealEnabled) {
         // アサーション失敗 → セルフヒール: キャッシュ削除して再試行
-        console.log("  GitHub page not found after act(). Attempting self-heal...");
-
         // 間違って開いたタブを閉じる
         const extraPages = attempt.allPages.filter((p: any) => p !== ctx.page);
         for (const ep of extraPages) {
@@ -225,54 +175,37 @@ async function main() {
         if (fs.existsSync(cacheDir)) {
           fs.rmSync(cacheDir, { recursive: true });
           fs.mkdirSync(cacheDir, { recursive: true });
-          console.log("  Cache cleared.");
         }
 
         // ページを再読み込みして再試行
         await ctx.page.goto("https://cfe.jp/");
         await ctx.page.waitForLoadState("networkidle");
-        console.log("  Retrying act() without cache...");
 
         attempt = await actAndAssert();
-
-        if (attempt.success) {
-          console.log("  Self-heal SUCCEEDED: GitHub page opened on retry.");
-        } else {
-          console.log("  Self-heal FAILED: GitHub page still not found after retry.");
-        }
-      } else if (!attempt.success) {
-        console.log("  GitHub page not found after act(). (Set SELF_HEAL=1 to enable auto-retry)");
       }
 
       // 新しく開いたタブのスクリーンショット
       const newTab = attempt.allPages[attempt.allPages.length - 1];
       if (newTab !== ctx.page) {
         await newTab.waitForLoadState("domcontentloaded").catch(() => {});
-        const newTabSs = await ctx.screenshot("05b-new-tab", newTab);
-        console.log(`  New tab screenshot: ${newTabSs}`);
+        await ctx.screenshot("05b-new-tab", newTab);
       }
 
       if (attempt.success) {
-        console.log("  Navigated to:", attempt.githubPage.url());
         results.push({
           step: "Test 5: Click GitHub link",
           passed: true,
           screenshot: path.join(SCREENSHOT_DIR, "05b-new-tab.png"),
         });
-        console.log("[Test 5] PASSED: GitHub page opened.\n");
 
         // 成功時: 現在のスクリーンショットをベースラインとして保存
-        const saved = saveBaseline(comparisonSsPath, "05a-before-click", BASELINES_DIR);
-        console.log(`  Baseline saved: ${saved}`);
+        saveBaseline(comparisonSsPath, "05a-before-click", BASELINES_DIR);
       } else {
-        const urls = attempt.allPages.map((p: any) => p.url());
-        console.error("  Expected a page with github.com, but got:", urls);
         results.push({
           step: "Test 5: Click GitHub link",
           passed: false,
           screenshot: path.join(SCREENSHOT_DIR, "05b-new-tab.png"),
         });
-        console.log("[Test 5] FAILED: GitHub page not found (even after self-heal).\n");
       }
     }
   } catch (error) {

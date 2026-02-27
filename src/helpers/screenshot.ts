@@ -44,9 +44,6 @@ export function compareWithBaseline(
 
   // サイズが異なる場合は大幅な変化とみなす
   if (img1.width !== img2.width || img1.height !== img2.height) {
-    console.log(
-      `  Image size mismatch: current=${img1.width}x${img1.height} baseline=${img2.width}x${img2.height}`
-    );
     return { mismatchRatio: 1, diffSaved: false, skipped: false };
   }
 
