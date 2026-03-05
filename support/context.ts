@@ -85,29 +85,31 @@ export function createTestContext(
       const pagesBefore = stagehand.context.pages().length;
       await stagehand.act(instruction);
 
-      // 新タブが開くのを待つ（最大 5 秒ポーリング）
+      // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング（最大 5 秒）
       const deadline = Date.now() + 5000;
+      let resultPage: any = null;
       while (Date.now() < deadline) {
-        const current = stagehand.context.pages();
-        if (current.length > pagesBefore) break;
+        const allPages = stagehand.context.pages();
+        const matchedPage = allPages.find((p: any) =>
+          p.url().includes(urlPattern)
+        );
+        if (matchedPage) {
+          resultPage = matchedPage;
+          break;
+        }
+        if (page.url().includes(urlPattern)) {
+          resultPage = page;
+          break;
+        }
         await new Promise((r) => setTimeout(r, 300));
       }
-      // URL が確定するのを待つ
-      await new Promise((r) => setTimeout(r, 1000));
 
-      const allPages = stagehand.context.pages();
-      const matchedPage = allPages.find((p: any) =>
-        p.url().includes(urlPattern)
-      );
-      const navigatedInPlace = page.url().includes(urlPattern);
-
-      if (!matchedPage && !navigatedInPlace) {
+      if (!resultPage) {
         throw new Error(
           `Navigation failed: no page matching "${urlPattern}" found`
         );
       }
 
-      const resultPage = matchedPage || page;
       if (resultPage !== page) {
         await resultPage.waitForLoadState("domcontentloaded").catch(() => {});
       }
