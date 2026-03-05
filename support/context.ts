@@ -140,9 +140,12 @@ export function createTestContext(
 
     async highlightObserved(actions: any[], screenshotName: string) {
       await highlightElements(page, actions);
-      await screenshotFn(screenshotName);
-      await recorder.injectFrames(3);
-      await removeHighlights(page);
+      try {
+        await screenshotFn(screenshotName);
+        await recorder.injectFrames(3);
+      } finally {
+        await removeHighlights(page);
+      }
     },
 
     async highlightTarget(instruction: string, screenshotName: string) {
@@ -152,9 +155,12 @@ export function createTestContext(
           showCursor: true,
           label: "Click target",
         });
-        await screenshotFn(screenshotName);
-        await recorder.injectFrames(3);
-        await removeHighlights(page);
+        try {
+          await screenshotFn(screenshotName);
+          await recorder.injectFrames(3);
+        } finally {
+          await removeHighlights(page);
+        }
       }
     },
   };
