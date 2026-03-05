@@ -37,16 +37,22 @@ const booksSchema = z.object({
 });
 
 describe("cfe.jp E2E", () => {
-  let ctx: TestContext | undefined;
-  let recorder: Recorder | undefined;
+  let _ctx: TestContext | undefined;
+  let _recorder: Recorder | undefined;
+
+  // beforeAll で初期化されるため、テスト本体では必ず値がある
+  const getCtx = () => {
+    if (!_ctx) throw new Error("ctx not initialized");
+    return _ctx;
+  };
 
   beforeAll(async () => {
-    ({ ctx, recorder } = await initStagehand(ORIGIN_URL));
+    ({ ctx: _ctx, recorder: _recorder } = await initStagehand(ORIGIN_URL));
   });
 
   afterAll(async () => {
-    if (ctx && recorder) {
-      await closeStagehand(ctx, recorder).catch((e) =>
+    if (_ctx && _recorder) {
+      await closeStagehand(_ctx, _recorder).catch((e) =>
         console.error("closeStagehand error:", e)
       );
     }
@@ -54,10 +60,10 @@ describe("cfe.jp E2E", () => {
 
   afterEach(async (testCtx) => {
     // テスト失敗時にスクリーンショットを自動保存
-    if (ctx && testCtx.task.result?.state === "fail") {
+    if (_ctx && testCtx.task.result?.state === "fail") {
       try {
         const name = `error-${testCtx.task.name.replace(/\s+/g, "-")}`;
-        await ctx.screenshot(name);
+        await _ctx.screenshot(name);
       } catch (err) {
         console.warn(`Failed to capture error screenshot "${name}":`, err);
       }
@@ -68,6 +74,7 @@ describe("cfe.jp E2E", () => {
   // Test 1: Navigate to the page
   // --------------------------------------------------
   test("Navigate to page", async () => {
+    const ctx = getCtx();
     await ctx.page.goto(ORIGIN_URL);
     await ctx.page.waitForLoadState("networkidle");
     await ctx.screenshot("01-page-loaded");
@@ -77,6 +84,7 @@ describe("cfe.jp E2E", () => {
   // Test 2: Extract profile information
   // --------------------------------------------------
   test("Extract profile", async () => {
+    const ctx = getCtx();
     await withSelfHeal(ctx, async () => {
       const profile = await ctx.stagehand.extract(
         "Extract the person's name, their job title or description, and a list of their SNS/social media link labels",
@@ -92,6 +100,7 @@ describe("cfe.jp E2E", () => {
   // Test 3: Extract book (著書) information
   // --------------------------------------------------
   test("Extract books", async () => {
+    const ctx = getCtx();
     await withSelfHeal(ctx, async () => {
       const books = await ctx.stagehand.extract(
         "Extract information about the books (著書) listed on this page, including the title and a short description for each book.",
@@ -106,6 +115,7 @@ describe("cfe.jp E2E", () => {
   // Test 4: Observe clickable links on the page
   // --------------------------------------------------
   test("Observe links", async () => {
+    const ctx = getCtx();
     await withSelfHeal(ctx, async () => {
       const actions = await ctx.stagehand.observe(
         "Find all clickable links on this page"
@@ -119,6 +129,7 @@ describe("cfe.jp E2E", () => {
   // Test 5: Click a link using act() + assert destination
   // --------------------------------------------------
   test("Click GitHub link", async () => {
+    const ctx = getCtx();
     await withSelfHeal(ctx, async () => {
       await ctx.assertNoVisualRegression("05a-before-click");
       await ctx.highlightTarget("Find the GitHub link", "05a-click-target");
