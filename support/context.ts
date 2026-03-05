@@ -64,9 +64,6 @@ export interface TestContext {
   highlightTarget: (instruction: string, screenshotName: string) => Promise<void>;
 }
 
-// ベースライン比較用の一時パスを保持
-let _lastComparisonSsPath: string | null = null;
-
 export function createTestContext(
   stagehand: Stagehand,
   page: any,
@@ -74,6 +71,8 @@ export function createTestContext(
   screenshotFn: ScreenshotFn,
   originUrl: string
 ): TestContext {
+  let lastComparisonSsPath: string | null = null;
+
   const ctx: TestContext = {
     stagehand,
     page,
@@ -119,7 +118,7 @@ export function createTestContext(
     async assertNoVisualRegression(baselineName: string) {
       const ssPath = path.join(SCREENSHOT_DIR, `${baselineName}.png`);
       await page.screenshot({ path: ssPath });
-      _lastComparisonSsPath = ssPath;
+      lastComparisonSsPath = ssPath;
 
       const diffPath = path.join(SCREENSHOT_DIR, `${baselineName}-diff.png`);
       const comparison = compareWithBaseline(ssPath, baselineName, {
@@ -133,8 +132,8 @@ export function createTestContext(
     },
 
     saveCurrentBaseline(baselineName: string) {
-      if (_lastComparisonSsPath) {
-        saveBaseline(_lastComparisonSsPath, baselineName, BASELINES_DIR);
+      if (lastComparisonSsPath) {
+        saveBaseline(lastComparisonSsPath, baselineName, BASELINES_DIR);
       }
     },
 
