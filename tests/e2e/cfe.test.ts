@@ -58,7 +58,9 @@ describe("cfe.jp E2E", () => {
       try {
         const name = `error-${testCtx.task.name.replace(/\s+/g, "-")}`;
         await ctx.screenshot(name);
-      } catch {}
+      } catch (err) {
+        console.warn(`Failed to capture error screenshot "${name}":`, err);
+      }
     }
   });
 
