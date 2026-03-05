@@ -37,20 +37,24 @@ const booksSchema = z.object({
 });
 
 describe("cfe.jp E2E", () => {
-  let ctx: TestContext;
-  let recorder: Recorder;
+  let ctx: TestContext | undefined;
+  let recorder: Recorder | undefined;
 
   beforeAll(async () => {
     ({ ctx, recorder } = await initStagehand(ORIGIN_URL));
   });
 
   afterAll(async () => {
-    await closeStagehand(ctx, recorder);
+    if (ctx && recorder) {
+      await closeStagehand(ctx, recorder).catch((e) =>
+        console.error("closeStagehand error:", e)
+      );
+    }
   });
 
   afterEach(async (testCtx) => {
     // テスト失敗時にスクリーンショットを自動保存
-    if (testCtx.task.result?.state === "fail") {
+    if (ctx && testCtx.task.result?.state === "fail") {
       try {
         const name = `error-${testCtx.task.name.replace(/\s+/g, "-")}`;
         await ctx.screenshot(name);
