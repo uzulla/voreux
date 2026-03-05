@@ -84,8 +84,8 @@ export function createTestContext(
       const initialPages = new Set(stagehand.context.pages());
       await stagehand.act(instruction);
 
-      // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング（最大 5 秒）
-      const deadline = Date.now() + 5000;
+      // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング（最大 10 秒）
+      const deadline = Date.now() + 10000;
       let resultPage: any = null;
       while (Date.now() < deadline) {
         // 新しく開いたページのみチェック

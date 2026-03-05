@@ -139,7 +139,10 @@ describe("cfe.jp E2E", () => {
         "github.com"
       );
       await ctx.screenshot("05b-new-tab", navPage);
-      ctx.saveCurrentBaseline("05a-before-click");
+      if (process.env.UPDATE_BASELINE) {
+        ctx.saveCurrentBaseline("05a-before-click");
+        console.log('Baseline updated: 05a-before-click');
+      }
     });
   });
 });
