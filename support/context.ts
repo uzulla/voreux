@@ -81,21 +81,23 @@ export function createTestContext(
     screenshot: screenshotFn,
 
     async actAndWaitForNav(instruction: string, urlPattern: string) {
-      const pagesBefore = stagehand.context.pages().length;
+      const initialPages = new Set(stagehand.context.pages());
       await stagehand.act(instruction);
 
       // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング（最大 5 秒）
       const deadline = Date.now() + 5000;
       let resultPage: any = null;
       while (Date.now() < deadline) {
-        const allPages = stagehand.context.pages();
-        const matchedPage = allPages.find((p: any) =>
+        // 新しく開いたページのみチェック
+        const newPages = stagehand.context.pages().filter((p: any) => !initialPages.has(p));
+        const matchedPage = newPages.find((p: any) =>
           p.url().includes(urlPattern)
         );
         if (matchedPage) {
           resultPage = matchedPage;
           break;
         }
+        // 同一タブ遷移チェック
         if (page.url().includes(urlPattern)) {
           resultPage = page;
           break;
