@@ -61,8 +61,8 @@ describe("cfe.jp E2E", () => {
   afterEach(async (testCtx) => {
     // テスト失敗時にスクリーンショットを自動保存
     if (_ctx && testCtx.task.result?.state === "fail") {
+      const name = `error-${testCtx.task.name.replace(/\s+/g, "-")}`;
       try {
-        const name = `error-${testCtx.task.name.replace(/\s+/g, "-")}`;
         await _ctx.screenshot(name);
       } catch (err) {
         console.warn(`Failed to capture error screenshot "${name}":`, err);
