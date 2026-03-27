@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import type { TestContext } from "./context.js";
 import { VisualRegressionError } from "./context.js";
+import { frameworkConfig } from "./config.js";
 
 /**
  * セルフヒール回復処理:
@@ -21,7 +22,7 @@ async function performSelfHeal(ctx: TestContext): Promise<void> {
   }
 
   // キャッシュを削除
-  const cacheDir = path.resolve(".cache/cfe-test");
+  const cacheDir = path.resolve(frameworkConfig.stagehand.cacheDir);
   if (fs.existsSync(cacheDir)) {
     fs.rmSync(cacheDir, { recursive: true });
     fs.mkdirSync(cacheDir, { recursive: true });

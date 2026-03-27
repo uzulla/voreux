@@ -8,6 +8,7 @@ import {
   highlightElements,
   removeHighlights,
 } from "./highlight.js";
+import { frameworkConfig } from "./config.js";
 
 // ----------------------------------------------------------------
 // 定数
@@ -18,7 +19,7 @@ export const RECORDING_DIR = path.resolve("recordings");
 export const FRAMES_DIR = path.join(RECORDING_DIR, "frames");
 export const BASELINES_DIR = path.resolve("baselines");
 
-export const VISUAL_DIFF_THRESHOLD = 0.1; // 10%
+export const VISUAL_DIFF_THRESHOLD = frameworkConfig.visualRegression.mismatchThreshold;
 
 // ----------------------------------------------------------------
 // VisualRegressionError
@@ -84,8 +85,8 @@ export function createTestContext(
       const initialPages = new Set(stagehand.context.pages());
       await stagehand.act(instruction);
 
-      // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング（最大 10 秒）
-      const deadline = Date.now() + 10000;
+      // 新タブ or 同一タブ遷移で URL が urlPattern にマッチするまでポーリング
+      const deadline = Date.now() + frameworkConfig.navigation.timeoutMs;
       let resultPage: any = null;
       while (Date.now() < deadline) {
         // 新しく開いたページのみチェック
@@ -102,7 +103,9 @@ export function createTestContext(
           resultPage = page;
           break;
         }
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) =>
+          setTimeout(r, frameworkConfig.navigation.pollIntervalMs)
+        );
       }
 
       if (!resultPage) {
@@ -143,7 +146,7 @@ export function createTestContext(
       await highlightElements(page, actions);
       try {
         await screenshotFn(screenshotName);
-        await recorder.injectFrames(3);
+        await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
       } finally {
         await removeHighlights(page);
       }
@@ -158,7 +161,7 @@ export function createTestContext(
         });
         try {
           await screenshotFn(screenshotName);
-          await recorder.injectFrames(3);
+          await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
         } finally {
           await removeHighlights(page);
         }
