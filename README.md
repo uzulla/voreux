@@ -76,7 +76,7 @@ recordings/               （生成）テスト録画（MP4）
 
 ## 動画録画
 
-テスト中 500ms 間隔でブラウザ画面をキャプチャし、テスト終了後に ffmpeg で MP4 に変換する。ffmpeg 未インストール時はフレーム画像が `recordings/frames/` に残る。
+ffmpeg が利用可能な場合のみ、テスト中 500ms 間隔でブラウザ画面をキャプチャし、テスト終了後に MP4 に変換する。ffmpeg 未インストール時はフレームキャプチャ自体をスキップし、動画変換も実行しない。
 
 > **なぜ Playwright の `recordVideo` を使わないのか？**
 > Stagehand v3 は Playwright の BrowserContext ではなく CDP 直接接続の `V3Context` でブラウザを制御しており、Playwright の録画 API にアクセスできない。

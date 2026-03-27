@@ -8,7 +8,13 @@ import {
   type TestContext,
 } from "./context.js";
 import { createScreenshotHelper } from "./screenshot.js";
-import { startRecording, framesToVideo, type Recorder } from "./recording.js";
+import {
+  startRecording,
+  framesToVideo,
+  hasFfmpegCommand,
+  createNoopRecorder,
+  type Recorder,
+} from "./recording.js";
 
 const FRAME_INTERVAL_MS = 500;
 
@@ -25,7 +31,12 @@ export async function initStagehand(originUrl: string): Promise<{
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true });
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.mkdirSync(FRAMES_DIR, { recursive: true });
+  const ffmpegAvailable = hasFfmpegCommand();
+  if (ffmpegAvailable) {
+    fs.mkdirSync(FRAMES_DIR, { recursive: true });
+  } else {
+    console.info("ffmpeg not found: skip frame capture and video conversion");
+  }
 
   const stagehand = new Stagehand({
     env: "LOCAL",
@@ -40,7 +51,9 @@ export async function initStagehand(originUrl: string): Promise<{
   const page = stagehand.context.pages()[0];
 
   const screenshotFn = createScreenshotHelper(page, SCREENSHOT_DIR);
-  const recorder = startRecording(page, FRAMES_DIR, FRAME_INTERVAL_MS);
+  const recorder = ffmpegAvailable
+    ? startRecording(page, FRAMES_DIR, FRAME_INTERVAL_MS)
+    : createNoopRecorder();
 
   const ctx = createTestContext(stagehand, page, recorder, screenshotFn, originUrl);
 
