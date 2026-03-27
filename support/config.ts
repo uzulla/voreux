@@ -42,6 +42,9 @@ const toBool = (value: string | undefined, fallback: boolean): boolean => {
   return fallback;
 };
 
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
 /**
  * フレームワーク共通設定。
  * 環境変数でオーバーライド可能にして、各プロジェクトで再利用しやすくする。
@@ -63,10 +66,14 @@ export const frameworkConfig: E2EFrameworkConfig = {
     injectFrameCount: Math.max(1, toInt(process.env.E2E_INJECT_FRAME_COUNT, 3)),
   },
   navigation: {
-    timeoutMs: toInt(process.env.E2E_NAV_TIMEOUT_MS, 10000),
-    pollIntervalMs: toInt(process.env.E2E_NAV_POLL_INTERVAL_MS, 300),
+    timeoutMs: Math.max(1, toInt(process.env.E2E_NAV_TIMEOUT_MS, 10000)),
+    pollIntervalMs: Math.max(1, toInt(process.env.E2E_NAV_POLL_INTERVAL_MS, 300)),
   },
   visualRegression: {
-    mismatchThreshold: toFloat(process.env.E2E_VISUAL_DIFF_THRESHOLD, 0.1),
+    mismatchThreshold: clamp(
+      toFloat(process.env.E2E_VISUAL_DIFF_THRESHOLD, 0.1),
+      0,
+      1
+    ),
   },
 };

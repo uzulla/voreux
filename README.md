@@ -133,7 +133,7 @@ ffmpeg が利用可能な場合のみ、テスト中 500ms 間隔でブラウザ
        └──→ FAIL
 ```
 
-`baselines/` にテスト成功時のスクリーンショットが保存される。ビューポートサイズ固定（1280x720）で比較の安定性を確保。閾値は `support/context.ts` の `VISUAL_DIFF_THRESHOLD` で調整可能（デフォルト 10%）。
+`baselines/` にテスト成功時のスクリーンショットが保存される。ビューポートサイズ固定（1280x720）で比較の安定性を確保。閾値は `support/config.ts` で管理され、環境変数 `E2E_VISUAL_DIFF_THRESHOLD` で調整可能（デフォルト 10%）。
 
 ## act() キャッシュ
 
@@ -141,7 +141,7 @@ ffmpeg が利用可能な場合のみ、テスト中 500ms 間隔でブラウザ
 
 - 対象は `act()` のみ。`extract()` / `observe()` はキャッシュされない
 - キャッシュキーは instruction + URL のハッシュ
-- DOM 構造が変わったら `rm -rf .cache/cfe-test` で再生成
+- DOM 構造が変わったら `rm -rf .cache/stagehand-e2e` で再生成
 - キャッシュヒット時も操作対象を誤る可能性があるため、`act()` 後のアサーションは必須
 
 ## v3 API のハマりポイント
