@@ -10,7 +10,7 @@ export interface E2EFrameworkConfig {
       height: number;
     };
   };
-  recording: {
+  videoRecording: {
     frameIntervalMs: number;
     injectFrameCount: number;
   };
@@ -49,7 +49,7 @@ const toBool = (value: string | undefined, fallback: boolean): boolean => {
 export const frameworkConfig: E2EFrameworkConfig = {
   stagehand: {
     model: process.env.STAGEHAND_MODEL ?? "openai/gpt-4o",
-    cacheDir: process.env.STAGEHAND_CACHE_DIR ?? ".cache/cfe-test",
+    cacheDir: process.env.STAGEHAND_CACHE_DIR ?? ".cache/stagehand-e2e",
   },
   browser: {
     headless: toBool(process.env.E2E_HEADLESS, false),
@@ -58,7 +58,7 @@ export const frameworkConfig: E2EFrameworkConfig = {
       height: toInt(process.env.E2E_VIEWPORT_HEIGHT, 720),
     },
   },
-  recording: {
+  videoRecording: {
     frameIntervalMs: Math.max(1, toInt(process.env.E2E_FRAME_INTERVAL_MS, 500)),
     injectFrameCount: Math.max(1, toInt(process.env.E2E_INJECT_FRAME_COUNT, 3)),
   },

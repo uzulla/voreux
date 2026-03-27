@@ -146,7 +146,7 @@ export function createTestContext(
       await highlightElements(page, actions);
       try {
         await screenshotFn(screenshotName);
-        await recorder.injectFrames(frameworkConfig.recording.injectFrameCount);
+        await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
       } finally {
         await removeHighlights(page);
       }
@@ -161,7 +161,7 @@ export function createTestContext(
         });
         try {
           await screenshotFn(screenshotName);
-          await recorder.injectFrames(frameworkConfig.recording.injectFrameCount);
+          await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
         } finally {
           await removeHighlights(page);
         }

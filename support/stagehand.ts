@@ -51,7 +51,11 @@ export async function initStagehand(originUrl: string): Promise<{
 
   const screenshotFn = createScreenshotHelper(page, SCREENSHOT_DIR);
   const recorder = ffmpegAvailable
-    ? startRecording(page, FRAMES_DIR, frameworkConfig.recording.frameIntervalMs)
+    ? startRecording(
+        page,
+        FRAMES_DIR,
+        frameworkConfig.videoRecording.frameIntervalMs
+      )
     : createNoopRecorder();
 
   const ctx = createTestContext(stagehand, page, recorder, screenshotFn, originUrl);
@@ -71,7 +75,10 @@ export async function closeStagehand(
   await ctx.stagehand.close();
 
   if (totalFrames > 0) {
-    const safeInterval = Math.max(frameworkConfig.recording.frameIntervalMs, 1);
+    const safeInterval = Math.max(
+      frameworkConfig.videoRecording.frameIntervalMs,
+      1
+    );
     const fps = Math.round(1000 / safeInterval);
     framesToVideo(FRAMES_DIR, RECORDING_DIR, fps);
   }
