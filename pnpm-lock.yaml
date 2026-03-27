@@ -6,7 +6,31 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  examples/cfe-jp:
+    dependencies:
+      voreux:
+        specifier: workspace:*
+        version: link:../../packages/voreux
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^25.2.1
+        version: 25.2.1
+      playwright:
+        specifier: ^1.58.1
+        version: 1.58.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.1)(tsx@4.21.0)
+
+  packages/voreux:
     dependencies:
       '@browserbasehq/stagehand':
         specifier: ^3.0.8
@@ -27,9 +51,6 @@ importers:
       '@types/pngjs':
         specifier: ^6.0.5
         version: 6.0.5
-      playwright:
-        specifier: ^1.58.1
-        version: 1.58.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -710,6 +731,7 @@ packages:
   basic-ftp@5.1.0:
     resolution: {integrity: sha512-RkaJzeJKDbaDWTIPiJwubyljaEPwpVWkm9Rt5h9Nd6h7tEXTJ3VB4qxdZBioV7JO5yLUaOKwz7vDOzlncUsegw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.0, please upgrade
 
   bignumber.js@9.3.1:
     resolution: {integrity: sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==}

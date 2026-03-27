@@ -1,0 +1,31 @@
+{
+  "name": "voreux",
+  "version": "0.1.0",
+  "description": "Voreux: Stagehand + Vitest based E2E testing framework",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "echo 'no package-local tests'"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "^3.0.8",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "@types/pngjs": "^6.0.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

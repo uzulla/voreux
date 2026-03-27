@@ -1,26 +1,12 @@
 {
-  "name": "voreux",
+  "name": "voreux-workspace",
+  "private": true,
   "version": "1.0.0",
-  "description": "Voreux: Stagehand + Vitest based E2E testing framework and sample scenarios", 
-  "scripts": {
-    "e2e": "vitest run",
-    "e2e:self-heal": "SELF_HEAL=1 vitest run"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "packageManager": "pnpm@10.28.1",
-  "dependencies": {
-    "@browserbasehq/stagehand": "^3.0.8",
-    "pixelmatch": "^7.1.0",
-    "pngjs": "^7.0.0",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "@types/node": "^25.2.1",
-    "@types/pngjs": "^6.0.5",
-    "playwright": "^1.58.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "e2e": "pnpm --filter @voreux/example-cfe-jp e2e",
+    "e2e:self-heal": "pnpm --filter @voreux/example-cfe-jp e2e:self-heal"
   }
 }
