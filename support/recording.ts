@@ -8,6 +8,33 @@ export interface Recorder {
   injectFrames: (n?: number) => Promise<void>;
 }
 
+let ffmpegAvailableCache: boolean | undefined;
+
+/**
+ * ffmpeg コマンドが利用可能かを確認する。
+ * 結果はプロセス内でキャッシュされる。
+ */
+export function hasFfmpegCommand(): boolean {
+  if (ffmpegAvailableCache !== undefined) return ffmpegAvailableCache;
+
+  try {
+    execSync("ffmpeg -version", { stdio: "ignore" });
+    ffmpegAvailableCache = true;
+  } catch {
+    ffmpegAvailableCache = false;
+  }
+
+  return ffmpegAvailableCache;
+}
+
+/** ffmpeg 未インストール時用の no-op recorder */
+export function createNoopRecorder(): Recorder {
+  return {
+    stop: async () => 0,
+    injectFrames: async () => {},
+  };
+}
+
 /**
  * ページのフレームキャプチャを開始する。
  * 返り値の stop() を呼ぶとキャプチャを終了し、撮影したフレーム数を返す。
