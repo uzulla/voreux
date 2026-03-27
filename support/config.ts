@@ -59,8 +59,8 @@ export const frameworkConfig: E2EFrameworkConfig = {
     },
   },
   recording: {
-    frameIntervalMs: toInt(process.env.E2E_FRAME_INTERVAL_MS, 500),
-    injectFrameCount: toInt(process.env.E2E_INJECT_FRAME_COUNT, 3),
+    frameIntervalMs: Math.max(1, toInt(process.env.E2E_FRAME_INTERVAL_MS, 500)),
+    injectFrameCount: Math.max(1, toInt(process.env.E2E_INJECT_FRAME_COUNT, 3)),
   },
   navigation: {
     timeoutMs: toInt(process.env.E2E_NAV_TIMEOUT_MS, 10000),

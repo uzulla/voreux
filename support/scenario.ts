@@ -7,7 +7,7 @@ import { withSelfHeal } from "./self-heal.js";
 export interface ScenarioStep {
   name: string;
   run: (ctx: TestContext) => Promise<void>;
-  /** true の場合のみ self-heal を適用 */
+  /** false を指定すると self-heal をスキップ（既定は適用） */
   selfHeal?: boolean;
 }
 

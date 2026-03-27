@@ -71,7 +71,8 @@ export async function closeStagehand(
   await ctx.stagehand.close();
 
   if (totalFrames > 0) {
-    const fps = Math.round(1000 / frameworkConfig.recording.frameIntervalMs);
+    const safeInterval = Math.max(frameworkConfig.recording.frameIntervalMs, 1);
+    const fps = Math.round(1000 / safeInterval);
     framesToVideo(FRAMES_DIR, RECORDING_DIR, fps);
   }
 }
