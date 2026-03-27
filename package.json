@@ -1,7 +1,7 @@
 {
-  "name": "stagehand_test",
+  "name": "voreux",
   "version": "1.0.0",
-  "description": "",
+  "description": "Voreux: Stagehand + Vitest based E2E testing framework and sample scenarios", 
   "scripts": {
     "e2e": "vitest run",
     "e2e:self-heal": "SELF_HEAL=1 vitest run"
