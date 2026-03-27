@@ -32,6 +32,30 @@ pnpm e2e:self-heal
 |------|------|
 | `OPENAI_API_KEY` | OpenAI API キー（必須） |
 | `SELF_HEAL=1` | セルフヒールモード。失敗時にキャッシュ削除・ページリロード・リトライを行う |
+| `STAGEHAND_MODEL` | Stagehand が使うモデル（既定: `openai/gpt-4o`） |
+| `E2E_HEADLESS` | `1/true` で headless 実行（既定: `false`） |
+| `E2E_NAV_TIMEOUT_MS` | `actAndWaitForNav` の待機上限（既定: `10000`） |
+| `E2E_VISUAL_DIFF_THRESHOLD` | 画像差分のFAIL閾値（既定: `0.1` = 10%） |
+
+## シナリオ記述（steps API）
+
+`support/scenario.ts` の `defineScenarioSuite()` を使うと、
+利用者はテストの「手順」だけを配列で記述できる。
+
+```typescript
+import { defineScenarioSuite } from "../../support/scenario";
+
+defineScenarioSuite({
+  suiteName: "example",
+  originUrl: "https://example.com/",
+  steps: [
+    { name: "Navigate", selfHeal: false, run: async (ctx) => { ... } },
+    { name: "Extract", run: async (ctx) => { ... } },
+  ],
+});
+```
+
+`run` は既定で self-heal ラップされる。初期遷移など不要な手順は `selfHeal: false` を指定できる。
 
 ## プロジェクト構成
 
@@ -40,6 +64,8 @@ tests/
   e2e/
     cfe.test.ts           テストシナリオ（Vitest の describe/test 形式）
 support/
+  scenario.ts             シナリオ実行の共通ライフサイクル（before/after/self-heal）
+  config.ts               フレームワーク設定（envで上書き可能）
   stagehand.ts            Stagehand 初期化・終了、出力ディレクトリ準備
   context.ts              TestContext インタフェース・ファクトリ、VisualRegressionError
   self-heal.ts            セルフヒール（タブ閉じ・キャッシュ削除・リロード・リトライ）
