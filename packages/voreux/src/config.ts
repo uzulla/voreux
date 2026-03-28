@@ -67,13 +67,16 @@ export const frameworkConfig: E2EFrameworkConfig = {
   },
   navigation: {
     timeoutMs: Math.max(1, toInt(process.env.E2E_NAV_TIMEOUT_MS, 10000)),
-    pollIntervalMs: Math.max(1, toInt(process.env.E2E_NAV_POLL_INTERVAL_MS, 300)),
+    pollIntervalMs: Math.max(
+      1,
+      toInt(process.env.E2E_NAV_POLL_INTERVAL_MS, 300),
+    ),
   },
   visualRegression: {
     mismatchThreshold: clamp(
       toFloat(process.env.E2E_VISUAL_DIFF_THRESHOLD, 0.1),
       0,
-      1
+      1,
     ),
   },
 };

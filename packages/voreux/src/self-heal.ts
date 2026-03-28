@@ -1,8 +1,8 @@
-import path from "path";
 import fs from "fs";
+import path from "path";
+import { frameworkConfig } from "./config.js";
 import type { TestContext } from "./context.js";
 import { VisualRegressionError } from "./context.js";
-import { frameworkConfig } from "./config.js";
 
 /**
  * セルフヒール回復処理:
@@ -41,7 +41,7 @@ async function performSelfHeal(ctx: TestContext): Promise<void> {
  */
 export async function withSelfHeal(
   ctx: TestContext,
-  fn: () => Promise<void>
+  fn: () => Promise<void>,
 ): Promise<void> {
   try {
     await fn();
@@ -49,7 +49,9 @@ export async function withSelfHeal(
     if (err instanceof VisualRegressionError) throw err;
     if (process.env.SELF_HEAL !== "1") throw err;
 
-    console.log("  [self-heal] Test failed, performing recovery and retrying...");
+    console.log(
+      "  [self-heal] Test failed, performing recovery and retrying...",
+    );
     await performSelfHeal(ctx);
     await fn();
   }

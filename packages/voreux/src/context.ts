@@ -1,14 +1,14 @@
-import path from "path";
 import type { Stagehand } from "@browserbasehq/stagehand";
-import type { ScreenshotFn } from "./screenshot.js";
-import type { Recorder } from "./recording.js";
-import { compareWithBaseline, saveBaseline } from "./screenshot.js";
+import path from "path";
+import { frameworkConfig } from "./config.js";
 import {
   highlightElement,
   highlightElements,
   removeHighlights,
 } from "./highlight.js";
-import { frameworkConfig } from "./config.js";
+import type { Recorder } from "./recording.js";
+import type { ScreenshotFn } from "./screenshot.js";
+import { compareWithBaseline, saveBaseline } from "./screenshot.js";
 
 // ----------------------------------------------------------------
 // 定数
@@ -19,7 +19,8 @@ export const RECORDING_DIR = path.resolve("recordings");
 export const FRAMES_DIR = path.join(RECORDING_DIR, "frames");
 export const BASELINES_DIR = path.resolve("baselines");
 
-export const VISUAL_DIFF_THRESHOLD = frameworkConfig.visualRegression.mismatchThreshold;
+export const VISUAL_DIFF_THRESHOLD =
+  frameworkConfig.visualRegression.mismatchThreshold;
 
 // ----------------------------------------------------------------
 // VisualRegressionError
@@ -30,7 +31,7 @@ export class VisualRegressionError extends Error {
   mismatchRatio: number;
   constructor(diffPath: string, mismatchRatio: number) {
     super(
-      `Visual regression detected (${(mismatchRatio * 100).toFixed(1)}% mismatch). Diff: ${diffPath}`
+      `Visual regression detected (${(mismatchRatio * 100).toFixed(1)}% mismatch). Diff: ${diffPath}`,
     );
     this.name = "VisualRegressionError";
     this.diffPath = diffPath;
@@ -62,7 +63,10 @@ export interface TestContext {
   highlightObserved: (actions: any[], screenshotName: string) => Promise<void>;
 
   /** observe() で要素を探し、単一ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
-  highlightTarget: (instruction: string, screenshotName: string) => Promise<void>;
+  highlightTarget: (
+    instruction: string,
+    screenshotName: string,
+  ) => Promise<void>;
 }
 
 export function createTestContext(
@@ -70,7 +74,7 @@ export function createTestContext(
   page: any,
   recorder: Recorder,
   screenshotFn: ScreenshotFn,
-  originUrl: string
+  originUrl: string,
 ): TestContext {
   let lastComparisonSsPath: string | null = null;
 
@@ -90,9 +94,11 @@ export function createTestContext(
       let resultPage: any = null;
       while (Date.now() < deadline) {
         // 新しく開いたページのみチェック
-        const newPages = stagehand.context.pages().filter((p: any) => !initialPages.has(p));
+        const newPages = stagehand.context
+          .pages()
+          .filter((p: any) => !initialPages.has(p));
         const matchedPage = newPages.find((p: any) =>
-          p.url().includes(urlPattern)
+          p.url().includes(urlPattern),
         );
         if (matchedPage) {
           resultPage = matchedPage;
@@ -104,13 +110,13 @@ export function createTestContext(
           break;
         }
         await new Promise((r) =>
-          setTimeout(r, frameworkConfig.navigation.pollIntervalMs)
+          setTimeout(r, frameworkConfig.navigation.pollIntervalMs),
         );
       }
 
       if (!resultPage) {
         throw new Error(
-          `Navigation failed: no page matching "${urlPattern}" found`
+          `Navigation failed: no page matching "${urlPattern}" found`,
         );
       }
 
@@ -131,7 +137,10 @@ export function createTestContext(
         diffPath,
       });
 
-      if (!comparison.skipped && comparison.mismatchRatio > VISUAL_DIFF_THRESHOLD) {
+      if (
+        !comparison.skipped &&
+        comparison.mismatchRatio > VISUAL_DIFF_THRESHOLD
+      ) {
         throw new VisualRegressionError(diffPath, comparison.mismatchRatio);
       }
     },
@@ -146,7 +155,9 @@ export function createTestContext(
       await highlightElements(page, actions);
       try {
         await screenshotFn(screenshotName);
-        await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
+        await recorder.injectFrames(
+          frameworkConfig.videoRecording.injectFrameCount,
+        );
       } finally {
         await removeHighlights(page);
       }
@@ -161,7 +172,9 @@ export function createTestContext(
         });
         try {
           await screenshotFn(screenshotName);
-          await recorder.injectFrames(frameworkConfig.videoRecording.injectFrameCount);
+          await recorder.injectFrames(
+            frameworkConfig.videoRecording.injectFrameCount,
+          );
         } finally {
           await removeHighlights(page);
         }

@@ -1,8 +1,8 @@
-import { describe, test, beforeAll, afterAll, afterEach } from "vitest";
-import { initStagehand, closeStagehand } from "./stagehand.js";
+import { afterAll, afterEach, beforeAll, describe, test } from "vitest";
 import type { TestContext } from "./context.js";
 import type { Recorder } from "./recording.js";
 import { withSelfHeal } from "./self-heal.js";
+import { closeStagehand, initStagehand } from "./stagehand.js";
 
 export interface ScenarioStep {
   name: string;
@@ -42,7 +42,7 @@ export function defineScenarioSuite({
     afterAll(async () => {
       if (_ctx && _recorder) {
         await closeStagehand(_ctx, _recorder).catch((e) =>
-          console.error("closeStagehand error:", e)
+          console.error("closeStagehand error:", e),
         );
       }
     });
