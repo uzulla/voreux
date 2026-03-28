@@ -209,7 +209,7 @@ await ctx.screenshot("new-tab", newPage);
 `act()` 後に、新タブまたは同一タブ遷移を待ちます。
 
 ```ts
-await ctx.actAndWaitForNav(
+const nextPage = await ctx.actAndWaitForNav(
   "Click the GitHub link",
   "github.com",
 );
@@ -384,7 +384,7 @@ defineScenarioSuite({
 {
   name: "Open external page",
   run: async (ctx) => {
-    await ctx.actAndWaitForNav(
+    const nextPage = await ctx.actAndWaitForNav(
       "Click the GitHub link",
       "github.com",
     );
