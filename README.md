@@ -1,179 +1,215 @@
-# Stagehand E2E Test
+# Voreux
 
-[Stagehand](https://github.com/browserbase/stagehand) + [Vitest](https://vitest.dev/) で https://cfe.jp/ に対する E2E テストを行うプロジェクト。
+Voreux は、Stagehand + Vitest ベースの E2E テストフレームワークです。
+
+このリポジトリは、**フレームワーク本体** と **そのフレームワークを利用するサンプルテストプロジェクト** を同じ repo 内で開発できるように、`pnpm workspace` 構成にしています。
+
+## この repo の考え方
+
+Voreux は最終的に npm パッケージとして配布し、利用者は次のように導入する想定です。
+
+```bash
+npm install voreux
+```
+
+ただし、開発中に毎回 npm へ publish しないとサンプルが動かない構成だと不便です。
+そこでこの repo では、workspace を使って次のようにしています。
+
+- `packages/voreux` に **Voreux 本体** を置く
+- `examples/cfe-jp` に **Voreux を使うサンプルプロジェクト** を置く
+- サンプル側は `voreux: workspace:*` で **ローカルの Voreux** を参照する
+
+これにより、**npm 未公開の状態でも、利用時に近い形でサンプルを動かせる** ようになっています。
+
+## ディレクトリ構造
+
+```text
+.
+├── package.json                workspaceルート用 package.json
+├── pnpm-workspace.yaml         workspace 定義
+├── packages/
+│   └── voreux/
+│       ├── package.json        Voreux 本体の package 定義
+│       ├── tsconfig.json
+│       ├── src/
+│       │   ├── index.ts        公開API
+│       │   ├── scenario.ts     describe/test の共通ライフサイクル
+│       │   ├── stagehand.ts    Stagehand 初期化/終了
+│       │   ├── context.ts      TestContext と共通ユーティリティ
+│       │   ├── self-heal.ts    self-heal 処理
+│       │   ├── screenshot.ts   スクリーンショット/比較
+│       │   ├── recording.ts    録画処理
+│       │   ├── highlight.ts    observe/target ハイライト
+│       │   └── config.ts       環境変数ベース設定
+│       ├── tests/
+│       │   └── public-api.test.ts  公開APIのスモークテスト
+│       └── dist/               build成果物（生成物）
+└── examples/
+    └── cfe-jp/
+        ├── package.json        サンプルプロジェクト定義
+        ├── tsconfig.json
+        ├── vitest.config.ts
+        ├── README.md
+        └── tests/
+            └── cfe.test.ts     サンプルシナリオ
+```
+
+## 役割分担
+
+### `packages/voreux`
+
+Voreux 本体です。npm 公開対象はこちらです。
+
+この package は、Stagehand ベースの E2E シナリオを組み立てるための共通機能を提供します。
+
+現時点では主に以下を持っています。
+
+- `defineScenarioSuite()` によるシナリオ定義
+- `ScenarioStep` / `ScenarioSuiteOptions` 型エクスポート
+- Stagehand の初期化/終了
+- self-heal
+- スクリーンショット撮影
+- ビジュアル差分検知
+- 録画処理
+- observe/act の補助
+
+### 公開されている型
+
+`voreux` は関数だけでなく、以下の型も public API として export しています。
+
+- `ScenarioStep`
+- `ScenarioSuiteOptions`
+
+TypeScript では、これらを使ってシナリオ定義を型安全に書けます。
+
+```ts
+import { defineScenarioSuite } from "voreux";
+import type { ScenarioStep, ScenarioSuiteOptions } from "voreux";
+
+const steps: ScenarioStep[] = [
+  {
+    name: "Navigate",
+    selfHeal: false,
+    run: async (ctx) => {
+      await ctx.page.goto("https://example.com/");
+    },
+  },
+];
+
+const suite: ScenarioSuiteOptions = {
+  suiteName: "example",
+  originUrl: "https://example.com/",
+  steps,
+};
+
+defineScenarioSuite(suite);
+```
+
+### `examples/cfe-jp`
+
+Voreux を利用する **サンプルテストプロジェクト** です。
+
+このサンプルは framework 内部を相対 import せず、通常利用者に近い形で:
+
+```ts
+import { defineScenarioSuite } from "voreux";
+```
+
+として使います。
+
+ただし実体は npm レジストリではなく workspace 経由で解決されます。
 
 ## セットアップ
 
+**推奨環境**
+
+- Node.js >= 22.x
+- pnpm >= 10.x
+
+この repo は `pnpm workspace` 前提で構成しているため、Node.js / pnpm のバージョン差異があると再現性が崩れる可能性があります。
+必要に応じて以下で確認してください。
+
 ```bash
-# 依存パッケージのインストール
-pnpm install
-
-# Playwright の Chromium をインストール（初回のみ）
-pnpm exec playwright install chromium
-
-# 環境変数の設定
-cp .env.example .env
-# .env を編集して OPENAI_API_KEY を設定
+node --version
+pnpm --version
 ```
 
-## 実行
+この repo 内で開発・検証する場合は、workspace ルートでセットアップします。
 
 ```bash
-# 通常実行
-pnpm e2e
+pnpm install
+pnpm exec playwright install chromium
+cp .env.example examples/cfe-jp/.env
+# examples/cfe-jp/.env に OPENAI_API_KEY を設定
+```
 
-# セルフヒールモード（失敗時にキャッシュ削除 + リトライ）
+`.env` はサンプルプロジェクト側（`examples/cfe-jp/.env`）に置きます。
+ルートの `.env` は不要です。
+
+## 実行方法
+
+### サンプルを実行
+
+```bash
+pnpm e2e
+```
+
+これは workspace ルートから `examples/cfe-jp` の E2E を実行します。
+`examples/cfe-jp/.env` に `OPENAI_API_KEY` が入っていれば、そのまま通ります。
+
+### self-heal 付きで実行
+
+```bash
 pnpm e2e:self-heal
 ```
 
+### workspace 全体を build
+
+```bash
+pnpm -r build
+```
+
+### Voreux パッケージだけ test
+
+```bash
+pnpm --filter voreux test
+```
+
+### サンプルだけ直接実行
+
+```bash
+pnpm --filter @voreux/example-cfe-jp e2e
+```
+
+## サンプルはここ
+
+サンプルシナリオはここにあります。
+
+- `examples/cfe-jp/tests/cfe.test.ts`
+
+まずはこのファイルを見れば、Voreux をどう使うかが分かるようにしています。
+
+## 利用イメージ
+
+将来的に npm 公開後、利用者はたとえば別 repo で以下のように使う想定です。
+
+```ts
+import { defineScenarioSuite } from "voreux";
+```
+
+この repo では、その最終利用形に近い形を保ちながら、publish 前でも workspace で開発できるようにしています。
+
 ## 環境変数
 
-| 変数 | 説明 |
-|------|------|
-| `OPENAI_API_KEY` | OpenAI API キー（必須） |
-| `SELF_HEAL=1` | セルフヒールモード。失敗時にキャッシュ削除・ページリロード・リトライを行う |
-| `STAGEHAND_MODEL` | Stagehand が使うモデル（既定: `openai/gpt-4o`） |
-| `E2E_HEADLESS` | `1/true` で headless 実行（既定: `false`） |
-| `E2E_NAV_TIMEOUT_MS` | `actAndWaitForNav` の待機上限（既定: `10000`） |
-| `E2E_VISUAL_DIFF_THRESHOLD` | 画像差分のFAIL閾値（既定: `0.1` = 10%） |
-
-## シナリオ記述（steps API）
-
-`support/scenario.ts` の `defineScenarioSuite()` を使うと、
-利用者はテストの「手順」だけを配列で記述できる。
-
-```typescript
-import { defineScenarioSuite } from "../../support/scenario";
-
-defineScenarioSuite({
-  suiteName: "example",
-  originUrl: "https://example.com/",
-  steps: [
-    { name: "Navigate", selfHeal: false, run: async (ctx) => { ... } },
-    { name: "Extract", run: async (ctx) => { ... } },
-  ],
-});
-```
-
-`run` は既定で self-heal ラップされる。初期遷移など不要な手順は `selfHeal: false` を指定できる。
-
-## プロジェクト構成
-
-```text
-tests/
-  e2e/
-    cfe.test.ts           テストシナリオ（Vitest の describe/test 形式）
-support/
-  scenario.ts             シナリオ実行の共通ライフサイクル（before/after/self-heal）
-  config.ts               フレームワーク設定（envで上書き可能）
-  stagehand.ts            Stagehand 初期化・終了、出力ディレクトリ準備
-  context.ts              TestContext インタフェース・ファクトリ、VisualRegressionError
-  self-heal.ts            セルフヒール（タブ閉じ・キャッシュ削除・リロード・リトライ）
-  screenshot.ts           スクリーンショット撮影、ベースライン比較（pixelmatch）
-  recording.ts            フレームキャプチャ、ffmpeg で MP4 変換
-  highlight.ts            DOM ハイライトオーバーレイ注入
-vitest.config.ts          Vitest 設定
-baselines/                ビジュアルリグレッション用ベースライン画像
-screenshots/              （生成）テスト中のスクリーンショット
-recordings/               （生成）テスト録画（MP4）
-```
-
-## テストの流れ
-
-`tests/e2e/cfe.test.ts` で以下の 5 テストが順次実行される:
-
-1. **Navigate to page** — `page.goto()` でサイトを開く
-2. **Extract profile** — `extract()` で名前・肩書き・SNS リンク一覧を構造化抽出
-3. **Extract books** — `extract()` で著書タイトル・説明を抽出
-4. **Observe links** — `observe()` でクリック可能な要素を列挙しハイライト表示
-5. **Click GitHub link** — `act()` で GitHub リンクをクリックし、遷移先を検証
-
-各テストでスクリーンショットが `screenshots/` に保存され、テスト全体の録画が `recordings/test-recording.mp4` に出力される。
-
-## Stagehand とは
-
-[Browserbase](https://www.browserbase.com/) が開発した AI 駆動のブラウザ自動化フレームワーク。Playwright を拡張し、自然言語でブラウザを操作する 3 つのプリミティブを提供する:
-
-- **`act(instruction)`** — 自然言語で操作を指示（クリック、入力など）
-- **`extract(instruction, schema)`** — Zod スキーマに沿った構造化データ抽出
-- **`observe(instruction)`** — 操作可能な要素の発見・列挙
-
-ローカルモード (`env: "LOCAL"`) では Browserbase のクラウド不要で、ローカルの Chromium + LLM API キーだけで動作する。
-
-## 動画録画
-
-ffmpeg が利用可能な場合のみ、テスト中 500ms 間隔でブラウザ画面をキャプチャし、テスト終了後に MP4 に変換する。ffmpeg 未インストール時はフレームキャプチャ自体をスキップし、動画変換も実行しない。
-
-> **なぜ Playwright の `recordVideo` を使わないのか？**
-> Stagehand v3 は Playwright の BrowserContext ではなく CDP 直接接続の `V3Context` でブラウザを制御しており、Playwright の録画 API にアクセスできない。
-
-## セルフヒール + ビジュアルリグレッション検知
-
-`SELF_HEAL=1` 時のみ有効。`act()` のキャッシュ破損（セレクタずれ）からの自動復旧を行う。ただしページ自体の視覚的崩壊（ビジュアルリグレッション）はヒール対象外で即 FAIL。
-
-```text
-ページスクリーンショット撮影
-       │
-  ベースライン存在？ ── No ──→ 初回: そのまま実行
-       │ Yes
-  pixelmatch で比較
-       │
-  差異 > 10% ? ── Yes ──→ FAIL (VisualRegressionError)
-       │ No
-  テスト本体を実行
-       │
-  成功？ ── Yes ──→ PASS
-       │ No
-  SELF_HEAL=1 ? ── No ──→ FAIL
-       │ Yes
-  キャッシュ削除 → ページリロード → リトライ
-       │
-  成功？ ── Yes ──→ PASS
-       │ No
-       └──→ FAIL
-```
-
-`baselines/` にテスト成功時のスクリーンショットが保存される。ビューポートサイズ固定（1280x720）で比較の安定性を確保。閾値は `support/config.ts` で管理され、環境変数 `E2E_VISUAL_DIFF_THRESHOLD` で調整可能（デフォルト 10%）。
-
-## act() キャッシュ
-
-コンストラクタの `cacheDir` で有効化。`act()` の結果（xpath セレクタ）をローカルにキャッシュし、2回目以降は LLM を呼ばず直接操作する。
-
-- 対象は `act()` のみ。`extract()` / `observe()` はキャッシュされない
-- キャッシュキーは instruction + URL のハッシュ
-- DOM 構造が変わったら `rm -rf .cache/stagehand-e2e` で再生成
-- キャッシュヒット時も操作対象を誤る可能性があるため、`act()` 後のアサーションは必須
-
-## v3 API のハマりポイント
-
-### `extract()` は位置引数
-
-```typescript
-// OK
-const data = await stagehand.extract("instruction", zodSchema);
-
-// NG（schema が無視され pageText のみ返る）
-const data = await stagehand.extract({ instruction: "...", schema: zodSchema });
-```
-
-### `model` の指定が必要
-
-```typescript
-const stagehand = new Stagehand({
-  env: "LOCAL",
-  model: "openai/gpt-4o",  // これがないと AI 機能が動かない
-});
-```
-
-### V3Context の制限
-
-- `stagehand.context` は Playwright の `BrowserContext` ではなく `V3Context`
-- `waitForEvent()` がないため、新タブ検出は `context.pages()` のポーリングで代替
-- Pages から `.context()` メソッドも使えない
-
-## 参考リンク
-
-- [Stagehand GitHub](https://github.com/browserbase/stagehand)
-- [Stagehand Docs](https://docs.stagehand.dev/)
-- [Vitest](https://vitest.dev/)
-- [Caching Best Practices](https://docs.stagehand.dev/v3/best-practices/caching)
+- `OPENAI_API_KEY`
+  - 必須
+- `SELF_HEAL=1`
+  - self-heal を有効化
+- `STAGEHAND_MODEL`
+  - 既定: `openai/gpt-4o`
+- `E2E_HEADLESS`
+  - `1` / `true` で headless 実行
+- `E2E_NAV_TIMEOUT_MS`
+  - 遷移待機上限（ms）
+- `E2E_VISUAL_DIFF_THRESHOLD`
+  - 画像差分 FAIL 閾値（例: `0.1`）

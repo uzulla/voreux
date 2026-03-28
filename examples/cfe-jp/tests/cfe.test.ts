@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 import { z } from "zod";
-import { defineScenarioSuite } from "../../support/scenario.js";
+import { defineScenarioSuite } from "voreux";
 
 const ORIGIN_URL = "https://cfe.jp/";
 
