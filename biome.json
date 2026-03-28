@@ -11,9 +11,6 @@
       "suspicious": {
         "noExplicitAny": "off"
       },
-      "security": {
-        "noGlobalEval": "off"
-      },
       "style": {
         "useNodejsImportProtocol": "off"
       }

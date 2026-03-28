@@ -62,6 +62,7 @@ export async function highlightElement(
       cursorSvg,
       containerId,
     }: any) => {
+      // biome-ignore lint/security/noGlobalEval: intentional evaluation inside the browser page context for selector resolution
       const el = eval(resolveExpr) as Element | null;
       if (!el) return;
 
