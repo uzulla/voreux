@@ -27,15 +27,6 @@ interface HighlightElementOpts {
   borderColor?: string;
 }
 
-function resolveElement(selector: string): string {
-  // Stagehand selectors may be xpath= prefixed or CSS
-  if (selector.startsWith("xpath=")) {
-    const xpath = selector.slice("xpath=".length);
-    return `document.evaluate(${JSON.stringify(xpath)}, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue`;
-  }
-  return `document.querySelector(${JSON.stringify(selector)})`;
-}
-
 /**
  * 単一要素をハイライト + オプションでカーソル表示。
  * act() のクリック対象の可視化用。
@@ -54,7 +45,7 @@ export async function highlightElement(
 
   await page.evaluate(
     ({
-      resolveExpr,
+      selector,
       overlayColor,
       borderColor,
       showCursor,
@@ -62,7 +53,26 @@ export async function highlightElement(
       cursorSvg,
       containerId,
     }: any) => {
-      const el = eval(resolveExpr) as Element | null;
+      let el: Element | null = null;
+      try {
+        if (selector.startsWith("xpath=")) {
+          const xpath = selector.slice("xpath=".length);
+          const node = document.evaluate(
+            xpath,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null,
+          ).singleNodeValue;
+          if (node instanceof Element) {
+            el = node;
+          }
+        } else {
+          el = document.querySelector(selector);
+        }
+      } catch {
+        return;
+      }
       if (!el) return;
 
       (el as HTMLElement).scrollIntoView?.({
@@ -131,7 +141,7 @@ export async function highlightElement(
       }
     },
     {
-      resolveExpr: resolveElement(selector),
+      selector,
       overlayColor,
       borderColor,
       showCursor,
@@ -181,13 +191,16 @@ export async function highlightElements(
         try {
           if (action.selector.startsWith("xpath=")) {
             const xpath = action.selector.slice("xpath=".length);
-            el = document.evaluate(
+            const node = document.evaluate(
               xpath,
               document,
               null,
               XPathResult.FIRST_ORDERED_NODE_TYPE,
               null,
-            ).singleNodeValue as Element;
+            ).singleNodeValue;
+            if (node instanceof Element) {
+              el = node;
+            }
           } else {
             el = document.querySelector(action.selector);
           }
