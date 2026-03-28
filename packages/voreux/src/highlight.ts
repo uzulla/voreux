@@ -57,13 +57,16 @@ export async function highlightElement(
       try {
         if (selector.startsWith("xpath=")) {
           const xpath = selector.slice("xpath=".length);
-          el = document.evaluate(
+          const node = document.evaluate(
             xpath,
             document,
             null,
             XPathResult.FIRST_ORDERED_NODE_TYPE,
             null,
-          ).singleNodeValue as Element;
+          ).singleNodeValue;
+          if (node instanceof Element) {
+            el = node;
+          }
         } else {
           el = document.querySelector(selector);
         }
@@ -188,13 +191,16 @@ export async function highlightElements(
         try {
           if (action.selector.startsWith("xpath=")) {
             const xpath = action.selector.slice("xpath=".length);
-            el = document.evaluate(
+            const node = document.evaluate(
               xpath,
               document,
               null,
               XPathResult.FIRST_ORDERED_NODE_TYPE,
               null,
-            ).singleNodeValue as Element;
+            ).singleNodeValue;
+            if (node instanceof Element) {
+              el = node;
+            }
           } else {
             el = document.querySelector(action.selector);
           }
