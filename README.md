@@ -93,9 +93,12 @@ import { defineScenarioSuite } from "voreux";
 ```bash
 pnpm install
 pnpm exec playwright install chromium
-cp .env.example .env
-# .env に OPENAI_API_KEY を設定
+cp .env.example examples/cfe-jp/.env
+# examples/cfe-jp/.env に OPENAI_API_KEY を設定
 ```
+
+`.env` はサンプルプロジェクト側（`examples/cfe-jp/.env`）に置きます。
+ルートの `.env` は不要です。
 
 ## 実行方法
 
@@ -106,6 +109,7 @@ pnpm e2e
 ```
 
 これは workspace ルートから `examples/cfe-jp` の E2E を実行します。
+`examples/cfe-jp/.env` に `OPENAI_API_KEY` が入っていれば、そのまま通ります。
 
 ### self-heal 付きで実行
 
