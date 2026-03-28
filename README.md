@@ -189,6 +189,9 @@ pnpm --filter @voreux/example-cfe-jp e2e
 
 まずはこのファイルを見れば、Voreux をどう使うかが分かるようにしています。
 
+より詳しいシナリオ作成ガイド:
+- `docs/how-to-write-e2e-scenarios.md`
+
 ## 利用イメージ
 
 将来的に npm 公開後、利用者はたとえば別 repo で以下のように使う想定です。
