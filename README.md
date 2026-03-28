@@ -65,12 +65,45 @@ Voreux 本体です。npm 公開対象はこちらです。
 現時点では主に以下を持っています。
 
 - `defineScenarioSuite()` によるシナリオ定義
+- `ScenarioStep` / `ScenarioSuiteOptions` 型エクスポート
 - Stagehand の初期化/終了
 - self-heal
 - スクリーンショット撮影
 - ビジュアル差分検知
 - 録画処理
 - observe/act の補助
+
+### 公開されている型
+
+`voreux` は関数だけでなく、以下の型も public API として export しています。
+
+- `ScenarioStep`
+- `ScenarioSuiteOptions`
+
+TypeScript では、これらを使ってシナリオ定義を型安全に書けます。
+
+```ts
+import { defineScenarioSuite } from "voreux";
+import type { ScenarioStep, ScenarioSuiteOptions } from "voreux";
+
+const steps: ScenarioStep[] = [
+  {
+    name: "Navigate",
+    selfHeal: false,
+    run: async (ctx) => {
+      await ctx.page.goto("https://example.com/");
+    },
+  },
+];
+
+const suite: ScenarioSuiteOptions = {
+  suiteName: "example",
+  originUrl: "https://example.com/",
+  steps,
+};
+
+defineScenarioSuite(suite);
+```
 
 ### `examples/cfe-jp`
 
@@ -87,6 +120,19 @@ import { defineScenarioSuite } from "voreux";
 ただし実体は npm レジストリではなく workspace 経由で解決されます。
 
 ## セットアップ
+
+**推奨環境**
+
+- Node.js >= 22.x
+- pnpm >= 10.x
+
+この repo は `pnpm workspace` 前提で構成しているため、Node.js / pnpm のバージョン差異があると再現性が崩れる可能性があります。
+必要に応じて以下で確認してください。
+
+```bash
+node --version
+pnpm --version
+```
 
 この repo 内で開発・検証する場合は、workspace ルートでセットアップします。
 
