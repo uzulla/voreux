@@ -190,12 +190,17 @@ const actions = await ctx.stagehand.observe("Find clickable links");
 ```
 
 
-### `ctx.screenshot(name)`
+### `ctx.screenshot(name, targetPage?)`
 
 スクリーンショットを保存します。
+通常は現在ページを撮りますが、`targetPage` を渡すと別ページ（新しいタブなど）も撮影できます。
 
 ```ts
 await ctx.screenshot("02-after-login");
+```
+
+```ts
+await ctx.screenshot("new-tab", newPage);
 ```
 
 
