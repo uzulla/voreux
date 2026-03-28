@@ -31,7 +31,7 @@
       "examples/**/*.ts",
       "*.json",
       "*.md",
-      "!!**/packages/voreux/dist/**"
+      "!!**/packages/voreux/dist"
     ]
   }
 }
