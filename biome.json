@@ -23,6 +23,12 @@
     }
   },
   "files": {
-    "includes": ["packages/**/*.ts", "examples/**/*.ts", "*.json", "*.md"]
+    "includes": [
+      "packages/**/*.ts",
+      "examples/**/*.ts",
+      "*.json",
+      "*.md",
+      "!!**/packages/voreux/dist"
+    ]
   }
 }
