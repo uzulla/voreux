@@ -388,7 +388,7 @@ defineScenarioSuite({
       "Click the GitHub link",
       "github.com",
     );
-    await ctx.screenshot("github-opened");
+    await ctx.screenshot("github-opened", nextPage);
   },
 }
 ```
