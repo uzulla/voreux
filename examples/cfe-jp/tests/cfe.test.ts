@@ -1,6 +1,6 @@
 import { expect } from "vitest";
-import { z } from "zod";
 import { defineScenarioSuite } from "voreux";
+import { z } from "zod";
 
 const ORIGIN_URL = "https://cfe.jp/";
 
@@ -21,7 +21,7 @@ const booksSchema = z.object({
       description: z
         .string()
         .describe("Short description or summary of the book"),
-    })
+    }),
   ),
 });
 
@@ -43,7 +43,7 @@ defineScenarioSuite({
       run: async (ctx) => {
         const profile = await ctx.stagehand.extract(
           "Extract the person's name, their job title or description, and a list of their SNS/social media link labels",
-          profileSchema
+          profileSchema,
         );
         await ctx.screenshot("02-profile-extracted");
         expect(profile.name.length).toBeGreaterThan(0);
@@ -55,7 +55,7 @@ defineScenarioSuite({
       run: async (ctx) => {
         const books = await ctx.stagehand.extract(
           "Extract information about the books (著書) listed on this page, including the title and a short description for each book.",
-          booksSchema
+          booksSchema,
         );
         await ctx.screenshot("03-books-extracted");
         expect(books.books.length).toBeGreaterThan(0);
@@ -65,7 +65,7 @@ defineScenarioSuite({
       name: "Observe links",
       run: async (ctx) => {
         const actions = await ctx.stagehand.observe(
-          "Find all clickable links on this page"
+          "Find all clickable links on this page",
         );
         await ctx.highlightObserved(actions, "04-links-observed");
         expect(actions.length).toBeGreaterThan(0);
@@ -79,7 +79,7 @@ defineScenarioSuite({
 
         const navPage = await ctx.actAndWaitForNav(
           "Click the GitHub link",
-          "github.com"
+          "github.com",
         );
         await ctx.screenshot("05b-new-tab", navPage);
         if (process.env.UPDATE_BASELINE) {
