@@ -164,7 +164,9 @@ defineScenarioSuite({
 
 `run(ctx)` の `ctx` には、シナリオを書く上で便利な API が入っています。
 
+
 ### `ctx.page`
+
 Playwright ライクなページオブジェクトです。
 
 例:
@@ -174,7 +176,9 @@ await ctx.page.goto("https://example.com/");
 await ctx.page.waitForLoadState("networkidle");
 ```
 
+
 ### `ctx.stagehand`
+
 Stagehand 本体です。
 
 例:
@@ -185,14 +189,18 @@ await ctx.stagehand.act("Click the login button");
 const actions = await ctx.stagehand.observe("Find clickable links");
 ```
 
+
 ### `ctx.screenshot(name)`
+
 スクリーンショットを保存します。
 
 ```ts
 await ctx.screenshot("02-after-login");
 ```
 
+
 ### `ctx.actAndWaitForNav(instruction, urlPattern)`
+
 `act()` 後に、新タブまたは同一タブ遷移を待ちます。
 
 ```ts
@@ -203,7 +211,9 @@ const nextPage = await ctx.actAndWaitForNav(
 await ctx.screenshot("03-github", nextPage);
 ```
 
+
 ### `ctx.highlightObserved(actions, screenshotName)`
+
 `observe()` の結果をハイライトしてから撮影します。
 
 ```ts
@@ -211,21 +221,27 @@ const actions = await ctx.stagehand.observe("Find all clickable links");
 await ctx.highlightObserved(actions, "04-links");
 ```
 
+
 ### `ctx.highlightTarget(instruction, screenshotName)`
+
 ターゲット候補を見つけて、クリック前に可視化します。
 
 ```ts
 await ctx.highlightTarget("Find the login button", "05-target");
 ```
 
+
 ### `ctx.assertNoVisualRegression(baselineName)`
+
 現在画面と baseline を比較し、大きな差異があれば fail します。
 
 ```ts
 await ctx.assertNoVisualRegression("before-submit");
 ```
 
+
 ### `ctx.saveCurrentBaseline(baselineName)`
+
 比較に使ったスクリーンショットを baseline として保存します。
 
 ```ts
@@ -240,7 +256,9 @@ if (process.env.UPDATE_BASELINE) {
 
 Voreux では、主に Stagehand の以下を使います。
 
+
 ### `act()`
+
 自然言語でブラウザ操作を指示します。
 
 ```ts
@@ -254,7 +272,9 @@ await ctx.stagehand.act("Click the login button");
 
 ---
 
+
 ### `extract()`
+
 ページから構造化データを取り出します。
 
 ```ts
@@ -278,7 +298,9 @@ const profile = await ctx.stagehand.extract(
 
 ---
 
+
 ### `observe()`
+
 操作候補を見つけます。
 
 ```ts
