@@ -1,21 +1,21 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import fs from "fs";
+import { frameworkConfig } from "./config.js";
 import {
-  SCREENSHOT_DIR,
-  RECORDING_DIR,
-  FRAMES_DIR,
   createTestContext,
+  FRAMES_DIR,
+  RECORDING_DIR,
+  SCREENSHOT_DIR,
   type TestContext,
 } from "./context.js";
-import { createScreenshotHelper } from "./screenshot.js";
 import {
-  startRecording,
+  createNoopRecorder,
   framesToVideo,
   hasFfmpegCommand,
-  createNoopRecorder,
   type Recorder,
+  startRecording,
 } from "./recording.js";
-import { frameworkConfig } from "./config.js";
+import { createScreenshotHelper } from "./screenshot.js";
 
 /**
  * Stagehand を初期化し、テスト実行に必要な環境を準備する。
@@ -54,11 +54,17 @@ export async function initStagehand(originUrl: string): Promise<{
     ? startRecording(
         page,
         FRAMES_DIR,
-        frameworkConfig.videoRecording.frameIntervalMs
+        frameworkConfig.videoRecording.frameIntervalMs,
       )
     : createNoopRecorder();
 
-  const ctx = createTestContext(stagehand, page, recorder, screenshotFn, originUrl);
+  const ctx = createTestContext(
+    stagehand,
+    page,
+    recorder,
+    screenshotFn,
+    originUrl,
+  );
 
   return { ctx, recorder };
 }
@@ -69,7 +75,7 @@ export async function initStagehand(originUrl: string): Promise<{
  */
 export async function closeStagehand(
   ctx: TestContext,
-  recorder: Recorder
+  recorder: Recorder,
 ): Promise<void> {
   const totalFrames = await recorder.stop();
   await ctx.stagehand.close();
@@ -77,7 +83,7 @@ export async function closeStagehand(
   if (totalFrames > 0) {
     const safeInterval = Math.max(
       frameworkConfig.videoRecording.frameIntervalMs,
-      1
+      1,
     );
     const fps = Math.round(1000 / safeInterval);
     framesToVideo(FRAMES_DIR, RECORDING_DIR, fps);

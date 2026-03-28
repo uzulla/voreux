@@ -1,5 +1,5 @@
-import path from "path";
 import fs from "fs";
+import path from "path";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
@@ -9,10 +9,7 @@ export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
  * スクリーンショット撮影ヘルパーを生成する。
  * 返り値の関数は名前を受け取ってスクリーンショットを保存し、ファイルパスを返す。
  */
-export function createScreenshotHelper(
-  page: any,
-  dir: string
-): ScreenshotFn {
+export function createScreenshotHelper(page: any, dir: string): ScreenshotFn {
   return async (name: string, targetPage = page) => {
     const filePath = path.join(dir, `${name}.png`);
     try {
@@ -31,7 +28,7 @@ export function createScreenshotHelper(
 export function compareWithBaseline(
   currentPath: string,
   baselineName: string,
-  opts: { baselinesDir: string; diffPath: string }
+  opts: { baselinesDir: string; diffPath: string },
 ): { mismatchRatio: number; diffSaved: boolean; skipped: boolean } {
   const baselinePath = path.join(opts.baselinesDir, `${baselineName}.png`);
 
@@ -55,7 +52,7 @@ export function compareWithBaseline(
     diff.data,
     width,
     height,
-    { threshold: 0.1 }
+    { threshold: 0.1 },
   );
 
   const mismatchRatio = numDiffPixels / (width * height);
@@ -69,7 +66,7 @@ export function compareWithBaseline(
 export function saveBaseline(
   screenshotPath: string,
   baselineName: string,
-  baselinesDir: string
+  baselinesDir: string,
 ): string {
   if (!fs.existsSync(baselinesDir)) {
     fs.mkdirSync(baselinesDir, { recursive: true });

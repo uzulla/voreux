@@ -7,6 +7,13 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @voreux/example-cfe-jp e2e",
-    "e2e:self-heal": "pnpm --filter @voreux/example-cfe-jp e2e:self-heal"
+    "e2e:self-heal": "pnpm --filter @voreux/example-cfe-jp e2e:self-heal",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "check": "biome check .",
+    "typecheck": "pnpm --filter voreux exec tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.9"
   }
 }

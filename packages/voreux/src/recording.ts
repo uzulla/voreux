@@ -1,6 +1,6 @@
-import path from "path";
-import fs from "fs";
 import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 export interface Recorder {
   stop: () => Promise<number>;
@@ -42,7 +42,7 @@ export function createNoopRecorder(): Recorder {
 export function startRecording(
   page: any,
   framesDir: string,
-  intervalMs = 500
+  intervalMs = 500,
 ): Recorder {
   let frameIndex = 0;
   let stopped = false;
@@ -54,7 +54,7 @@ export function startRecording(
         try {
           const filePath = path.join(
             framesDir,
-            `frame-${String(frameIndex).padStart(5, "0")}.png`
+            `frame-${String(frameIndex).padStart(5, "0")}.png`,
           );
           await page.screenshot({ path: filePath });
           frameIndex++;
@@ -75,7 +75,7 @@ export function startRecording(
         for (let i = 0; i < n; i++) {
           const filePath = path.join(
             framesDir,
-            `frame-${String(frameIndex).padStart(5, "0")}.png`
+            `frame-${String(frameIndex).padStart(5, "0")}.png`,
           );
           await page.screenshot({ path: filePath });
           frameIndex++;
@@ -98,22 +98,19 @@ export function startRecording(
 export function framesToVideo(
   framesDir: string,
   outputDir: string,
-  fps: number
+  fps: number,
 ): string | null {
   const outputPath = path.join(outputDir, "test-recording.mp4");
   const pattern = path.join(framesDir, "frame-%05d.png");
   try {
     execSync(
-      `ffmpeg -y -framerate ${fps} -i "${pattern}" -c:v libx264 -pix_fmt yuv420p "${outputPath}" 2>/dev/null`
+      `ffmpeg -y -framerate ${fps} -i "${pattern}" -c:v libx264 -pix_fmt yuv420p "${outputPath}" 2>/dev/null`,
     );
     // フレーム画像を削除
     fs.rmSync(framesDir, { recursive: true });
     return outputPath;
   } catch {
-    console.error(
-      "  ffmpeg conversion failed. Raw frames kept in:",
-      framesDir
-    );
+    console.error("  ffmpeg conversion failed. Raw frames kept in:", framesDir);
     return null;
   }
 }

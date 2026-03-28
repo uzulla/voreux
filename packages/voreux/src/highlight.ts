@@ -43,7 +43,7 @@ function resolveElement(selector: string): string {
 export async function highlightElement(
   page: any,
   selector: string,
-  opts: HighlightElementOpts = {}
+  opts: HighlightElementOpts = {},
 ): Promise<void> {
   const {
     showCursor = false,
@@ -65,7 +65,10 @@ export async function highlightElement(
       const el = eval(resolveExpr) as Element | null;
       if (!el) return;
 
-      (el as HTMLElement).scrollIntoView?.({ block: "center", behavior: "instant" });
+      (el as HTMLElement).scrollIntoView?.({
+        block: "center",
+        behavior: "instant",
+      });
 
       const rect = el.getBoundingClientRect();
       const scrollX = window.scrollX;
@@ -79,8 +82,8 @@ export async function highlightElement(
         container.style.position = "absolute";
         container.style.top = "0";
         container.style.left = "0";
-        container.style.width = document.documentElement.scrollWidth + "px";
-        container.style.height = document.documentElement.scrollHeight + "px";
+        container.style.width = `${document.documentElement.scrollWidth}px`;
+        container.style.height = `${document.documentElement.scrollHeight}px`;
         container.style.pointerEvents = "none";
         container.style.zIndex = "2147483647";
         document.documentElement.appendChild(container);
@@ -89,10 +92,10 @@ export async function highlightElement(
       // Overlay box
       const overlay = document.createElement("div");
       overlay.style.position = "absolute";
-      overlay.style.left = (rect.left + scrollX - 3) + "px";
-      overlay.style.top = (rect.top + scrollY - 3) + "px";
-      overlay.style.width = (rect.width + 6) + "px";
-      overlay.style.height = (rect.height + 6) + "px";
+      overlay.style.left = `${rect.left + scrollX - 3}px`;
+      overlay.style.top = `${rect.top + scrollY - 3}px`;
+      overlay.style.width = `${rect.width + 6}px`;
+      overlay.style.height = `${rect.height + 6}px`;
       overlay.style.background = overlayColor;
       overlay.style.border = `3px solid ${borderColor}`;
       overlay.style.borderRadius = "4px";
@@ -104,8 +107,8 @@ export async function highlightElement(
         const badge = document.createElement("div");
         badge.textContent = label;
         badge.style.position = "absolute";
-        badge.style.left = (rect.left + scrollX - 3) + "px";
-        badge.style.top = (rect.top + scrollY - 22) + "px";
+        badge.style.left = `${rect.left + scrollX - 3}px`;
+        badge.style.top = `${rect.top + scrollY - 22}px`;
         badge.style.background = borderColor;
         badge.style.color = "#fff";
         badge.style.fontSize = "11px";
@@ -122,8 +125,8 @@ export async function highlightElement(
         const cursor = document.createElement("div");
         cursor.innerHTML = cursorSvg;
         cursor.style.position = "absolute";
-        cursor.style.left = (rect.left + scrollX + rect.width / 2) + "px";
-        cursor.style.top = (rect.top + scrollY + rect.height / 2) + "px";
+        cursor.style.left = `${rect.left + scrollX + rect.width / 2}px`;
+        cursor.style.top = `${rect.top + scrollY + rect.height / 2}px`;
         container.appendChild(cursor);
       }
     },
@@ -135,7 +138,7 @@ export async function highlightElement(
       label,
       cursorSvg: CURSOR_SVG,
       containerId: HIGHLIGHT_CONTAINER_ID,
-    }
+    },
   );
 }
 
@@ -151,7 +154,7 @@ interface ObservedAction {
  */
 export async function highlightElements(
   page: any,
-  actions: ObservedAction[]
+  actions: ObservedAction[],
 ): Promise<void> {
   await page.evaluate(
     ({ actions, palette, containerId }: any) => {
@@ -163,8 +166,8 @@ export async function highlightElements(
         container.style.position = "absolute";
         container.style.top = "0";
         container.style.left = "0";
-        container.style.width = document.documentElement.scrollWidth + "px";
-        container.style.height = document.documentElement.scrollHeight + "px";
+        container.style.width = `${document.documentElement.scrollWidth}px`;
+        container.style.height = `${document.documentElement.scrollHeight}px`;
         container.style.pointerEvents = "none";
         container.style.zIndex = "2147483647";
         document.documentElement.appendChild(container);
@@ -178,7 +181,13 @@ export async function highlightElements(
         try {
           if (action.selector.startsWith("xpath=")) {
             const xpath = action.selector.slice("xpath=".length);
-            el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as Element;
+            el = document.evaluate(
+              xpath,
+              document,
+              null,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null,
+            ).singleNodeValue as Element;
           } else {
             el = document.querySelector(action.selector);
           }
@@ -194,10 +203,10 @@ export async function highlightElements(
         // Overlay box
         const overlay = document.createElement("div");
         overlay.style.position = "absolute";
-        overlay.style.left = (rect.left + scrollX - 2) + "px";
-        overlay.style.top = (rect.top + scrollY - 2) + "px";
-        overlay.style.width = (rect.width + 4) + "px";
-        overlay.style.height = (rect.height + 4) + "px";
+        overlay.style.left = `${rect.left + scrollX - 2}px`;
+        overlay.style.top = `${rect.top + scrollY - 2}px`;
+        overlay.style.width = `${rect.width + 4}px`;
+        overlay.style.height = `${rect.height + 4}px`;
         overlay.style.background = color.bg;
         overlay.style.border = `2px solid ${color.border}`;
         overlay.style.borderRadius = "3px";
@@ -208,8 +217,8 @@ export async function highlightElements(
         const badge = document.createElement("div");
         badge.textContent = String(i + 1);
         badge.style.position = "absolute";
-        badge.style.left = (rect.left + scrollX - 2) + "px";
-        badge.style.top = (rect.top + scrollY - 20) + "px";
+        badge.style.left = `${rect.left + scrollX - 2}px`;
+        badge.style.top = `${rect.top + scrollY - 20}px`;
         badge.style.background = color.border;
         badge.style.color = "#fff";
         badge.style.fontSize = "11px";
@@ -228,8 +237,8 @@ export async function highlightElements(
           const tip = document.createElement("div");
           tip.textContent = `${i + 1}. ${action.description}`;
           tip.style.position = "absolute";
-          tip.style.left = (rect.left + scrollX - 2) + "px";
-          tip.style.top = (rect.top + scrollY + rect.height + 4) + "px";
+          tip.style.left = `${rect.left + scrollX - 2}px`;
+          tip.style.top = `${rect.top + scrollY + rect.height + 4}px`;
           tip.style.background = "rgba(0,0,0,0.75)";
           tip.style.color = "#fff";
           tip.style.fontSize = "10px";
@@ -245,10 +254,13 @@ export async function highlightElements(
       }
     },
     {
-      actions: actions.map((a) => ({ selector: a.selector, description: a.description })),
+      actions: actions.map((a) => ({
+        selector: a.selector,
+        description: a.description,
+      })),
       palette: COLOR_PALETTE,
       containerId: HIGHLIGHT_CONTAINER_ID,
-    }
+    },
   );
 }
 
