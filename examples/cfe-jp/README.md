@@ -13,6 +13,8 @@ cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 ```
 
 ローカル用の `.env` は `.gitignore` で除外されており、コミットしない前提です。
+また、キャッシュ・スクリーンショット・録画・ベースラインなどのサンプル生成物は
+`examples/cfe-jp/` 配下に出るように設定しています。
 
 ## 実行（リポジトリルートで）
 
