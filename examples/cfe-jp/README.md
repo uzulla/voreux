@@ -5,10 +5,10 @@
 ## セットアップ
 
 このサンプルは `examples/cfe-jp/.env` を使います。
-まずテンプレートをコピーして API キーを設定してください。
+`examples/cfe-jp/` ディレクトリでテンプレートをコピーして API キーを設定してください。
 
 ```bash
-cp examples/cfe-jp/.env.example examples/cfe-jp/.env
+cp .env.example .env
 # examples/cfe-jp/.env に OPENAI_API_KEY を設定
 ```
 
