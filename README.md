@@ -195,8 +195,6 @@ pnpm --filter @voreux/example-cfe-jp e2e
 
 ## 利用イメージ
 
-将来的に npm 公開後、利用者はたとえば別 repo で以下のように使う想定です。
-
 ```ts
 import { defineScenarioSuite } from "voreux";
 ```
