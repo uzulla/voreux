@@ -14,10 +14,12 @@ import { compareWithBaseline, saveBaseline } from "./screenshot.js";
 // 定数
 // ----------------------------------------------------------------
 
-export const SCREENSHOT_DIR = path.resolve("screenshots");
-export const RECORDING_DIR = path.resolve("recordings");
+export const SCREENSHOT_DIR = path.resolve(
+  frameworkConfig.paths.screenshotsDir,
+);
+export const RECORDING_DIR = path.resolve(frameworkConfig.paths.recordingsDir);
 export const FRAMES_DIR = path.join(RECORDING_DIR, "frames");
-export const BASELINES_DIR = path.resolve("baselines");
+export const BASELINES_DIR = path.resolve(frameworkConfig.paths.baselinesDir);
 
 export const VISUAL_DIFF_THRESHOLD =
   frameworkConfig.visualRegression.mismatchThreshold;

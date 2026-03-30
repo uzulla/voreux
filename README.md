@@ -138,13 +138,16 @@ pnpm --version
 
 ```bash
 pnpm install
-pnpm exec playwright install chromium
-cp .env.example examples/cfe-jp/.env
+pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
+cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 # examples/cfe-jp/.env に OPENAI_API_KEY を設定
 ```
 
 `.env` はサンプルプロジェクト側（`examples/cfe-jp/.env`）に置きます。
 ルートの `.env` は不要です。
+ローカル用の `.env` は `examples/cfe-jp/.gitignore` で除外します。
+また、sample 実行時の `.cache` / `screenshots` / `recordings` / `baselines` も
+repo 直下ではなく `examples/cfe-jp/` 配下へ出るようにしています。
 
 ## 実行方法
 

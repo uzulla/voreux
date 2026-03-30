@@ -3,6 +3,11 @@ export interface E2EFrameworkConfig {
     model: string;
     cacheDir: string;
   };
+  paths: {
+    screenshotsDir: string;
+    recordingsDir: string;
+    baselinesDir: string;
+  };
   browser: {
     headless: boolean;
     viewport: {
@@ -53,6 +58,11 @@ export const frameworkConfig: E2EFrameworkConfig = {
   stagehand: {
     model: process.env.STAGEHAND_MODEL ?? "openai/gpt-4o",
     cacheDir: process.env.STAGEHAND_CACHE_DIR ?? ".cache/stagehand-e2e",
+  },
+  paths: {
+    screenshotsDir: process.env.E2E_SCREENSHOTS_DIR ?? "screenshots",
+    recordingsDir: process.env.E2E_RECORDINGS_DIR ?? "recordings",
+    baselinesDir: process.env.E2E_BASELINES_DIR ?? "baselines",
   },
   browser: {
     headless: toBool(process.env.E2E_HEADLESS, false),
