@@ -123,6 +123,7 @@ import { defineScenarioSuite } from "voreux";
 
 - Node.js >= 22.x
 - pnpm >= 10.x
+- Windows ユーザーは WSL2 が必要です（native PowerShell / cmd は現在サポート対象外）
 
 この repo は `pnpm workspace` 前提で構成しているため、Node.js / pnpm のバージョン差異があると再現性が崩れる可能性があります。
 必要に応じて以下で確認してください。
