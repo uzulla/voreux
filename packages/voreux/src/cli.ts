@@ -126,6 +126,11 @@ defineScenarioSuite({
 async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
   const resolved = targetDir ? path.resolve(targetDir) : process.cwd();
 
+  if (fs.existsSync(resolved) && !fs.statSync(resolved).isDirectory()) {
+    console.error(`voreux init: ${resolved} is a file, not a directory.`);
+    process.exit(1);
+  }
+
   if (!fs.existsSync(resolved)) {
     fs.mkdirSync(resolved, { recursive: true });
     console.log(`Created directory: ${resolved}`);
