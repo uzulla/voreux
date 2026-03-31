@@ -1,11 +1,8 @@
 #!/usr/bin/env node
-import { parseArgs } from "util";
+import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { spawnSync } from "child_process";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { parseArgs } from "util";
 
 const HELP_TEXT = `Voreux — Stagehand + Vitest E2E testing framework
 
@@ -26,27 +23,31 @@ For more details, see: https://github.com/uzulla/voreux`;
 const VERSION = "0.1.0";
 
 const INIT_TEMPLATE_FILES: Record<string, string> = {
-  "package.json": JSON.stringify({
-    name: "my-voreux-project",
-    version: "0.1.0",
-    type: "module",
-    private: true,
-    scripts: {
-      test: "vitest run",
-      "test:self-heal": "cross-env SELF_HEAL=1 vitest run",
-      build: "tsc --noEmit",
+  "package.json": JSON.stringify(
+    {
+      name: "my-voreux-project",
+      version: "0.1.0",
+      type: "module",
+      private: true,
+      scripts: {
+        test: "vitest run",
+        "test:self-heal": "cross-env SELF_HEAL=1 vitest run",
+        build: "tsc --noEmit",
+      },
+      dependencies: {
+        "@uzulla/voreux": "^0.1.0",
+        zod: "^3.25.76",
+      },
+      devDependencies: {
+        "@types/node": "^25.2.1",
+        "cross-env": "^10.1.0",
+        typescript: "^5.9.3",
+        vitest: "^4.0.18",
+      },
     },
-    dependencies: {
-      "@uzulla/voreux": "workspace:*",
-      zod: "^3.25.76",
-    },
-    devDependencies: {
-      "@types/node": "^25.2.1",
-      "cross-env": "^10.1.0",
-      typescript: "^5.9.3",
-      vitest: "^4.0.18",
-    },
-  }, null, 2),
+    null,
+    2,
+  ),
 
   "vitest.config.ts": `import { defineConfig } from "vitest/config";
 
@@ -64,26 +65,29 @@ export default defineConfig({
 
   ".env.example": `OPENAI_API_KEY=sk-...`,
 
-  ".gitignore": [
-    "node_modules",
-    ".env",
-    "screenshots",
-    "recordings",
-    "baselines",
-    "*.png",
-    "*.mp4",
-  ].join("\n") + "\n",
+  ".gitignore": `node_modules
+.env
+screenshots
+recordings
+baselines
+*.png
+*.mp4
+`,
 
-  "tsconfig.json": JSON.stringify({
-    compilerOptions: {
-      target: "ES2022",
-      module: "NodeNext",
-      moduleResolution: "NodeNext",
-      strict: true,
-      esModuleInterop: true,
-      skipLibCheck: true,
+  "tsconfig.json": JSON.stringify(
+    {
+      compilerOptions: {
+        target: "ES2022",
+        module: "NodeNext",
+        moduleResolution: "NodeNext",
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+      },
     },
-  }, null, 2),
+    null,
+    2,
+  ),
 
   "tests/example.test.ts": `import { defineScenarioSuite } from "@uzulla/voreux";
 
@@ -125,11 +129,11 @@ async function cmdInit(targetDir?: string): Promise<void> {
 
   console.log(
     `\nScaffold complete! Next steps:\n` +
-    `  cd ${resolved}\n` +
-    `  pnpm install\n` +
-    `  cp .env.example .env\n` +
-    `  # add OPENAI_API_KEY to .env\n` +
-    `  pnpm test\n`,
+      `  cd ${resolved}\n` +
+      `  pnpm install\n` +
+      `  cp .env.example .env\n` +
+      `  # add OPENAI_API_KEY to .env\n` +
+      `  pnpm test\n`,
   );
 }
 
