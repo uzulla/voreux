@@ -2,7 +2,19 @@
 import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { parseArgs } from "util";
+
+const PKG_VERSION = JSON.parse(
+  fs.readFileSync(
+    path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "package.json",
+    ),
+    "utf-8",
+  ),
+).version;
 
 const HELP_TEXT = `Voreux — Stagehand + Vitest E2E testing framework
 
@@ -20,8 +32,6 @@ Examples:
 
 For more details, see: https://github.com/uzulla/voreux`;
 
-const VERSION = "0.1.0";
-
 const INIT_TEMPLATE_FILES: Record<string, string> = {
   "package.json": JSON.stringify(
     {
@@ -35,7 +45,7 @@ const INIT_TEMPLATE_FILES: Record<string, string> = {
         build: "tsc --noEmit",
       },
       dependencies: {
-        "@uzulla/voreux": "^0.1.0",
+        "@uzulla/voreux": `^${PKG_VERSION}`,
         zod: "^3.25.76",
       },
       devDependencies: {
@@ -168,7 +178,7 @@ async function main(): Promise<void> {
   }
 
   if (values.version) {
-    console.log(`voreux ${VERSION}`);
+    console.log(`voreux ${PKG_VERSION}`);
     return;
   }
 
