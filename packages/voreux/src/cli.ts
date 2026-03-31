@@ -19,13 +19,17 @@ const PKG_VERSION = JSON.parse(
 const HELP_TEXT = `Voreux — Stagehand + Vitest E2E testing framework
 
 Usage:
-  voreux init [dir]        Scaffold a new Voreux project (default: current dir)
-  voreux test [pattern]    Run vitest tests (default: all)
-  voreux --help            Show this help
-  voreux --version         Show version
+  voreux init [dir] [--force]  Scaffold a project (default: skips existing files)
+  voreux test [pattern]         Run vitest tests (default: all)
+  voreux --help                Show this help
+  voreux --version             Show version
+
+Options:
+  --force, -f   Overwrite existing files during init
 
 Examples:
   voreux init my-e2e
+  voreux init my-e2e --force   (overwrites any existing files)
   cd my-e2e
   # add OPENAI_API_KEY to .env
   voreux test
@@ -119,7 +123,7 @@ defineScenarioSuite({
 `,
 };
 
-async function cmdInit(targetDir?: string): Promise<void> {
+async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
   const resolved = targetDir ? path.resolve(targetDir) : process.cwd();
 
   if (!fs.existsSync(resolved)) {
@@ -133,8 +137,17 @@ async function cmdInit(targetDir?: string): Promise<void> {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(filePath, content, "utf-8");
-    console.log(`Created: ${relativePath}`);
+    if (fs.existsSync(filePath)) {
+      if (force) {
+        fs.writeFileSync(filePath, content, "utf-8");
+        console.log(`Overwritten: ${relativePath}`);
+      } else {
+        console.log(`Skipped (exists): ${relativePath}`);
+      }
+    } else {
+      fs.writeFileSync(filePath, content, "utf-8");
+      console.log(`Created: ${relativePath}`);
+    }
   }
 
   console.log(
@@ -166,6 +179,7 @@ async function cmdTest(pattern?: string): Promise<void> {
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({
     options: {
+      force: { type: "boolean", short: "f" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },
@@ -186,7 +200,7 @@ async function main(): Promise<void> {
 
   switch (command) {
     case "init":
-      await cmdInit(rest[0]);
+      await cmdInit(rest[0], values.force ?? false);
       break;
 
     case "test":
