@@ -1,92 +1,53 @@
 # Voreux
 
-Voreux は、Stagehand + Vitest ベースの E2E テストフレームワークです。
+Voreux は、**Stagehand + Vitest** ベースの E2E テストフレームワークです。
 
-このリポジトリは、**フレームワーク本体** と **そのフレームワークを利用するサンプルテストプロジェクト** を同じ repo 内で開発できるように、`pnpm workspace` 構成にしています。
+AI に「クリックして」「入力して」と指示するだけで、Web ブラウザ操作を自動化するテストを書けます。
 
-## この repo の考え方
+## インストール
 
 ```bash
-npm install voreux
+npm install @uzulla/voreux
+# または
+pnpm add @uzulla/voreux
 ```
 
-ただし、開発中に毎回 npm へ publish しないとサンプルが動かない構成だと不便です。
-そこでこの repo では、workspace を使って次のようにしています。
+**必須環境**
 
-- `packages/voreux` に **Voreux 本体** を置く
-- `examples/cfe-jp` に **Voreux を使うサンプルプロジェクト** を置く
-- サンプル側は `voreux: workspace:*` で **ローカルの Voreux** を参照する
+- Node.js >= 22.x
+- pnpm >= 10.x（推奨）または npm
+- Windows ユーザーは **WSL2** が必要です（native PowerShell / cmd は現在サポート対象外）
 
-これにより、**npm 未公開の状態でも、利用時に近い形でサンプルを動かせる** ようになっています。
+## クイックスタート
 
-## ディレクトリ構造
+```bash
+# プロジェクトの雛形を生成
+npx @uzulla/voreux init my-e2e
+cd my-e2e
 
-```text
-.
-├── package.json                workspaceルート用 package.json
-├── pnpm-workspace.yaml         workspace 定義
-├── packages/
-│   └── voreux/
-│       ├── package.json        Voreux 本体の package 定義
-│       ├── tsconfig.json
-│       ├── src/
-│       │   ├── index.ts        公開API
-│       │   ├── scenario.ts     describe/test の共通ライフサイクル
-│       │   ├── stagehand.ts    Stagehand 初期化/終了
-│       │   ├── context.ts      TestContext と共通ユーティリティ
-│       │   ├── self-heal.ts    self-heal 処理
-│       │   ├── screenshot.ts   スクリーンショット/比較
-│       │   ├── recording.ts    録画処理
-│       │   ├── highlight.ts    observe/target ハイライト
-│       │   └── config.ts       環境変数ベース設定
-│       ├── tests/
-│       │   └── public-api.test.ts  公開APIのスモークテスト
-│       └── dist/               build成果物（生成物）
-└── examples/
-    └── cfe-jp/
-        ├── package.json        サンプルプロジェクト定義
-        ├── tsconfig.json
-        ├── vitest.config.ts
-        ├── README.md
-        └── tests/
-            └── cfe.test.ts     サンプルシナリオ
+# 依存をインストール
+pnpm install
+
+# OPENAI_API_KEY を設定
+cp .env.example .env
+# .env の OPENAI_API_KEY を実際のキーに置き換える
+
+# テストを実行
+pnpm test
 ```
 
-## 役割分担
+> Note:
+> `npx @uzulla/voreux init my-e2e` は、package がまだ npm に publish されていない段階では 404 で失敗することがあります。
+> その場合は local path install か、repo からの別の bootstrap 手順を使ってください。
 
-### `packages/voreux`
-
-Voreux 本体です。npm 公開対象はこちらです。
-
-この package は、Stagehand ベースの E2E シナリオを組み立てるための共通機能を提供します。
-
-現時点では主に以下を持っています。
-
-- `defineScenarioSuite()` によるシナリオ定義
-- `ScenarioStep` / `ScenarioSuiteOptions` 型エクスポート
-- Stagehand の初期化/終了
-- self-heal
-- スクリーンショット撮影
-- ビジュアル差分検知
-- 録画処理
-- observe/act の補助
-
-### 公開されている型
-
-`voreux` は関数だけでなく、以下の型も public API として export しています。
-
-- `ScenarioStep`
-- `ScenarioSuiteOptions`
-
-TypeScript では、これらを使ってシナリオ定義を型安全に書けます。
+## 最初のテストを書く
 
 ```ts
-import { defineScenarioSuite } from "voreux";
-import type { ScenarioStep, ScenarioSuiteOptions } from "voreux";
+import { defineScenarioSuite } from "@uzulla/voreux";
 
-const steps: ScenarioStep[] = [
+const steps = [
   {
-    name: "Navigate",
+    name: "load page",
     selfHeal: false,
     run: async (ctx) => {
       await ctx.page.goto("https://example.com/");
@@ -94,46 +55,34 @@ const steps: ScenarioStep[] = [
   },
 ];
 
-const suite: ScenarioSuiteOptions = {
+defineScenarioSuite({
   suiteName: "example",
   originUrl: "https://example.com/",
   steps,
-};
-
-defineScenarioSuite(suite);
+});
 ```
 
-### `examples/cfe-jp`
+## 設定
 
-Voreux を利用する **サンプルテストプロジェクト** です。
+### 環境変数
 
-このサンプルは framework 内部を相対 import せず、通常利用者に近い形で:
+| 変数 | 既定値 | 説明 |
+|---|---|---|
+| `OPENAI_API_KEY` | **必須** | OpenAI API キー |
+| `SELF_HEAL` | `0` | `1` で自己修復を有効化 |
+| `STAGEHAND_MODEL` | `openai/gpt-4o` | 使用するモデル |
+| `E2E_HEADLESS` | `false` | `1` でヘッドレス実行 |
 
-```ts
-import { defineScenarioSuite } from "voreux";
-```
+---
 
-として使います。
+## この repo について（開発者向け）
 
-ただし実体は npm レジストリではなく workspace 経由で解決されます。
+このリポジトリは、**フレームワーク本体** と **そのフレームワークを利用するサンプルテストプロジェクト** を同じ repo 内で開発できるように、`pnpm workspace` 構成にしています。
 
-## セットアップ
+- `packages/voreux` に Voreux 本体を置く
+- `examples/cfe-jp` にサンプルプロジェクトを置く
 
-**推奨環境**
-
-- Node.js >= 22.x
-- pnpm >= 10.x
-- Windows ユーザーは WSL2 が必要です（native PowerShell / cmd は現在サポート対象外）
-
-この repo は `pnpm workspace` 前提で構成しているため、Node.js / pnpm のバージョン差異があると再現性が崩れる可能性があります。
-必要に応じて以下で確認してください。
-
-```bash
-node --version
-pnpm --version
-```
-
-この repo 内で開発・検証する場合は、workspace ルートでセットアップします。
+この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
 
 ```bash
 pnpm install
@@ -142,77 +91,56 @@ cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 # examples/cfe-jp/.env に OPENAI_API_KEY を設定
 ```
 
-`.env` はサンプルプロジェクト側（`examples/cfe-jp/.env`）に置きます。
-ルートの `.env` は不要です。
-ローカル用の `.env` は `examples/cfe-jp/.gitignore` で除外します。
-また、sample 実行時の `.cache` / `screenshots` / `recordings` / `baselines` も
-repo 直下ではなく `examples/cfe-jp/` 配下へ出るようにしています。
+`.env` は `examples/cfe-jp/.env` に置き、repo ルートには置きません。
 
-## 実行方法
+## ディレクトリ構造
 
-### サンプルを実行
+```text
+.
+├── packages/
+│   └── voreux/          Voreux 本体（npm 公開対象）
+│       ├── src/
+│       │   ├── index.ts    公開 API
+│       │   ├── scenario.ts  describe/test の共通ライフサイクル
+│       │   ├── stagehand.ts Stagehand 初期化/終了
+│       │   ├── context.ts   TestContext と共通ユーティリティ
+│       │   ├── self-heal.ts self-heal 処理
+│       │   ├── screenshot.ts スクリーンショット/比較
+│       │   ├── recording.ts  録画処理
+│       │   └── highlight.ts observe/target ハイライト
+│       └── dist/           build 成果物
+└── examples/
+    └── cfe-jp/           サンプルテストプロジェクト
+        └── tests/
+            └── cfe.test.ts サンプルシナリオ
+```
+
+## 公開されている型・関数
+
+```ts
+import { defineScenarioSuite } from "@uzulla/voreux";
+import type { ScenarioStep, ScenarioSuiteOptions } from "@uzulla/voreux";
+```
+
+## 実行方法（開発時）
 
 ```bash
+# サンプルを実行
 pnpm e2e
-```
 
-これは workspace ルートから `examples/cfe-jp` の E2E を実行します。
-`examples/cfe-jp/.env` に `OPENAI_API_KEY` が入っていれば、そのまま通ります。
-
-### self-heal 付きで実行
-
-```bash
+# self-heal 付きで実行
 pnpm e2e:self-heal
-```
 
-### workspace 全体を build
-
-```bash
+# workspace 全体を build
 pnpm -r build
-```
 
-### Voreux パッケージだけ test
+# Voreux パッケージだけ test
+pnpm --filter @uzulla/voreux test
 
-```bash
-pnpm --filter voreux test
-```
-
-### サンプルだけ直接実行
-
-```bash
+# サンプルだけ直接実行
 pnpm --filter @voreux/example-cfe-jp e2e
 ```
 
-## サンプルはここ
+## ライセンス
 
-サンプルシナリオはここにあります。
-
-- `examples/cfe-jp/tests/cfe.test.ts`
-
-まずはこのファイルを見れば、Voreux をどう使うかが分かるようにしています。
-
-より詳しいシナリオ作成ガイド:
-- `docs/how-to-write-e2e-scenarios.md`
-
-## 利用イメージ
-
-```ts
-import { defineScenarioSuite } from "voreux";
-```
-
-この repo では、その最終利用形に近い形を保ちながら、publish 前でも workspace で開発できるようにしています。
-
-## 環境変数
-
-- `OPENAI_API_KEY`
-  - 必須
-- `SELF_HEAL=1`
-  - self-heal を有効化
-- `STAGEHAND_MODEL`
-  - 既定: `openai/gpt-4o`
-- `E2E_HEADLESS`
-  - `1` / `true` で headless 実行
-- `E2E_NAV_TIMEOUT_MS`
-  - 遷移待機上限（ms）
-- `E2E_VISUAL_DIFF_THRESHOLD`
-  - 画像差分 FAIL 閾値（例: `0.1`）
+MIT — `packages/voreux/LICENSE` を参照
