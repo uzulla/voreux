@@ -141,6 +141,10 @@ pnpm --filter @uzulla/voreux test
 pnpm --filter @voreux/example-cfe-jp e2e
 ```
 
+## npm 公開について
+
+npm への公開手順は `README_PUBLISH.md` を参照してください。
+
 ## ライセンス
 
 MIT — `packages/voreux/LICENSE` を参照
