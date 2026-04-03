@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@uzulla/voreux": "workspace:*",
-    "zod": "^3.25.76"
+    "zod": "^4.0.16"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

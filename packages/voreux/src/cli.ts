@@ -50,7 +50,7 @@ const INIT_TEMPLATE_FILES: Record<string, string> = {
       },
       dependencies: {
         "@uzulla/voreux": `^${PKG_VERSION}`,
-        zod: "^3.25.76",
+        zod: "^4.0.16",
       },
       devDependencies: {
         "@types/node": "^25.2.1",
