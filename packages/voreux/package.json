@@ -1,6 +1,6 @@
 {
-  "name": "voreux",
-  "version": "0.1.0",
+  "name": "@uzulla/voreux",
+  "version": "0.1.1",
   "description": "Voreux: Stagehand + Vitest based E2E testing framework",
   "type": "module",
   "main": "./dist/index.js",
