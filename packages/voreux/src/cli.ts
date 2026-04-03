@@ -68,11 +68,7 @@ const INIT_TEMPLATE_FILES: Record<string, string> = {
 export default defineConfig({
   test: {
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    singleFork: true,
   },
 });
 `,
