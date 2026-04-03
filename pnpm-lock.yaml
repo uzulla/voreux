@@ -14,7 +14,7 @@ importers:
 
   examples/cfe-jp:
     dependencies:
-      voreux:
+      '@uzulla/voreux':
         specifier: workspace:*
         version: link:../../packages/voreux
       zod:

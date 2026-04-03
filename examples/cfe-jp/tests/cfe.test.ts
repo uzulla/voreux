@@ -1,5 +1,6 @@
+import type { TestContext } from "@uzulla/voreux";
+import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
-import { defineScenarioSuite } from "voreux";
 import { z } from "zod";
 
 const ORIGIN_URL = "https://cfe.jp/";
@@ -32,7 +33,7 @@ defineScenarioSuite({
     {
       name: "Navigate to page",
       selfHeal: false,
-      run: async (ctx) => {
+      run: async (ctx: TestContext) => {
         await ctx.page.goto(ORIGIN_URL);
         await ctx.page.waitForLoadState("networkidle");
         await ctx.screenshot("01-page-loaded");
@@ -40,7 +41,7 @@ defineScenarioSuite({
     },
     {
       name: "Extract profile",
-      run: async (ctx) => {
+      run: async (ctx: TestContext) => {
         const profile = await ctx.stagehand.extract(
           "Extract the person's name, their job title or description, and a list of their SNS/social media link labels",
           profileSchema,
@@ -52,7 +53,7 @@ defineScenarioSuite({
     },
     {
       name: "Extract books",
-      run: async (ctx) => {
+      run: async (ctx: TestContext) => {
         const books = await ctx.stagehand.extract(
           "Extract information about the books (著書) listed on this page, including the title and a short description for each book.",
           booksSchema,
@@ -63,7 +64,7 @@ defineScenarioSuite({
     },
     {
       name: "Observe links",
-      run: async (ctx) => {
+      run: async (ctx: TestContext) => {
         const actions = await ctx.stagehand.observe(
           "Find all clickable links on this page",
         );
@@ -73,7 +74,7 @@ defineScenarioSuite({
     },
     {
       name: "Click GitHub link",
-      run: async (ctx) => {
+      run: async (ctx: TestContext) => {
         await ctx.assertNoVisualRegression("05a-before-click");
         await ctx.highlightTarget("Find the GitHub link", "05a-click-target");
 
