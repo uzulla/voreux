@@ -1,6 +1,6 @@
 # Voreux Sample: cfe-jp
 
-このディレクトリは Voreux のサンプルテストプロジェクトです。
+このディレクトリは Voreux（`@uzulla/voreux`）のサンプルテストプロジェクトです。
 
 ## セットアップ
 

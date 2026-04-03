@@ -2,6 +2,10 @@
   "name": "@uzulla/voreux",
   "version": "0.1.1",
   "description": "Voreux: Stagehand + Vitest based E2E testing framework",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,8 +19,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
