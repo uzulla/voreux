@@ -1,6 +1,12 @@
 import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
+import {
+  appendTextIntoMonacoAtCurrentCaret,
+  ensureMonacoIsVisible,
+  placeCaretNearSwaggerTitleLine,
+  readMonacoProbe,
+} from "./monaco-helpers.js";
 
 const ORIGIN_URL = "https://editor.swagger.io/";
 const APPENDED_TEXT = " Voreux";
@@ -20,10 +26,6 @@ async function dismissCookieBanner(page: any) {
   if (clicked) {
     await page.waitForTimeout(500);
   }
-}
-
-async function focusMonacoEditor(page: any) {
-  await page.waitForSelector(".monaco-editor", { timeout: 20000 });
 }
 
 async function listButtonTexts(page: any): Promise<string[]> {
@@ -47,18 +49,6 @@ async function clickButtonByText(page: any, candidates: string[]): Promise<boole
     }
     return false;
   }, candidates);
-}
-
-async function placeCaretNearTitleLine(page: any) {
-  // 現物確認で比較的安定して title 行付近へ入力が入った座標
-  const box = await page.evaluate(() => {
-    const el = document.querySelector(".monaco-editor") as HTMLElement | null;
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { x: r.x, y: r.y };
-  });
-  if (!box) throw new Error("Monaco editor not found");
-  await page.click(Math.round(box.x + 180), Math.round(box.y + 55));
 }
 
 async function getPageText(page: any) {
@@ -88,21 +78,36 @@ defineScenarioSuite({
       name: "Edit Monaco title with keyboard input",
       selfHeal: false,
       run: async (ctx: TestContext) => {
-        await focusMonacoEditor(ctx.page);
-        await placeCaretNearTitleLine(ctx.page);
+        /**
+         * This step is intentionally treated as a special case and documented in
+         * more detail than a normal sample step.
+         *
+         * Why:
+         * - Monaco is not a normal input control.
+         * - We want this sample to teach future readers how to approach
+         *   code-editor-like widgets in Voreux / Stagehand.
+         *
+         * What we do here:
+         * 1. Wait until Monaco is visible.
+         * 2. Click a known-good coordinate near the title line.
+         * 3. Type additional text using Stagehand's page.type().
+         * 4. Assert against both the editor rendering (`.view-lines`) and the
+         *    visible page text so the sample stays useful as documentation.
+         */
+        await ensureMonacoIsVisible(ctx.page);
+        await placeCaretNearSwaggerTitleLine(ctx.page);
         await ctx.screenshot("02a-before-monaco-edit");
 
-        await ctx.page.type(APPENDED_TEXT, { delay: 50 });
+        await appendTextIntoMonacoAtCurrentCaret(ctx.page, APPENDED_TEXT);
         await ctx.page.waitForTimeout(1500);
         await ctx.screenshot("02b-after-monaco-edit");
 
-        const probe = await ctx.page.evaluate(() => ({
-          bodyHasVoreux: (document.body.innerText || "").includes("Voreux"),
-          viewText: (document.querySelector(".view-lines")?.textContent || "").slice(0, 500),
-        }));
+        const probe = await readMonacoProbe(ctx.page);
 
+        // The exact insertion point may vary a little, but the editor should
+        // still visibly contain the original title text plus our inserted token.
         expect(probe.viewText).toContain("Streetlights");
-        expect(probe.bodyHasVoreux).toBe(true);
+        expect(probe.bodyHasInsertedText).toBe(true);
       },
     },
     {
