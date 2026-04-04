@@ -29,6 +29,8 @@ npm pkg get name
 
 # 3. version は packages/voreux/package.json を確認
 npm pkg get version
+# → "0.1.1" のように JSON 文字列で返る
+# script で素の値が必要なら: npm pkg get version | tr -d '"'
 
 # 4. workspace ルートで lint / check / build
 cd ../..
