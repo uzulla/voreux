@@ -11,22 +11,32 @@
 
 ## 公開前のチェック
 
+まず、publish 対象ディレクトリへ移動します。
+
+```bash
+cd packages/voreux
+```
+
+そのうえで、以下を確認します。
+
 ```bash
 # 1. npm ログイン確認
 npm whoami
 
-# 2. 公開対象 package path 確認
-cat packages/voreux/package.json | jq '.name'  # → "@uzulla/voreux"
+# 2. 公開対象 package であることを確認
+npm pkg get name
+# → "@uzulla/voreux"
 
-# 3. version 確認（前回から上げておくこと）
-cat packages/voreux/package.json | jq '.version'
+# 3. version は packages/voreux/package.json を確認
+npm pkg get version
 
-# 4. lint / check / build
+# 4. workspace ルートで lint / check / build
+cd ../..
 pnpm lint
 pnpm check
 pnpm -r build
 
-# 5. dry-run で確認
+# 5. packages/voreux に戻って dry-run
 cd packages/voreux
 npm pack --dry-run
 # → tarball に含まれるファイルを確認
@@ -44,7 +54,7 @@ npm publish --access public
 | 失敗 | 原因 | 対策 |
 |---|---|---|
 | `npm notice Skipping all unused files` | `files` フィールドが不適切 | `package.json` の `files` を確認（少なくとも `dist` は必要） |
-| `Version not changed` | version を上げていない | `packages/voreux/package.json` の version を上げて commit |
+| `Version not changed` | version を上げていない | `packages/voreux/package.json` の version を確認し、必要なら上げて commit |
 | `npm whoami` fails / `ENEEDAUTH` | npm 未ログイン | `npm login` で再ログイン |
 | `E404` scope not found | scope (`@uzulla`) の権限がない | `npm access list packages $(npm whoami)` などで権限を確認し、必要なら `npm publish --access public` を使う |
 | 想定したファイルが tarball に入らない | `files` や package 構成の認識ずれ | root に存在する `README.md` と `LICENSE` は `files` の有無にかかわらず自動で含まれるため、実際に何が入るかは `npm pack --dry-run` で確認する |
@@ -67,4 +77,4 @@ pnpm add @uzulla/voreux
 
 - workspace 構成のため、`npm publish` は `packages/voreux` ディレクトリから行う
 - repo ルートの `package.json` は private workspace 用（公開不可）
-- version は Semantic Versioning に従い更新すること
+- version は `packages/voreux/package.json` を確認し、Semantic Versioning に従って更新すること

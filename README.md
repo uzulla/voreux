@@ -37,8 +37,8 @@ pnpm test
 ```
 
 > Note:
-> `npx @uzulla/voreux init my-e2e` は、package がまだ npm に publish されていない段階では 404 で失敗することがあります。
-> その場合は local path install か、repo からの別の bootstrap 手順を使ってください。
+> 通常の公開版では `npx @uzulla/voreux init my-e2e` をそのまま使えます。
+> まだ publish していないローカル変更や未公開ブランチを試す場合は、repo からの別手順で検証してください。
 
 ## 最初のテストを書く
 
