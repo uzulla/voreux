@@ -10,8 +10,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@uzulla/voreux": "workspace:*",
-    "zod": "^4.0.0"
+    "@uzulla/voreux": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

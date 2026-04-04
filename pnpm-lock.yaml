@@ -42,9 +42,6 @@ importers:
       '@uzulla/voreux':
         specifier: workspace:*
         version: link:../../packages/voreux
-      zod:
-        specifier: ^4.0.0
-        version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: ^25.2.1

@@ -56,7 +56,13 @@ export async function getMonacoBox(
  */
 export async function placeCaretNearSwaggerTitleLine(page: any): Promise<void> {
   const box = await getMonacoBox(page);
-  await page.click(Math.round(box.x + 180), Math.round(box.y + 55));
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+
+  const clickX = clamp(box.x + 180, box.x, box.x + box.width - 1);
+  const clickY = clamp(box.y + 55, box.y, box.y + box.height - 1);
+
+  await page.click(Math.round(clickX), Math.round(clickY));
 }
 
 /**
@@ -80,15 +86,25 @@ export async function appendTextIntoMonacoAtCurrentCaret(
  * change?" signal, while `.view-lines` is Monaco-specific and tells us whether
  * the editor rendering itself changed.
  */
-export async function readMonacoProbe(page: any): Promise<{
+export async function readMonacoProbe(
+  page: any,
+  expectedText: string,
+  containerSelector = ".view-lines",
+): Promise<{
   bodyHasInsertedText: boolean;
   viewText: string;
 }> {
-  return page.evaluate(() => ({
-    bodyHasInsertedText: (document.body.innerText || "").includes("Voreux"),
-    viewText: (document.querySelector(".view-lines")?.textContent || "").slice(
-      0,
-      500,
-    ),
-  }));
+  return page.evaluate(
+    (args: { selector: string; text: string }) => {
+      const container = document.querySelector(args.selector);
+      const containerText = (container?.textContent || "").slice(0, 500);
+      return {
+        bodyHasInsertedText: (document.body.innerText || "").includes(
+          args.text,
+        ),
+        viewText: containerText,
+      };
+    },
+    { selector: containerSelector, text: expectedText },
+  );
 }
