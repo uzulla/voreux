@@ -81,14 +81,17 @@ defineScenarioSuite({
 
 - `packages/voreux` に Voreux 本体を置く
 - `examples/cfe-jp` にサンプルプロジェクトを置く
+- `examples/swagger-editor` に Monaco編集 + UI反映のサンプルを置く
 
 この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
 
 ```bash
 pnpm install
 pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
+pnpm --filter @voreux/example-swagger-editor exec playwright install chromium
 cp examples/cfe-jp/.env.example examples/cfe-jp/.env
-# examples/cfe-jp/.env に OPENAI_API_KEY を設定
+cp examples/swagger-editor/.env.example examples/swagger-editor/.env
+# 各 .env に OPENAI_API_KEY を設定
 ```
 
 `.env` は `examples/cfe-jp/.env` に置き、repo ルートには置きません。
@@ -110,9 +113,12 @@ cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 │       │   └── highlight.ts observe/target ハイライト
 │       └── dist/           build 成果物
 └── examples/
-    └── cfe-jp/           サンプルテストプロジェクト
+    ├── cfe-jp/           サンプルテストプロジェクト
+    │   └── tests/
+    │       └── cfe.test.ts サンプルシナリオ
+    └── swagger-editor/   Monaco編集 + preview操作のサンプル
         └── tests/
-            └── cfe.test.ts サンプルシナリオ
+            └── swagger-editor.test.ts
 ```
 
 ## 公開されている型・関数
@@ -137,8 +143,11 @@ pnpm -r build
 # Voreux パッケージだけ test
 pnpm --filter @uzulla/voreux test
 
-# サンプルだけ直接実行
+# cfe-jp サンプルだけ直接実行
 pnpm --filter @voreux/example-cfe-jp e2e
+
+# swagger-editor サンプルだけ直接実行
+pnpm --filter @voreux/example-swagger-editor e2e
 ```
 
 ## npm 公開について
