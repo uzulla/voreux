@@ -36,7 +36,10 @@ async function listButtonTexts(page: any): Promise<string[]> {
   );
 }
 
-async function clickButtonByText(page: any, candidates: string[]): Promise<boolean> {
+async function clickButtonByText(
+  page: any,
+  candidates: string[],
+): Promise<boolean> {
   return page.evaluate((texts: string[]) => {
     const buttons = Array.from(document.querySelectorAll("button"));
     const target = buttons.find((button) => {
