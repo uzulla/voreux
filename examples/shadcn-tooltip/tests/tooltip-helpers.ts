@@ -17,15 +17,19 @@ export async function pollUntil(
 }
 
 /**
- * docs ページ内には Tooltip サンプルが複数あるため、最初の trigger を対象に固定する。
+ * docs ページには tooltip サンプルが複数あるため、最上部 preview 内の
+ * `Hover` ボタンを対象に固定する。
  */
 export async function getTooltipTriggerBox(
   page: any,
 ): Promise<{ x: number; y: number; width: number; height: number }> {
   const box = await page.evaluate(() => {
-    const trigger = document.querySelectorAll(
-      '[data-slot="tooltip-trigger"]',
-    )[0] as HTMLElement | undefined;
+    const preview = document.querySelector(
+      '[data-slot="preview"]',
+    ) as HTMLElement | null;
+    const trigger = Array.from(preview?.querySelectorAll("button") ?? []).find(
+      (el) => (el.textContent || "").trim() === "Hover",
+    ) as HTMLElement | undefined;
     if (!trigger) return null;
     const r = trigger.getBoundingClientRect();
     return { x: r.x, y: r.y, width: r.width, height: r.height };
@@ -41,9 +45,12 @@ export async function hoverTooltipTrigger(page: any): Promise<void> {
     Math.round(box.y + box.height / 2),
   );
   await page.evaluate(() => {
-    const trigger = document.querySelectorAll(
-      '[data-slot="tooltip-trigger"]',
-    )[0] as HTMLElement | undefined;
+    const preview = document.querySelector(
+      '[data-slot="preview"]',
+    ) as HTMLElement | null;
+    const trigger = Array.from(preview?.querySelectorAll("button") ?? []).find(
+      (el) => (el.textContent || "").trim() === "Hover",
+    ) as HTMLElement | undefined;
     if (!trigger) return;
     for (const type of [
       "pointerenter",
@@ -63,9 +70,12 @@ export async function movePointerAway(page: any): Promise<void> {
   await page.hover(10, 10);
   await page.click(10, 10);
   await page.evaluate(() => {
-    const trigger = document.querySelectorAll(
-      '[data-slot="tooltip-trigger"]',
-    )[0] as HTMLElement | undefined;
+    const preview = document.querySelector(
+      '[data-slot="preview"]',
+    ) as HTMLElement | null;
+    const trigger = Array.from(preview?.querySelectorAll("button") ?? []).find(
+      (el) => (el.textContent || "").trim() === "Hover",
+    ) as HTMLElement | undefined;
     if (!trigger) return;
     for (const type of [
       "pointerleave",
@@ -116,10 +126,15 @@ export async function getTooltipState(page: any): Promise<{
   text: string;
 }> {
   const result = await page.evaluate(() => {
-    const content = document.querySelectorAll(
-      '[data-slot="tooltip-content"]',
-    )[0] as HTMLElement | undefined;
+    const content = Array.from(
+      document.querySelectorAll('[data-slot="tooltip-content"]'),
+    ).find((el) => {
+      const text = (el.textContent || "").trim();
+      return text.includes("Add to library");
+    }) as HTMLElement | undefined;
+
     if (!content) return { visible: false, text: "" };
+
     const cs = getComputedStyle(content);
     const rect = content.getBoundingClientRect();
     const visible =
@@ -128,6 +143,7 @@ export async function getTooltipState(page: any): Promise<{
       cs.opacity !== "0" &&
       rect.width > 0 &&
       rect.height > 0;
+
     return {
       visible,
       text: (content.textContent || "").trim(),
@@ -145,12 +161,18 @@ export async function screenshotTooltipRegion(
   name: string,
 ): Promise<string> {
   const box = await page.evaluate(() => {
-    const trigger = document.querySelectorAll(
-      '[data-slot="tooltip-trigger"]',
-    )[0] as HTMLElement | undefined;
-    const content = document.querySelectorAll(
-      '[data-slot="tooltip-content"]',
-    )[0] as HTMLElement | undefined;
+    const preview = document.querySelector(
+      '[data-slot="preview"]',
+    ) as HTMLElement | null;
+    const trigger = Array.from(preview?.querySelectorAll("button") ?? []).find(
+      (el) => (el.textContent || "").trim() === "Hover",
+    ) as HTMLElement | undefined;
+    const content = Array.from(
+      document.querySelectorAll('[data-slot="tooltip-content"]'),
+    ).find((el) => {
+      const text = (el.textContent || "").trim();
+      return text.includes("Add to library");
+    }) as HTMLElement | undefined;
     if (!trigger) return null;
 
     const triggerRect = trigger.getBoundingClientRect();

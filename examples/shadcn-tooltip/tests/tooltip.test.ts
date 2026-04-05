@@ -50,6 +50,9 @@ defineScenarioSuite({
         expect(visible.visible).toBe(true);
         expect(visible.text.length).toBeGreaterThan(0);
 
+        // 録画を人間が見た時にも tooltip 表示が分かるよう、
+        // visible 状態を少し維持してから screenshot を撮る。
+        await ctx.page.waitForTimeout(1200);
         const visibleShot = await screenshotTooltipRegion(
           ctx.page,
           "02-tooltip-visible",
@@ -72,6 +75,7 @@ defineScenarioSuite({
 
         await movePointerAway(ctx.page);
         await waitForTooltipHidden(ctx.page);
+        await ctx.page.waitForTimeout(600);
 
         const hidden = await getTooltipState(ctx.page);
         expect(hidden.visible).toBe(false);
