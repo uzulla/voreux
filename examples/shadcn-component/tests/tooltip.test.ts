@@ -10,7 +10,7 @@ import {
   waitForTooltipHidden,
   waitForTooltipVisible,
 } from "./tooltip-helpers.js";
-import { compareWithBaseline, saveBaseline } from "./visual-compare.js";
+import { compareWithBaseline, saveBaseline } from "./tooltip-visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/radix/tooltip";
 const BASELINES_DIR = fileURLToPath(new URL("../baselines/", import.meta.url));

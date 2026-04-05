@@ -12,8 +12,6 @@
     "e2e:swagger-editor:self-heal": "pnpm --filter @voreux/example-swagger-editor e2e:self-heal",
     "e2e:shadcn-component": "pnpm --filter @voreux/example-shadcn-component e2e",
     "e2e:shadcn-component:self-heal": "pnpm --filter @voreux/example-shadcn-component e2e:self-heal",
-    "e2e:shadcn-tooltip": "pnpm --filter @voreux/example-shadcn-tooltip e2e",
-    "e2e:shadcn-tooltip:self-heal": "pnpm --filter @voreux/example-shadcn-tooltip e2e:self-heal",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
