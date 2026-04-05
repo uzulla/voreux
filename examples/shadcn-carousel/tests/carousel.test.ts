@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
@@ -13,7 +14,7 @@ import {
 import { compareWithBaseline, saveBaseline } from "./visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/base/carousel";
-const BASELINES_DIR = new URL("../baselines/", import.meta.url).pathname;
+const BASELINES_DIR = fileURLToPath(new URL("../baselines/", import.meta.url));
 
 async function getPageText(page: any): Promise<string> {
   return page.evaluate(() => document.body.innerText ?? "");

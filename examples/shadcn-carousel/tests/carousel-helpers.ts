@@ -1,4 +1,6 @@
-const SHOTS_DIR = new URL("../screenshots/", import.meta.url).pathname;
+import { fileURLToPath } from "node:url";
+
+const SHOTS_DIR = fileURLToPath(new URL("../screenshots/", import.meta.url));
 
 export async function pollUntil(
   page: any,
