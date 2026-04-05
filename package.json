@@ -8,6 +8,8 @@
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @voreux/example-cfe-jp e2e",
     "e2e:self-heal": "pnpm --filter @voreux/example-cfe-jp e2e:self-heal",
+    "e2e:swagger-editor": "pnpm --filter @voreux/example-swagger-editor e2e",
+    "e2e:swagger-editor:self-heal": "pnpm --filter @voreux/example-swagger-editor e2e:self-heal",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
