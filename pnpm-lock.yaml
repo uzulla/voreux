@@ -64,6 +64,12 @@ importers:
       '@uzulla/voreux':
         specifier: workspace:*
         version: link:../../packages/voreux
+      pixelmatch:
+        specifier: ^7.1.0
+        version: 7.1.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
     devDependencies:
       '@types/node':
         specifier: ^25.2.1

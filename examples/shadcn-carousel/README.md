@@ -18,7 +18,7 @@
 - carousel の移動確認は transform よりも、**viewport 中央に最も近い item が何か** を見る方が分かりやすかった
 - 現物確認の結果、docs 上の basic carousel は **loop しない**。そのためこの sample では「末尾で止まること」を検証している
 - この sample では「DOM が変わったか」だけでなく、**前/次ボタンの disabled / opacity / pointer-events の変化** のような、人間に見える状態変化を重要視している
-- carousel 領域だけを clip screenshot する helper を入れており、将来的に軽量な部分 VRT を追加しやすい構造にしている
+- carousel 領域だけを clip screenshot する helper を入れており、軽量な部分 VRT の例を sample に含めている
 - sample 専用 helper は `tests/carousel-helpers.ts` に切り出し、テスト本体では「何を検証したいか」が読めるようにしている
 
 ## 現在のシナリオ
@@ -35,6 +35,7 @@ examples/shadcn-carousel/
   README.md
   tests/
     carousel-helpers.ts   carousel 向けの sample 専用 helper 群
+    visual-compare.ts     部分 VRT 用の最小比較 helper
     carousel.test.ts      教材として読む本体シナリオ
 ```
 
@@ -50,5 +51,6 @@ pnpm --filter @voreux/example-shadcn-carousel e2e
 「どのセルが見えているか」は centered item と部分 screenshot、
 「もう進めないこと」は nav button の視覚状態で確認する方針にしています。
 
-また、部分 screenshot はまだ baseline 比較まではしていませんが、
-**通常の軽量 VRT を将来追加しやすい導線** として先に入れています。
+また、この sample には **一箇所だけ実際の部分 VRT 比較** を入れています。
+初期状態の carousel clip を baseline として保存し、`Next` 後の clip と比較して
+差分率が十分にあることを確認します。

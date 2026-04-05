@@ -10,7 +10,9 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@uzulla/voreux": "workspace:*"
+    "@uzulla/voreux": "workspace:*",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

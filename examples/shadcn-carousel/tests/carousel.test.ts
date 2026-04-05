@@ -10,8 +10,10 @@ import {
   screenshotCarouselClip,
   waitForCenteredItem,
 } from "./carousel-helpers.js";
+import { compareWithBaseline, saveBaseline } from "./visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/base/carousel";
+const BASELINES_DIR = new URL("../baselines/", import.meta.url).pathname;
 
 async function getPageText(page: any): Promise<string> {
   return page.evaluate(() => document.body.innerText ?? "");
@@ -45,7 +47,10 @@ defineScenarioSuite({
       run: async (ctx: TestContext) => {
         const first = await getCenteredItem(ctx.page);
         expect(first.text).toBe("1");
-        await screenshotCarouselClip(ctx.page, "02-initial");
+        const initialShot = await screenshotCarouselClip(
+          ctx.page,
+          "02-initial",
+        );
 
         await clickCarouselButton(ctx.page, "carousel-next");
         await waitForCenteredItem(ctx.page, "2");
@@ -54,12 +59,23 @@ defineScenarioSuite({
           "03-after-next-to-2",
         );
 
-        // 部分 screenshot を残しておくことで、将来的に carousel 領域だけの
-        // 軽量な VRT を追加しやすくしている。
+        // 実 VRT 例:
+        // 初期状態の clip screenshot を baseline として保存し、
+        // 1 回進んだ後の画像との差分率が十分にあることを確認する。
         //
-        // 今回はまず centered item の変化を主 assertion にしているが、
-        // "どのセルが見えているか" を画面上で確認したい時の材料としても使える。
-        expect(secondShot).toContain("03-after-next-to-2");
+        // これにより「DOM 上で current item が変わった」だけでなく、
+        // 人間が見て分かるレベルで見た目が変化していることを検証できる。
+        saveBaseline(initialShot, "carousel-initial", BASELINES_DIR);
+        const diff = compareWithBaseline(secondShot, "carousel-initial", {
+          baselinesDir: BASELINES_DIR,
+          diffPath: `${BASELINES_DIR}/carousel-initial-diff.png`,
+        });
+        expect(diff.skipped).toBe(false);
+        // carousel は一度に大きく全体が変わるわけではなく、
+        // 部分的に横移動するだけなので差分率は小さめになる。
+        // 実観察では 0.2% 前後でも人間には十分見える変化だったため、
+        // ここでは 0.1% 超を閾値にする。
+        expect(diff.mismatchRatio).toBeGreaterThan(0.001);
 
         await clickCarouselButton(ctx.page, "carousel-next");
         await waitForCenteredItem(ctx.page, "3");
