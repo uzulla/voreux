@@ -1,0 +1,6 @@
+.env
+.cache/
+screenshots/
+recordings/
+baselines/
+node_modules/
