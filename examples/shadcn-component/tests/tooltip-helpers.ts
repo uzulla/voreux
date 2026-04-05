@@ -1,6 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SHOTS_DIR = fileURLToPath(new URL("../screenshots/", import.meta.url));
+const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
+  ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
+  : fileURLToPath(new URL("../screenshots/", import.meta.url));
+
+if (!fs.existsSync(SHOTS_DIR)) {
+  fs.mkdirSync(SHOTS_DIR, { recursive: true });
+}
 
 export async function pollUntil(
   page: any,
@@ -153,59 +161,24 @@ export async function getTooltipState(page: any): Promise<{
 }
 
 /**
- * trigger + tooltip 周辺だけを撮る。tooltip は portal される可能性があるため、
- * trigger 単体ではなく tooltip content を含めた union を clip にする。
+ * tooltip は hidden / visible で矩形サイズが変わるため、
+ * screenshot では union ではなく trigger 基準の固定 clip を使う。
+ * これにより hidden→visible 比較でも画像サイズを安定させられる。
  */
 export async function screenshotTooltipRegion(
   page: any,
   name: string,
 ): Promise<string> {
-  const box = await page.evaluate(() => {
-    const preview = document.querySelector(
-      '[data-slot="preview"]',
-    ) as HTMLElement | null;
-    const trigger = Array.from(preview?.querySelectorAll("button") ?? []).find(
-      (el) => (el.textContent || "").trim() === "Hover",
-    ) as HTMLElement | undefined;
-    const content = Array.from(
-      document.querySelectorAll('[data-slot="tooltip-content"]'),
-    ).find((el) => {
-      const text = (el.textContent || "").trim();
-      return text.includes("Add to library");
-    }) as HTMLElement | undefined;
-    if (!trigger) return null;
+  const box = await getTooltipTriggerBox(page);
 
-    const triggerRect = trigger.getBoundingClientRect();
-    const rects = [triggerRect];
-    if (content) {
-      const contentRect = content.getBoundingClientRect();
-      if (contentRect.width > 0 && contentRect.height > 0) {
-        rects.push(contentRect);
-      }
-    }
-
-    const left = Math.min(...rects.map((r) => r.left));
-    const top = Math.min(...rects.map((r) => r.top));
-    const right = Math.max(...rects.map((r) => r.right));
-    const bottom = Math.max(...rects.map((r) => r.bottom));
-    return {
-      x: left,
-      y: top,
-      width: right - left,
-      height: bottom - top,
-    };
-  });
-
-  if (!box) throw new Error("tooltip screenshot target not found");
-
-  const filePath = `${SHOTS_DIR}${name}.png`;
+  const filePath = path.join(SHOTS_DIR, `${name}.png`);
   await page.screenshot({
     path: filePath,
     clip: {
-      x: Math.max(0, Math.round(box.x - 24)),
-      y: Math.max(0, Math.round(box.y - 24)),
-      width: Math.round(box.width + 48),
-      height: Math.round(box.height + 48),
+      x: Math.max(0, Math.round(box.x - 48)),
+      y: Math.max(0, Math.round(box.y - 72)),
+      width: Math.round(box.width + 96),
+      height: Math.round(box.height + 128),
     },
   });
   return filePath;

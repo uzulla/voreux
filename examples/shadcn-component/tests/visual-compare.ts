@@ -3,6 +3,8 @@ import path from "node:path";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
+const PIXELMATCH_THRESHOLD = 0.1;
+
 export function saveBaseline(
   screenshotPath: string,
   baselineName: string,
@@ -31,7 +33,9 @@ export function compareWithBaseline(
   const img2 = PNG.sync.read(fs.readFileSync(baselinePath));
 
   if (img1.width !== img2.width || img1.height !== img2.height) {
-    return { mismatchRatio: 1, diffSaved: false, skipped: false };
+    throw new Error(
+      `Image size mismatch: current=${img1.width}x${img1.height}, baseline=${img2.width}x${img2.height}`,
+    );
   }
 
   const { width, height } = img1;
@@ -43,11 +47,15 @@ export function compareWithBaseline(
     width,
     height,
     {
-      threshold: 0.1,
+      threshold: PIXELMATCH_THRESHOLD,
     },
   );
 
   const mismatchRatio = numDiffPixels / (width * height);
+  const diffDir = path.dirname(opts.diffPath);
+  if (!fs.existsSync(diffDir)) {
+    fs.mkdirSync(diffDir, { recursive: true });
+  }
   fs.writeFileSync(opts.diffPath, PNG.sync.write(diff));
   return { mismatchRatio, diffSaved: true, skipped: false };
 }

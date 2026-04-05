@@ -1,3 +1,4 @@
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
@@ -13,7 +14,9 @@ import {
 import { compareWithBaseline, saveBaseline } from "./tooltip-visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/radix/tooltip";
-const BASELINES_DIR = fileURLToPath(new URL("../baselines/", import.meta.url));
+const BASELINES_DIR = process.env.E2E_BASELINES_DIR
+  ? path.resolve(process.cwd(), process.env.E2E_BASELINES_DIR)
+  : fileURLToPath(new URL("../baselines/", import.meta.url));
 
 defineScenarioSuite({
   suiteName: "shadcn-tooltip E2E",
@@ -70,6 +73,12 @@ defineScenarioSuite({
     {
       name: "pointer が離れると tooltip が消える",
       run: async (ctx: TestContext) => {
+        await ctx.page.goto(ORIGIN_URL);
+        await ctx.page.waitForSelector('[data-slot="preview"]', {
+          timeout: 30_000,
+        });
+        await ctx.page.waitForTimeout(3000);
+
         await hoverTooltipTrigger(ctx.page);
         await waitForTooltipVisible(ctx.page);
 

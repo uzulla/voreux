@@ -1,6 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SHOTS_DIR = fileURLToPath(new URL("../screenshots/", import.meta.url));
+const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
+  ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
+  : fileURLToPath(new URL("../screenshots/", import.meta.url));
+
+if (!fs.existsSync(SHOTS_DIR)) {
+  fs.mkdirSync(SHOTS_DIR, { recursive: true });
+}
 
 export async function pollUntil(
   page: any,
@@ -195,7 +203,7 @@ export async function screenshotCarouselClip(
   name: string,
 ): Promise<string> {
   const box = await getTargetCarouselBox(page);
-  const filePath = `${SHOTS_DIR}${name}.png`;
+  const filePath = path.join(SHOTS_DIR, `${name}.png`);
   await page.screenshot({
     path: filePath,
     clip: {
