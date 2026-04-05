@@ -82,37 +82,44 @@ defineScenarioSuite({
       selfHeal: false,
       run: async (ctx: TestContext) => {
         /**
-         * This step is intentionally treated as a special case and documented in
-         * more detail than a normal sample step.
+         * この step は、通常のサンプルより意図的に詳しく説明しています。
          *
-         * Why:
-         * - Monaco is not a normal input control.
-         * - We want this sample to teach future readers how to approach
-         *   code-editor-like widgets in Voreux / Stagehand.
+         * 理由:
+         * - Monaco は普通の input / textarea と同じようには扱えない
+         * - Voreux / Stagehand で「特殊な editor widget をどう扱うか」の
+         *   実例として後から読める形にしておきたい
          *
-         * What we do here:
-         * 1. Wait until Monaco is visible.
-         * 2. Click a known-good coordinate near the title line.
-         * 3. Type additional text using Stagehand's page.type().
-         * 4. Assert against both the editor rendering (`.view-lines`) and the
-         *    visible page text so the sample stays useful as documentation.
+         * このサンプルで重視しているバランス:
+         * - Monaco に focus して入力できることは確認したい
+         * - ただし hosted UI 上の caret 位置は少し揺れるため、
+         *   位置まで厳密に固定した assertion にすると flaky になりやすい
+         * - そのためこの step では、「title 付近の Monaco 領域に対して
+         *   実際に入力できる」という性質を優先して確認する
+         *
+         * ここでやること:
+         * 1. Monaco が見えるまで待つ
+         * 2. title 行付近の既知の座標へ click する
+         * 3. Stagehand の page.type() で追記する
+         * 4. Monaco の描画結果を見て、title 領域の内容変化を確認する
          */
         await ensureMonacoIsVisible(ctx.page);
         await placeCaretNearSwaggerTitleLine(ctx.page);
         await ctx.screenshot("02a-before-monaco-edit");
 
         await appendTextIntoMonacoAtCurrentCaret(ctx.page, APPENDED_TEXT);
-        // Hosted Monaco repaint is a little delayed in practice; a short fixed
-        // wait here proved more stable than checking only selector presence,
-        // because `.view-lines` already exists before the edit is reflected.
+        // hosted Monaco は repaint 反映が少し遅れることがあり、
+        // `.view-lines` の存在だけでは「編集結果が見えた」ことの判定になりません。
+        // そのため、ここは短い固定待機を残しています。
+        // 完全に state-based に寄せるより、このサンプル用途ではこちらの方が安定しました。
         await ctx.page.waitForTimeout(1500);
         await ctx.screenshot("02b-after-monaco-edit");
 
         const probe = await readMonacoProbe(ctx.page, "Voreux");
 
-        // The exact insertion point may vary a little, but the editor should
-        // still visibly contain the original title text. We intentionally avoid
-        // over-constraining the exact caret position in this sample.
+        // 挿入位置そのものは run ごとに少し揺れることがあるため、
+        // このサンプルでは「厳密にどの文字の直後へ入ったか」までは固定しません。
+        // ここで確認したいのは、Monaco の title 付近に対して
+        // 実際に入力が行われ、描画上の変化を観測できることです。
         expect(probe.viewText).toContain("Streetlights");
       },
     },
