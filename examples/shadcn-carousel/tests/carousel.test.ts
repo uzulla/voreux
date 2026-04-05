@@ -31,6 +31,14 @@ defineScenarioSuite({
         await ctx.page.waitForSelector('[data-slot="carousel"]', {
           timeout: 30_000,
         });
+        // NOTE:
+        // fixed wait は一般には推奨しない。通常は selector / state change /
+        // stable DOM signal を待つべきで、この書き方を sample の default として
+        // 真似してほしいわけではない。
+        //
+        // ここでは公開 docs サイト相手で hydration 完了の安定した signal が弱く、
+        // 実観察では deterministic wait だけだと再現性が落ちやすかったため、
+        // 例外的に fixed wait を残している。
         await ctx.page.waitForTimeout(3000);
         await ctx.screenshot("01-carousel-page-opened");
 
@@ -94,6 +102,9 @@ defineScenarioSuite({
         await ctx.page.waitForSelector('[data-slot="carousel"]', {
           timeout: 30_000,
         });
+        // NOTE: fixed wait は例外対応。通常は selector / state change /
+        // stable DOM signal を待つべきで、sample の default として真似してほしい書き方ではない。
+        // このページでは hydration 完了の安定 signal が弱く、再現性を優先して残している。
         await ctx.page.waitForTimeout(3000);
 
         const before = await getCenteredItem(ctx.page);
@@ -126,6 +137,9 @@ defineScenarioSuite({
         await ctx.page.waitForSelector('[data-slot="carousel"]', {
           timeout: 30_000,
         });
+        // NOTE: fixed wait は例外対応。通常は selector / state change /
+        // stable DOM signal を待つべきで、sample の default として真似してほしい書き方ではない。
+        // このページでは hydration 完了の安定 signal が弱く、再現性を優先して残している。
         await ctx.page.waitForTimeout(3000);
 
         const initialPrev = await getButtonVisualState(
