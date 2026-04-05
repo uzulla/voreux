@@ -225,9 +225,27 @@ async function setPetId(page: any, petId: string): Promise<void> {
 /**
  * Execute 後のレスポンスを待つ。
  *
- * 初期実装では `.live-responses-wrapper` を前提にしていたが、
- * 現物観察では `.response-col_status` / `.microlight` の方が安定して取得できた。
- * そのため、この helper では「実際に観測できた DOM」を待機条件にしている。
+ * この helper は、この sample の中でも特に「なぜこう書いているか」を
+ * コメントで残しておきたい箇所です。
+ *
+ * 最初にハマった点:
+ * - Swagger UI には静的なレスポンス説明テーブルと、Execute 後の live レスポンス表示がある
+ * - 名前だけ見ると `.live-responses-table` のような selector に絞りたくなる
+ * - 実際、その方向の review 指摘ももっともに見える
+ *
+ * しかし今回の sample では、次の現実がありました:
+ * - 生ブラウザ観察では `.live-responses-table` は確かに存在する
+ * - ただし Voreux / Stagehand の実行系でそこに限定すると、逆に不安定化して regress した
+ * - 一方で、section 全体から `.response-col_status` / `.microlight` を拾う現在の実装は、
+ *   実ブラウザ観察と E2E 実行の両方で安定して通った
+ *
+ * そのため、この sample では「理論的に狭くてきれいな selector」よりも、
+ * **公開 hosted UI 上で安定して再現できること** を優先している。
+ *
+ * 教材としての意図:
+ * - review の一般論をそのまま採用するのではなく
+ * - 実際に観察し、実行し、regress の有無まで見て判断する
+ * - その結果として、あえて少し広めの scope を維持することもある
  */
 async function waitForResponse(
   page: any,
@@ -238,6 +256,13 @@ async function waitForResponse(
     () =>
       page.evaluate((id: string) => {
         const section = document.querySelector(`#operations-pet-${id}`);
+
+        // ここでは section 全体から `.response-col_status` を見ている。
+        // 理由は上のコメントの通りで、live wrapper に限定した実装は
+        // この実行環境では安定しなかったため。
+        //
+        // ただし静的説明テーブルの "Code" 見出しを拾うと偽陽性になるので、
+        // `Code` そのものは除外し、実際の数値ステータスだけを待つ。
         const codes = Array.from(
           section?.querySelectorAll(".response-col_status") ?? [],
         )
@@ -262,6 +287,11 @@ async function waitForResponse(
       .map((el) => (el.textContent ?? "").trim())
       .filter(Boolean)
       .filter((text) => text !== "Code");
+
+    // `.microlight` には curl / request URL / response body など複数種が出る。
+    // そのため「最初の microlight を取る」のではなく、
+    // JSON っぽい見た目 (`[` or `{` で始まる) のものだけを response body として扱う。
+    // これも Swagger UI の現物観察から決めたルール。
     const bodies = Array.from(section?.querySelectorAll(".microlight") ?? [])
       .map((el) => (el.textContent ?? "").trim())
       .filter(Boolean);
