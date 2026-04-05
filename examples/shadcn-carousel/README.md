@@ -1,56 +1,50 @@
 # Voreux Sample: shadcn-carousel
 
-このサンプルは `https://ui.shadcn.com/docs/components/base/carousel` の
-**ページ最上部にある basic carousel** を対象にします。
+このディレクトリには、`https://ui.shadcn.com` 上の
+**shadcn UI コンポーネント sample 群** をまとめています。
 
-## このサンプルで見せたいこと
+現在含んでいる sample:
+- carousel
+- tooltip
 
-- ノイジーなコンポーネントサンプルページから、テスト対象の carousel を特定する
-- カルーセル操作後、**アニメーション完了を待って** 次のセルへ進む
-- ボタン連打ではなく、状態変化を観測してから次の操作へ進む
-- docs 上の実サンプルが **loop するのか / しないのか** を現物確認ベースで判定する
-- DOM の正しさだけでなく、**人間が知覚できる見た目の変化** を重視する
+## このディレクトリの方針
 
-## このサンプルの重要な教訓
+- shadcn UI 系の sample は同じディレクトリにまとめる
+- component ごとの知見は test / helper を分けて保持する
+- hosted docs サイト相手の不安定さや、Stagehand 前提の実装パターンを sample として残す
 
-- サンプルページは複数 carousel がありノイジーなので、最初に「どれを対象にするか」を固定する必要がある
-- 今回は `data-slot="carousel"` の **最初の要素** を対象としている
-- carousel の移動確認は transform よりも、**viewport 中央に最も近い item が何か** を見る方が分かりやすかった
-- 現物確認の結果、docs 上の basic carousel は **loop しない**。そのためこの sample では「末尾で止まること」を検証している
-- この sample では「DOM が変わったか」だけでなく、**前/次ボタンの disabled / opacity / pointer-events の変化** のような、人間に見える状態変化を重要視している
-- carousel 領域だけを clip screenshot する helper を入れており、軽量な部分 VRT の例を sample に含めている
-- sample 専用 helper は `tests/carousel-helpers.ts` に切り出し、テスト本体では「何を検証したいか」が読めるようにしている
+## 現在の sample
 
-## 現在のシナリオ
+### carousel
+対象:
+- `https://ui.shadcn.com/docs/components/base/carousel`
 
-1. 対象 carousel を特定する
-2. `Next` を押してセルを進め、各操作の間でアニメーション終了を待つ
-3. 短時間の連打でも carousel が壊れず、後続セルへ進めることを確認する
-4. 末尾まで進むと `Next` が視覚的に無効化され、`Previous` は有効なままであることを確認する
+見せたいこと:
+- ノイジーな component docs から対象 carousel を固定する
+- アニメーション完了を待って次操作へ進む
+- centered item / button state / 部分 VRT で human-perceivable state change を確認する
 
-## ファイル構成
+主なファイル:
+- `tests/carousel.test.ts`
+- `tests/carousel-helpers.ts`
+- `tests/visual-compare.ts`
 
-```text
-examples/shadcn-carousel/
-  README.md
-  tests/
-    carousel-helpers.ts   carousel 向けの sample 専用 helper 群
-    visual-compare.ts     部分 VRT 用の最小比較 helper
-    carousel.test.ts      教材として読む本体シナリオ
-```
+### tooltip
+対象:
+- `https://ui.shadcn.com/docs/components/radix/tooltip`
+
+見せたいこと:
+- hover で表示される tooltip を扱う
+- 部分 VRT で hidden → visible の変化を確認する
+- pointer を外したあと tooltip が消えるところまで確認する
+
+主なファイル:
+- `tests/tooltip.test.ts`
+- `tests/tooltip-helpers.ts`
+- `tests/tooltip-visual-compare.ts`
 
 ## 実行
 
 ```bash
 pnpm --filter @voreux/example-shadcn-carousel e2e
 ```
-
-## 補足
-
-この carousel にはインジケーターが無いため、
-「どのセルが見えているか」は centered item と部分 screenshot、
-「もう進めないこと」は nav button の視覚状態で確認する方針にしています。
-
-また、この sample には **一箇所だけ実際の部分 VRT 比較** を入れています。
-初期状態の carousel clip を baseline として保存し、`Next` 後の clip と比較して
-差分率が十分にあることを確認します。

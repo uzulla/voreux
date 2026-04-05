@@ -108,8 +108,8 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 ### 参考にすべき既存サンプル
 - `examples/swagger-editor/tests/swagger-editor.test.ts`
 - `examples/swagger-editor/tests/monaco-helpers.ts`
-- `examples/shadcn-component/tests/carousel.test.ts`
-- `examples/shadcn-component/tests/tooltip.test.ts`
+- `examples/shadcn-carousel/tests/carousel.test.ts`
+- `examples/shadcn-carousel/tests/tooltip.test.ts`
 
 特に Monaco のような特殊 widget を扱う場合、
 「Playwright らしい locator 操作」よりも、**Stagehand page で実際に通る最小手段** を優先してください。
@@ -135,7 +135,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/cfe-jp` にサンプルプロジェクトを置く
 - `examples/swagger-editor` に Monaco編集 + UI反映のサンプルを置く
 - `examples/petstore-swagger-ui` に Swagger UI 操作（Try it out / Execute）のサンプルを置く
-- `examples/shadcn-component` に shadcn UI サンプル群をまとめる
+- `examples/shadcn-carousel` に shadcn UI サンプル群をまとめる
   - carousel: カルーセル操作 + アニメーション待機
   - tooltip: hover tooltip + 表示/非表示 VRT
 
@@ -146,11 +146,11 @@ pnpm install
 pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
 pnpm --filter @voreux/example-swagger-editor exec playwright install chromium
 pnpm --filter @voreux/example-petstore-swagger-ui exec playwright install chromium
-pnpm --filter @voreux/example-shadcn-component exec playwright install chromium
+pnpm --filter @voreux/example-shadcn-carousel exec playwright install chromium
 cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 cp examples/swagger-editor/.env.example examples/swagger-editor/.env
 cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
-cp examples/shadcn-component/.env.example examples/shadcn-component/.env
+cp examples/shadcn-carousel/.env.example examples/shadcn-carousel/.env
 # 各 .env に OPENAI_API_KEY を設定
 ```
 
@@ -182,7 +182,7 @@ cp examples/shadcn-component/.env.example examples/shadcn-component/.env
     ├── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
     │   └── tests/
     │       └── petstore.test.ts
-    └── shadcn-component/   shadcn UI サンプル群
+    └── shadcn-carousel/    shadcn UI サンプル群
         └── tests/
             ├── carousel.test.ts
             └── tooltip.test.ts
@@ -219,8 +219,8 @@ pnpm --filter @voreux/example-swagger-editor e2e
 # petstore-swagger-ui サンプルだけ直接実行
 pnpm --filter @voreux/example-petstore-swagger-ui e2e
 
-# shadcn-component サンプル群を直接実行
-pnpm --filter @voreux/example-shadcn-component e2e
+# shadcn-carousel サンプル群を直接実行
+pnpm --filter @voreux/example-shadcn-carousel e2e
 ```
 
 ## npm 公開について
