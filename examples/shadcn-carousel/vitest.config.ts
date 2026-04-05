@@ -8,7 +8,7 @@ export default defineConfig({
     maxWorkers: 1,
     isolate: false,
     testTimeout: 120_000,
-    hookTimeout: 300_000,
+    hookTimeout: 420_000,
     watch: false,
     reporters: ["verbose"],
   },

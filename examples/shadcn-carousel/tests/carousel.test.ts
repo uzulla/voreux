@@ -46,7 +46,6 @@ defineScenarioSuite({
         const first = await getCenteredItem(ctx.page);
         expect(first.text).toBe("1");
         await screenshotCarouselClip(ctx.page, "02-initial");
-        await ctx.screenshot("02-page-initial");
 
         await clickCarouselButton(ctx.page, "carousel-next");
         await waitForCenteredItem(ctx.page, "2");
@@ -54,7 +53,6 @@ defineScenarioSuite({
           ctx.page,
           "03-after-next-to-2",
         );
-        await ctx.screenshot("03-page-after-next-to-2");
 
         // 部分 screenshot を残しておくことで、将来的に carousel 領域だけの
         // 軽量な VRT を追加しやすくしている。
@@ -69,8 +67,38 @@ defineScenarioSuite({
           ctx.page,
           "04-after-next-to-3",
         );
-        await ctx.screenshot("04-page-after-next-to-3");
         expect(thirdShot).toContain("04-after-next-to-3");
+      },
+    },
+    {
+      name: "短時間に連打してもカルーセルが壊れず進める",
+      run: async (ctx: TestContext) => {
+        await ctx.page.goto(ORIGIN_URL);
+        await ctx.page.waitForSelector('[data-slot="carousel"]', {
+          timeout: 30_000,
+        });
+        await ctx.page.waitForTimeout(3000);
+
+        const before = await getCenteredItem(ctx.page);
+        expect(before.text).toBe("1");
+
+        await clickCarouselButton(ctx.page, "carousel-next");
+        await clickCarouselButton(ctx.page, "carousel-next");
+        await clickCarouselButton(ctx.page, "carousel-next");
+
+        // 連打後も carousel が壊れず、少なくとも後続セルへ進めていることを確認する。
+        // ここでは「厳密に何枚進むか」より、「固まらない・見失わない・進行できる」ことを重視する。
+        const okTexts = ["2", "3", "4"];
+        const settled = await (async () => {
+          for (let i = 0; i < 30; i++) {
+            const current = await getCenteredItem(ctx.page);
+            if (okTexts.includes(current.text)) return current.text;
+            await ctx.page.waitForTimeout(100);
+          }
+          return null;
+        })();
+
+        expect(settled).not.toBeNull();
       },
     },
     {
@@ -102,7 +130,6 @@ defineScenarioSuite({
         expect(initialNext.disabled).toBe(false);
 
         await advanceUntilCenteredItem(ctx.page, "5");
-        await ctx.screenshot("05-at-last-slide");
 
         const lastPrev = await getButtonVisualState(
           ctx.page,

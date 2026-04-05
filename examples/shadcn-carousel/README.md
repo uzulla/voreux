@@ -25,7 +25,8 @@
 
 1. 対象 carousel を特定する
 2. `Next` を押して 1 → 2 → 3 へ進み、各操作の間でアニメーション終了を待つ
-3. 末尾では `Next` が視覚的に無効化され、`Previous` は有効なままであることを確認する
+3. 短時間の連打でも carousel が壊れず、後続セルへ進めることを確認する
+4. 末尾では `Next` が視覚的に無効化され、`Previous` は有効なままであることを確認する
 
 ## ファイル構成
 
@@ -48,3 +49,6 @@ pnpm --filter @voreux/example-shadcn-carousel e2e
 この carousel にはインジケーターが無いため、
 「どのセルが見えているか」は centered item と部分 screenshot、
 「もう進めないこと」は nav button の視覚状態で確認する方針にしています。
+
+また、部分 screenshot はまだ baseline 比較まではしていませんが、
+**通常の軽量 VRT を将来追加しやすい導線** として先に入れています。
