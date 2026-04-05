@@ -108,7 +108,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 ### 参考にすべき既存サンプル
 - `examples/swagger-editor/tests/swagger-editor.test.ts`
 - `examples/swagger-editor/tests/monaco-helpers.ts`
-- `examples/shadcn-carousel/tests/carousel.test.ts`
+- `examples/shadcn-component/tests/carousel.test.ts`
 - `examples/shadcn-tooltip/tests/tooltip.test.ts`
 
 特に Monaco のような特殊 widget を扱う場合、
@@ -136,7 +136,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/swagger-editor` に Monaco編集 + UI反映のサンプルを置く
 - `examples/petstore-swagger-ui` に Swagger UI 操作（Try it out / Execute）のサンプルを置く
 - `examples/shadcn-*` を shadcn UI サンプル群としてまとめる
-  - `examples/shadcn-carousel`: カルーセル操作 + アニメーション待機
+  - `examples/shadcn-component`: カルーセル操作 + アニメーション待機
   - `examples/shadcn-tooltip`: hover tooltip + 表示/非表示 VRT
 
 この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
@@ -146,12 +146,12 @@ pnpm install
 pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
 pnpm --filter @voreux/example-swagger-editor exec playwright install chromium
 pnpm --filter @voreux/example-petstore-swagger-ui exec playwright install chromium
-pnpm --filter @voreux/example-shadcn-carousel exec playwright install chromium
+pnpm --filter @voreux/example-shadcn-component exec playwright install chromium
 pnpm --filter @voreux/example-shadcn-tooltip exec playwright install chromium
 cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 cp examples/swagger-editor/.env.example examples/swagger-editor/.env
 cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
-cp examples/shadcn-carousel/.env.example examples/shadcn-carousel/.env
+cp examples/shadcn-component/.env.example examples/shadcn-component/.env
 cp examples/shadcn-tooltip/.env.example examples/shadcn-tooltip/.env
 # 各 .env に OPENAI_API_KEY を設定
 ```
@@ -184,7 +184,7 @@ cp examples/shadcn-tooltip/.env.example examples/shadcn-tooltip/.env
     ├── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
     │   └── tests/
     │       └── petstore.test.ts
-    ├── shadcn-carousel/    shadcn UI: カルーセル操作 + アニメーション待機のサンプル
+    ├── shadcn-component/   shadcn UI: カルーセル操作 + アニメーション待機のサンプル
     │   └── tests/
     │       └── carousel.test.ts
     └── shadcn-tooltip/     shadcn UI: hover tooltip + 表示/非表示 VRT のサンプル
@@ -223,8 +223,8 @@ pnpm --filter @voreux/example-swagger-editor e2e
 # petstore-swagger-ui サンプルだけ直接実行
 pnpm --filter @voreux/example-petstore-swagger-ui e2e
 
-# shadcn-carousel サンプルだけ直接実行
-pnpm --filter @voreux/example-shadcn-carousel e2e
+# shadcn-component サンプルだけ直接実行
+pnpm --filter @voreux/example-shadcn-component e2e
 
 # shadcn-tooltip サンプルだけ直接実行
 pnpm --filter @voreux/example-shadcn-tooltip e2e
