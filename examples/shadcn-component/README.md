@@ -16,6 +16,7 @@
 ## 現在の sample
 
 ### carousel
+
 対象:
 - `https://ui.shadcn.com/docs/components/base/carousel`
 
@@ -30,6 +31,7 @@
 - `tests/visual-compare.ts`
 
 ### tooltip
+
 対象:
 - `https://ui.shadcn.com/docs/components/radix/tooltip`
 
