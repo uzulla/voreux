@@ -135,8 +135,9 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/cfe-jp` にサンプルプロジェクトを置く
 - `examples/swagger-editor` に Monaco編集 + UI反映のサンプルを置く
 - `examples/petstore-swagger-ui` に Swagger UI 操作（Try it out / Execute）のサンプルを置く
-- `examples/shadcn-carousel` にカルーセル操作 + アニメーション待機のサンプルを置く
-- `examples/shadcn-tooltip` に hover tooltip + 表示/非表示 VRT のサンプルを置く
+- `examples/shadcn-*` を shadcn UI サンプル群としてまとめる
+  - `examples/shadcn-carousel`: カルーセル操作 + アニメーション待機
+  - `examples/shadcn-tooltip`: hover tooltip + 表示/非表示 VRT
 
 この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
 
@@ -183,10 +184,10 @@ cp examples/shadcn-tooltip/.env.example examples/shadcn-tooltip/.env
     ├── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
     │   └── tests/
     │       └── petstore.test.ts
-    ├── shadcn-carousel/    カルーセル操作 + アニメーション待機のサンプル
+    ├── shadcn-carousel/    shadcn UI: カルーセル操作 + アニメーション待機のサンプル
     │   └── tests/
     │       └── carousel.test.ts
-    └── shadcn-tooltip/     hover tooltip + 表示/非表示 VRT のサンプル
+    └── shadcn-tooltip/     shadcn UI: hover tooltip + 表示/非表示 VRT のサンプル
         └── tests/
             └── tooltip.test.ts
 ```
