@@ -7,216 +7,343 @@ import { expect } from "vitest";
  *
  * 対象: https://petstore.swagger.io/
  * テスト対象 API:
- *   - GET /pet/findByStatus  : status パラメータでペットを検索する
- *   - GET /pet/{petId}       : petId を指定してペットを取得する
+ *   - GET /pet/findByStatus
+ *   - GET /pet/{petId}
  *
- * このサンプルで見せたいこと:
- * - Swagger UI の "Try it out" → パラメータ入力 → Execute という典型的な操作フロー
- * - Playwright の標準ロケーター（selfHeal: false）を使った、シンプルで速い E2E
- * - レスポンスコードと Body の内容を assertion で確認する方法
+ * 重要:
+ * - ctx.page は Stagehand 経由の page オブジェクトであり、Playwright full API とは異なる
+ * - このサンプルでは、Swagger UI を「普通のフォーム」ではなく
+ *   DOM 観察 + 座標 click + type で扱う
+ * - cookie banner を閉じないと opblock クリックが通らないことがある
+ * - response を取るときも、思い込みで wrapper を決めず、実際に現れる DOM を観察して待機条件を決める
  */
 
 const ORIGIN_URL = "https://petstore.swagger.io/";
 
-/** 指定したオペレーション ID を持つ Swagger UI セクションを開く */
-async function expandOperation(page: any, operationId: string): Promise<void> {
-  // Swagger UI は各 endpoint を <section data-path="..." data-tag="..."> などで管理している。
-  // 最も安定した方法は、operationId 属性を持つ <div id="operations-..."> を探してクリックすること。
-  const sectionId = `operations-pet-${operationId}`;
-  const section = page.locator(`#${sectionId}`);
-  await section.waitFor({ state: "attached", timeout: 15_000 });
+async function pollUntil(
+  page: any,
+  fn: () => Promise<boolean>,
+  timeoutMs: number,
+  intervalMs = 300,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await fn()) return true;
+    await page.waitForTimeout(intervalMs);
+  }
+  return false;
+}
 
-  // すでに展開済みの場合は再クリックしない
-  const isOpen = await section
-    .locator(".opblock-body")
-    .isVisible()
-    .catch(() => false);
-  if (!isOpen) {
-    await section.locator(".opblock-summary").click();
-    await section
-      .locator(".opblock-body")
-      .waitFor({ state: "visible", timeout: 10_000 });
+async function getPageText(page: any): Promise<string> {
+  return page.evaluate(() => document.body.innerText ?? "");
+}
+
+async function dismissCookieBanner(page: any): Promise<void> {
+  const box = await page.evaluate(() => {
+    const button = Array.from(document.querySelectorAll("button")).find((b) =>
+      (b.textContent ?? "").toLowerCase().includes("allow all cookies"),
+    ) as HTMLElement | undefined;
+    if (!button) return null;
+    const r = button.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+
+  if (!box) return;
+
+  await page.click(
+    Math.round(box.x + box.width / 2),
+    Math.round(box.y + box.height / 2),
+  );
+  await page.waitForTimeout(1000);
+}
+
+async function waitForSwaggerPetstore(page: any): Promise<void> {
+  const ok = await pollUntil(
+    page,
+    async () => {
+      const text = await getPageText(page);
+      return text.includes("Swagger Petstore");
+    },
+    30_000,
+    500,
+  );
+  if (!ok) throw new Error("Swagger Petstore UI did not become ready in time");
+}
+
+async function getSummaryBox(
+  page: any,
+  operationId: string,
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const box = await page.evaluate((id: string) => {
+    const el = document.querySelector(
+      `#operations-pet-${id} .opblock-summary`,
+    ) as HTMLElement | null;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  }, operationId);
+
+  if (!box) {
+    throw new Error(`summary box not found for operation: ${operationId}`);
+  }
+
+  return box;
+}
+
+async function isOperationOpen(
+  page: any,
+  operationId: string,
+): Promise<boolean> {
+  return page.evaluate((id: string) => {
+    const section = document.querySelector(`#operations-pet-${id}`);
+    return section?.classList.contains("is-open") ?? false;
+  }, operationId);
+}
+
+/**
+ * Swagger UI の opblock を開く。
+ *
+ * ここでの教訓:
+ * - `.opblock-body` の存在だけでは開閉判定に使えない
+ * - このサイトでは `is-open` class の方が信頼できた
+ * - summary 要素は座標 click の方が安定した
+ */
+async function expandOperation(page: any, operationId: string): Promise<void> {
+  const exists = await pollUntil(
+    page,
+    () =>
+      page.evaluate(
+        (id: string) => !!document.querySelector(`#operations-pet-${id}`),
+        operationId,
+      ),
+    15_000,
+  );
+  if (!exists) throw new Error(`operation not found: ${operationId}`);
+
+  if (await isOperationOpen(page, operationId)) return;
+
+  await page.evaluate((id: string) => {
+    document
+      .querySelector(`#operations-pet-${id}`)
+      ?.scrollIntoView({ block: "center", behavior: "instant" });
+  }, operationId);
+  await page.waitForTimeout(500);
+
+  const box = await getSummaryBox(page, operationId);
+  await page.click(
+    Math.round(box.x + box.width / 2),
+    Math.round(box.y + box.height / 2),
+  );
+
+  const opened = await pollUntil(
+    page,
+    () => isOperationOpen(page, operationId),
+    10_000,
+  );
+  if (!opened) throw new Error(`operation did not open: ${operationId}`);
+}
+
+async function getButtonBox(
+  page: any,
+  operationId: string,
+  textNeedle: string,
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const box = await page.evaluate(
+    (args: { id: string; text: string }) => {
+      const section = document.querySelector(`#operations-pet-${args.id}`);
+      const button = Array.from(section?.querySelectorAll("button") ?? []).find(
+        (b) =>
+          (b.textContent ?? "").toLowerCase().includes(args.text.toLowerCase()),
+      ) as HTMLElement | undefined;
+      if (!button) return null;
+      const r = button.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    },
+    { id: operationId, text: textNeedle },
+  );
+
+  if (!box) {
+    throw new Error(`button not found: ${textNeedle} for ${operationId}`);
+  }
+
+  return box;
+}
+
+async function clickButton(
+  page: any,
+  operationId: string,
+  textNeedle: string,
+): Promise<void> {
+  const box = await getButtonBox(page, operationId, textNeedle);
+  await page.click(
+    Math.round(box.x + box.width / 2),
+    Math.round(box.y + box.height / 2),
+  );
+  await page.waitForTimeout(500);
+}
+
+async function setFindByStatusAvailable(page: any): Promise<void> {
+  const ok = await page.evaluate(() => {
+    const section = document.querySelector("#operations-pet-findPetsByStatus");
+    const select = section?.querySelector("select") as HTMLSelectElement | null;
+    if (select) {
+      select.value = "available";
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    }
+    return false;
+  });
+
+  if (!ok) {
+    throw new Error("status select not found for findPetsByStatus");
   }
 }
 
-/** セクション内の "Try it out" ボタンを押して入力モードにする */
-async function clickTryItOut(page: any, operationId: string): Promise<void> {
-  const section = page.locator(`#operations-pet-${operationId}`);
-  const btn = section.locator("button", { hasText: "Try it out" });
-  await btn.waitFor({ state: "visible", timeout: 10_000 });
-  await btn.click();
+async function setPetId(page: any, petId: string): Promise<void> {
+  const box = await page.evaluate(() => {
+    const input = document.querySelector(
+      "#operations-pet-getPetById input[placeholder='petId']",
+    ) as HTMLElement | null;
+    if (!input) return null;
+    const r = input.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+
+  if (!box) {
+    throw new Error("petId input not found");
+  }
+
+  await page.click(
+    Math.round(box.x + box.width / 2),
+    Math.round(box.y + box.height / 2),
+  );
+  await page.type(petId);
+  await page.waitForTimeout(300);
 }
 
-/** セクション内の "Execute" ボタンを押してリクエストを送信する */
-async function clickExecute(page: any, operationId: string): Promise<void> {
-  const section = page.locator(`#operations-pet-${operationId}`);
-  const btn = section.locator("button", { hasText: "Execute" });
-  await btn.waitFor({ state: "visible", timeout: 10_000 });
-  await btn.click();
-}
-
-/** レスポンスコードが返ってくるまで待ち、コードと Body を返す */
+/**
+ * Execute 後のレスポンスを待つ。
+ *
+ * 初期実装では `.live-responses-wrapper` を前提にしていたが、
+ * 現物観察では `.response-col_status` / `.microlight` の方が安定して取得できた。
+ * そのため、この helper では「実際に観測できた DOM」を待機条件にしている。
+ */
 async function waitForResponse(
   page: any,
   operationId: string,
 ): Promise<{ code: string; body: string }> {
-  const section = page.locator(`#operations-pet-${operationId}`);
+  const ok = await pollUntil(
+    page,
+    () =>
+      page.evaluate((id: string) => {
+        const section = document.querySelector(`#operations-pet-${id}`);
+        const codes = Array.from(
+          section?.querySelectorAll(".response-col_status") ?? [],
+        )
+          .map((el) => (el.textContent ?? "").trim())
+          .filter(Boolean)
+          .filter((text) => text !== "Code");
+        return codes.length > 0;
+      }, operationId),
+    30_000,
+    500,
+  );
 
-  // Swagger UI はレスポンスを .live-responses-wrapper 内に表示する
-  const responseWrapper = section.locator(".live-responses-wrapper");
-  await responseWrapper.waitFor({ state: "visible", timeout: 30_000 });
+  if (!ok) {
+    throw new Error(`response did not appear for operation: ${operationId}`);
+  }
 
-  const codeEl = responseWrapper.locator(".response-col_status").first();
-  await codeEl.waitFor({ state: "visible", timeout: 30_000 });
+  return page.evaluate((id: string) => {
+    const section = document.querySelector(`#operations-pet-${id}`);
+    const codes = Array.from(
+      section?.querySelectorAll(".response-col_status") ?? [],
+    )
+      .map((el) => (el.textContent ?? "").trim())
+      .filter(Boolean)
+      .filter((text) => text !== "Code");
+    const bodies = Array.from(section?.querySelectorAll(".microlight") ?? [])
+      .map((el) => (el.textContent ?? "").trim())
+      .filter(Boolean);
 
-  const code = await codeEl.textContent();
-  const bodyEl = responseWrapper.locator(".microlight").first();
-  const body = await bodyEl.textContent().catch(() => "");
-
-  return { code: (code ?? "").trim(), body: (body ?? "").trim() };
+    return {
+      code: codes[0] ?? "",
+      body:
+        bodies.find((text) => text.startsWith("[") || text.startsWith("{")) ??
+        "",
+    };
+  }, operationId);
 }
 
 defineScenarioSuite({
   suiteName: "petstore-swagger-ui E2E",
   originUrl: ORIGIN_URL,
   steps: [
-    // ------------------------------------------------------------------
-    // Step 1: ページ読み込みと基本確認
-    // ------------------------------------------------------------------
     {
       name: "ページを開いて Swagger UI が表示されることを確認する",
       selfHeal: false,
       run: async (ctx: TestContext) => {
         await ctx.page.goto(ORIGIN_URL);
-        // Swagger UI の初期化が終わるまで待つ
         await ctx.page.waitForSelector(".swagger-ui", { timeout: 30_000 });
+        await ctx.page.waitForTimeout(3000);
+        await dismissCookieBanner(ctx.page);
+        await waitForSwaggerPetstore(ctx.page);
         await ctx.screenshot("01-page-loaded");
 
         const title = await ctx.page.title();
         expect(title).toContain("Swagger");
 
-        // ページ上に "Swagger Petstore" という見出しが表示されることを確認
-        const pageText = await ctx.page.evaluate(
-          () => document.body.innerText ?? "",
-        );
+        const pageText = await getPageText(ctx.page);
         expect(pageText).toContain("Swagger Petstore");
+        expect(pageText).toContain("/pet/findByStatus");
+        expect(pageText).toContain("Finds Pets by status");
+        expect(pageText).toContain("/pet/{petId}");
+        expect(pageText).toContain("Find pet by ID");
       },
     },
-
-    // ------------------------------------------------------------------
-    // Step 2: GET /pet/findByStatus を Try it out で実行する
-    //
-    // Swagger UI での操作フロー:
-    //   1. エンドポイントのセクションを展開する
-    //   2. "Try it out" をクリックして入力可能な状態にする
-    //   3. status のチェックボックス/select で "available" を選ぶ
-    //   4. "Execute" を押してリクエストを送信する
-    //   5. レスポンスコードが 200 であることを確認する
-    //   6. レスポンス Body が JSON 配列であることを確認する
-    // ------------------------------------------------------------------
     {
-      name: "GET /pet/findByStatus で status=available を検索して 200 を確認する",
+      name: "findByStatus を status=available で実行して 200 を確認する",
       selfHeal: false,
       run: async (ctx: TestContext) => {
         await expandOperation(ctx.page, "findPetsByStatus");
         await ctx.screenshot("02a-findByStatus-expanded");
 
-        await clickTryItOut(ctx.page, "findPetsByStatus");
-        await ctx.screenshot("02b-findByStatus-try-it-out");
+        await clickButton(ctx.page, "findPetsByStatus", "Try it out");
+        await setFindByStatusAvailable(ctx.page);
+        await ctx.screenshot("02b-findByStatus-params-set");
 
-        // Swagger UI の findByStatus は <select> で status を選ぶ
-        // (古いバージョンはチェックボックス、新しいバージョンは select)
-        const section = ctx.page.locator("#operations-pet-findPetsByStatus");
-
-        // select があれば "available" を選択する
-        const select = section.locator("select").first();
-        const hasSelect = await select.isVisible().catch(() => false);
-        if (hasSelect) {
-          await select.selectOption("available");
-        } else {
-          // チェックボックス形式の場合: まず全チェックを外し "available" だけ付ける
-          const checkboxes = section.locator("input[type='checkbox']");
-          const count = await checkboxes.count();
-          for (let i = 0; i < count; i++) {
-            const cb = checkboxes.nth(i);
-            const checked = await cb.isChecked();
-            const label = await cb
-              .locator("..")
-              .textContent()
-              .catch(() => "");
-            if (label.includes("available") && !checked) {
-              await cb.check();
-            } else if (!label.includes("available") && checked) {
-              await cb.uncheck();
-            }
-          }
-        }
-
-        await ctx.screenshot("02c-findByStatus-params-set");
-
-        await clickExecute(ctx.page, "findPetsByStatus");
-        await ctx.screenshot("02d-findByStatus-executed");
-
+        await clickButton(ctx.page, "findPetsByStatus", "Execute");
         const { code, body } = await waitForResponse(
           ctx.page,
           "findPetsByStatus",
         );
-        await ctx.screenshot("02e-findByStatus-response");
+        await ctx.screenshot("02c-findByStatus-response");
 
-        // HTTP 200 が返ること
         expect(code).toBe("200");
-
-        // Body が JSON 配列の形式であること（"[" で始まる）
         expect(body.startsWith("[")).toBe(true);
+        expect(body).toContain("status");
       },
     },
-
-    // ------------------------------------------------------------------
-    // Step 3: GET /pet/{petId} に petId=1 を入力して実行する
-    //
-    // Swagger UI での操作フロー:
-    //   1. エンドポイントのセクションを展開する
-    //   2. "Try it out" をクリック
-    //   3. petId の input に "1" を入力する
-    //   4. "Execute" を押す
-    //   5. レスポンスコードが 200 または 404 であることを確認する
-    //      (petId=1 はサーバーの状態によって存在しないこともある)
-    //   6. Body が JSON オブジェクトの形式であること、または "Pet not found" メッセージを確認する
-    // ------------------------------------------------------------------
     {
-      name: "GET /pet/{petId} に petId=1 を入力してレスポンスを確認する",
+      name: "getPetById に petId=1 を入力してレスポンスを確認する",
       selfHeal: false,
       run: async (ctx: TestContext) => {
-        const PET_ID = "1";
-
         await expandOperation(ctx.page, "getPetById");
         await ctx.screenshot("03a-getPetById-expanded");
 
-        await clickTryItOut(ctx.page, "getPetById");
-        await ctx.screenshot("03b-getPetById-try-it-out");
+        await clickButton(ctx.page, "getPetById", "Try it out");
+        await setPetId(ctx.page, "1");
+        await ctx.screenshot("03b-getPetById-params-set");
 
-        // petId の入力欄を探して入力する
-        const section = ctx.page.locator("#operations-pet-getPetById");
-        const petIdInput = section.locator("input[placeholder='petId']");
-        await petIdInput.waitFor({ state: "visible", timeout: 10_000 });
-        await petIdInput.fill(PET_ID);
-        await ctx.screenshot("03c-getPetById-params-set");
-
-        await clickExecute(ctx.page, "getPetById");
-        await ctx.screenshot("03d-getPetById-executed");
-
+        await clickButton(ctx.page, "getPetById", "Execute");
         const { code, body } = await waitForResponse(ctx.page, "getPetById");
-        await ctx.screenshot("03e-getPetById-response");
+        await ctx.screenshot("03c-getPetById-response");
 
-        // petId=1 はサーバーの状態によって 200 / 404 どちらもあり得る
         expect(["200", "404"]).toContain(code);
-
         if (code === "200") {
-          // 200 の場合: JSON オブジェクトが返り、id フィールドを含む
           expect(body.startsWith("{")).toBe(true);
           expect(body).toContain('"id"');
         } else {
-          // 404 の場合: "Pet not found" メッセージが含まれる
           expect(body.toLowerCase()).toContain("not found");
         }
       },

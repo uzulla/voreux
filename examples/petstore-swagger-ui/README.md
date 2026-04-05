@@ -5,8 +5,20 @@
 ## このサンプルで見せたいこと
 
 - Swagger UI の **"Try it out" → パラメータ入力 → Execute → レスポンス確認** という典型的な操作フロー
-- `selfHeal: false` の Playwright 標準ロケーターだけで完結する、速くてシンプルな E2E
+- Voreux / Stagehand 環境で、**Playwright full API に寄りすぎず** Swagger UI を扱う方法
 - HTTP ステータスコードとレスポンス Body を `expect` で検証する方法
+
+## このサンプルが将来の作業者に伝えたい教訓
+
+このサンプルは、単に Petstore を叩く例ではなく、
+**「Swagger UI のような複雑UIを Voreux でどう扱うか」** の実例でもあります。
+
+特に重要だった点:
+- `ctx.page` は Playwright の生 `Page` ではない
+- cookie banner を閉じないと opblock click が通らないことがある
+- opblock の開閉は `.opblock-body` の有無ではなく `is-open` class の方が信頼できた
+- response 待機は `.live-responses-wrapper` 前提ではなく、実際に出てくる `.response-col_status` / `.microlight` を観察して決めるべきだった
+- まずブラウザで現物を観察してから selector / assertion を決める方が早い
 
 ## テスト対象 API
 
@@ -64,3 +76,8 @@ pnpm --filter @voreux/example-petstore-swagger-ui e2e:self-heal
 - `petstore.swagger.io` は公開サンドボックスのため、データは随時変化します
 - `GET /pet/{petId}` は `petId=1` が存在する保証がないため、**200 または 404 の両方を許容** しています
 - Swagger UI のバージョンやレイアウトが変わった場合はセレクターの調整が必要になることがあります
+- cookie banner を閉じないと opblock のクリックが通らないことがあります
+- Swagger UI は **折りたたみ時でも `.opblock-body` を DOM に残すとは限らず、逆に DOM 存在だけでは開閉判定にならない** ため、このサンプルでは `is-open` クラスで展開状態を見ています
+- Voreux / Stagehand では Playwright の locator full API 前提で書かず、`waitForSelector` / `evaluate` / 座標 click / `type()` を主軸に組む方が安定します
+- response 待機は、先入観で wrapper selector を決めず、**実際にどの DOM が増えるか** を観察してから決めた方がよいです
+- step 名に `/` を含めると screenshot path が壊れることがあるため、サンプルでは安全な step 名にする方がよいです

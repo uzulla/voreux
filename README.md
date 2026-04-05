@@ -62,6 +62,56 @@ defineScenarioSuite({
 });
 ```
 
+## 実装者向けの重要注意: `ctx.page` は Playwright の生 `Page` ではない
+
+Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
+そのため、**Playwright の full API と完全互換ではありません**。
+
+特に次は注意してください。
+
+### 使える前提で考えてよいもの
+- `ctx.page.goto(...)`
+- `ctx.page.waitForSelector(...)`
+- `ctx.page.waitForLoadState(...)`
+- `ctx.page.evaluate(...)`
+- `ctx.page.type(...)`
+- `ctx.page.click(x, y)` ← **座標クリック**
+
+### Playwright 気分でそのまま書くとハマりやすいもの
+- `ctx.page.locator(...).waitFor()`
+- `ctx.page.locator(...).isVisible()`
+- `ctx.page.getByRole(...)`
+- `ctx.page.click(selector, options)` ← **Voreux では座標クリックAPIとして扱う前提で考える**
+
+### 実装のコツ
+- まず `waitForSelector()` と `evaluate()` を基本に組む
+- テキスト探索や要素列挙は `evaluate()` で行う
+- 複雑UI（Monaco / Swagger UI など）は、DOM観察 + 座標クリック + `type()` の組み合わせを優先する
+- Playwright の locator を前提に大量実装しない
+
+### よくある失敗パターン（実際に踏んだもの）
+- `ctx.page.locator(...).waitFor()` を書いてしまう
+  - → Stagehand page ではそのまま通らないことがある
+- `getByRole()` / `hasText` / `nth()` / `count()` を当然に使う
+  - → Playwright 生 API と同じつもりで書くと壊れる
+- Swagger UI や Monaco を「普通のフォーム」と思って扱う
+  - → 実際には DOM 観察や座標 click の方が安定する場合がある
+- selector が見つかっただけで「操作可能」とみなす
+  - → hosted UI は初期表示や描画完了のタイミングがずれるので、観測対象をよく選ぶ
+
+### 迷ったらどうするか
+- まず `document.body.innerText` と対象要素の `textContent` を `evaluate()` で観察する
+- 「今本当に何が表示されているか」を見てから操作方針を決める
+- 生 Playwright で通るコードをそのまま Voreux に持ち込まない
+- 既存サンプルで通っているパターンに寄せる
+
+### 参考にすべき既存サンプル
+- `examples/swagger-editor/tests/swagger-editor.test.ts`
+- `examples/swagger-editor/tests/monaco-helpers.ts`
+
+特に Monaco のような特殊 widget を扱う場合、
+「Playwright らしい locator 操作」よりも、**Stagehand page で実際に通る最小手段** を優先してください。
+
 ## 設定
 
 ### 環境変数
