@@ -19,12 +19,23 @@
 - 現物確認の結果、docs 上の basic carousel は **loop しない**。そのためこの sample では「末尾で止まること」を検証している
 - この sample では「DOM が変わったか」だけでなく、**前/次ボタンの disabled / opacity / pointer-events の変化** のような、人間に見える状態変化を重要視している
 - carousel 領域だけを clip screenshot する helper を入れており、将来的に軽量な部分 VRT を追加しやすい構造にしている
+- sample 専用 helper は `tests/carousel-helpers.ts` に切り出し、テスト本体では「何を検証したいか」が読めるようにしている
 
 ## 現在のシナリオ
 
 1. 対象 carousel を特定する
 2. `Next` を押して 1 → 2 → 3 へ進み、各操作の間でアニメーション終了を待つ
 3. 末尾では `Next` が視覚的に無効化され、`Previous` は有効なままであることを確認する
+
+## ファイル構成
+
+```text
+examples/shadcn-carousel/
+  README.md
+  tests/
+    carousel-helpers.ts   carousel 向けの sample 専用 helper 群
+    carousel.test.ts      教材として読む本体シナリオ
+```
 
 ## 実行
 
