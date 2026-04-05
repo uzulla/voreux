@@ -166,13 +166,13 @@ cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
 │       │   └── highlight.ts observe/target ハイライト
 │       └── dist/           build 成果物
 └── examples/
-    ├── cfe-jp/           サンプルテストプロジェクト
+    ├── cfe-jp/              サンプルテストプロジェクト
     │   └── tests/
     │       └── cfe.test.ts サンプルシナリオ
-    └── swagger-editor/   Monaco編集 + preview操作のサンプル
-        └── tests/
-            └── swagger-editor.test.ts
-    └── petstore-swagger-ui/  Swagger UI 操作（Try it out / Execute）のサンプル
+    ├── swagger-editor/      Monaco編集 + preview操作のサンプル
+    │   └── tests/
+    │       └── swagger-editor.test.ts
+    └── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
         └── tests/
             └── petstore.test.ts
 ```

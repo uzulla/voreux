@@ -281,7 +281,6 @@ defineScenarioSuite({
   steps: [
     {
       name: "ページを開いて Swagger UI が表示されることを確認する",
-      selfHeal: false,
       run: async (ctx: TestContext) => {
         await ctx.page.goto(ORIGIN_URL);
         await ctx.page.waitForSelector(".swagger-ui", { timeout: 30_000 });
@@ -303,7 +302,6 @@ defineScenarioSuite({
     },
     {
       name: "findByStatus を status=available で実行して 200 を確認する",
-      selfHeal: false,
       run: async (ctx: TestContext) => {
         await expandOperation(ctx.page, "findPetsByStatus");
         await ctx.screenshot("02a-findByStatus-expanded");
@@ -326,7 +324,6 @@ defineScenarioSuite({
     },
     {
       name: "getPetById に petId=1 を入力してレスポンスを確認する",
-      selfHeal: false,
       run: async (ctx: TestContext) => {
         await expandOperation(ctx.page, "getPetById");
         await ctx.screenshot("03a-getPetById-expanded");
