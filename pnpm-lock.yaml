@@ -59,7 +59,7 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.1)(tsx@4.21.0)
 
-  examples/shadcn-carousel:
+  examples/shadcn-component:
     dependencies:
       '@uzulla/voreux':
         specifier: workspace:*

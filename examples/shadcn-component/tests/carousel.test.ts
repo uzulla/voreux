@@ -21,7 +21,7 @@ async function getPageText(page: any): Promise<string> {
 }
 
 defineScenarioSuite({
-  suiteName: "shadcn-carousel E2E",
+  suiteName: "shadcn-component E2E (carousel)",
   originUrl: ORIGIN_URL,
   steps: [
     {

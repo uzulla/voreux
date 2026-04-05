@@ -1,4 +1,4 @@
-# Voreux Sample: shadcn-carousel
+# Voreux Sample: shadcn-component
 
 このディレクトリには、`https://ui.shadcn.com` 上の
 **shadcn UI コンポーネント sample 群** をまとめています。
@@ -46,5 +46,5 @@
 ## 実行
 
 ```bash
-pnpm --filter @voreux/example-shadcn-carousel e2e
+pnpm --filter @voreux/example-shadcn-component e2e
 ```
