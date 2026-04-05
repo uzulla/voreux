@@ -133,6 +133,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/cfe-jp` にサンプルプロジェクトを置く
 - `examples/swagger-editor` に Monaco編集 + UI反映のサンプルを置く
 - `examples/petstore-swagger-ui` に Swagger UI 操作（Try it out / Execute）のサンプルを置く
+- `examples/shadcn-carousel` にカルーセル操作 + アニメーション待機のサンプルを置く
 
 この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
 
@@ -141,9 +142,11 @@ pnpm install
 pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
 pnpm --filter @voreux/example-swagger-editor exec playwright install chromium
 pnpm --filter @voreux/example-petstore-swagger-ui exec playwright install chromium
+pnpm --filter @voreux/example-shadcn-carousel exec playwright install chromium
 cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 cp examples/swagger-editor/.env.example examples/swagger-editor/.env
 cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
+cp examples/shadcn-carousel/.env.example examples/shadcn-carousel/.env
 # 各 .env に OPENAI_API_KEY を設定
 ```
 
@@ -172,9 +175,12 @@ cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
     ├── swagger-editor/      Monaco編集 + preview操作のサンプル
     │   └── tests/
     │       └── swagger-editor.test.ts
-    └── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
+    ├── petstore-swagger-ui/ Swagger UI 操作（Try it out / Execute）のサンプル
+    │   └── tests/
+    │       └── petstore.test.ts
+    └── shadcn-carousel/    カルーセル操作 + アニメーション待機のサンプル
         └── tests/
-            └── petstore.test.ts
+            └── carousel.test.ts
 ```
 
 ## 公開されている型・関数
@@ -207,6 +213,9 @@ pnpm --filter @voreux/example-swagger-editor e2e
 
 # petstore-swagger-ui サンプルだけ直接実行
 pnpm --filter @voreux/example-petstore-swagger-ui e2e
+
+# shadcn-carousel サンプルだけ直接実行
+pnpm --filter @voreux/example-shadcn-carousel e2e
 ```
 
 ## npm 公開について
