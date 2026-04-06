@@ -6,6 +6,12 @@ export interface Recorder {
   stop: () => Promise<number>;
   /** 現在のページ状態をフレームとして即座に n 枚書き込む */
   injectFrames: (n?: number) => Promise<void>;
+  /** interval ベースの録画キャプチャを一時停止する */
+  pause: () => void;
+  /** 一時停止した録画キャプチャを再開する */
+  resume: () => void;
+  /** 現在のページ状態をフレームとして即座に 1 枚書き込む */
+  captureFrameNow: () => Promise<void>;
 }
 
 let ffmpegAvailableCache: boolean | undefined;
@@ -32,6 +38,9 @@ export function createNoopRecorder(): Recorder {
   return {
     stop: async () => 0,
     injectFrames: async () => {},
+    pause: () => {},
+    resume: () => {},
+    captureFrameNow: async () => {},
   };
 }
 
@@ -47,20 +56,25 @@ export function startRecording(
   let frameIndex = 0;
   let stopped = false;
   let injecting = false;
+  let paused = false;
+
+  const captureFrameNow = async () => {
+    try {
+      const filePath = path.join(
+        framesDir,
+        `frame-${String(frameIndex).padStart(5, "0")}.png`,
+      );
+      await page.screenshot({ path: filePath });
+      frameIndex++;
+    } catch {
+      // ブラウザが閉じられた等の場合は無視
+    }
+  };
 
   const capture = async () => {
     while (!stopped) {
-      if (!injecting) {
-        try {
-          const filePath = path.join(
-            framesDir,
-            `frame-${String(frameIndex).padStart(5, "0")}.png`,
-          );
-          await page.screenshot({ path: filePath });
-          frameIndex++;
-        } catch {
-          // ブラウザが閉じられた等の場合は無視
-        }
+      if (!injecting && !paused) {
+        await captureFrameNow();
       }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
@@ -69,16 +83,18 @@ export function startRecording(
   const promise = capture();
 
   return {
+    pause: () => {
+      paused = true;
+    },
+    resume: () => {
+      paused = false;
+    },
+    captureFrameNow,
     injectFrames: async (n = 3) => {
       injecting = true;
       try {
         for (let i = 0; i < n; i++) {
-          const filePath = path.join(
-            framesDir,
-            `frame-${String(frameIndex).padStart(5, "0")}.png`,
-          );
-          await page.screenshot({ path: filePath });
-          frameIndex++;
+          await captureFrameNow();
         }
       } catch {}
       injecting = false;

@@ -1,5 +1,6 @@
 import type { Stagehand } from "@browserbasehq/stagehand";
 import path from "path";
+import { annotateKey, annotatePoint } from "./annotation.js";
 import { frameworkConfig } from "./config.js";
 import {
   highlightElement,
@@ -63,6 +64,12 @@ export interface TestContext {
 
   /** observe() 結果を一括ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
   highlightObserved: (actions: any[], screenshotName: string) => Promise<void>;
+
+  /** クリック位置とラベルを人間向けに可視化する */
+  annotateClick: (x: number, y: number, label?: string) => Promise<void>;
+
+  /** キー押下を人間向けに可視化する */
+  annotateKey: (key: string) => Promise<void>;
 
   /** observe() で要素を探し、単一ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
   highlightTarget: (
@@ -130,7 +137,14 @@ export function createTestContext(
 
     async assertNoVisualRegression(baselineName: string) {
       const ssPath = path.join(SCREENSHOT_DIR, `${baselineName}.png`);
-      await page.screenshot({ path: ssPath });
+      recorder.pause();
+      try {
+        await recorder.captureFrameNow();
+        await page.screenshot({ path: ssPath });
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
       lastComparisonSsPath = ssPath;
 
       const diffPath = path.join(SCREENSHOT_DIR, `${baselineName}-diff.png`);
@@ -163,6 +177,14 @@ export function createTestContext(
       } finally {
         await removeHighlights(page);
       }
+    },
+
+    async annotateClick(x: number, y: number, label?: string) {
+      await annotatePoint(page, { x, y, label });
+    },
+
+    async annotateKey(key: string) {
+      await annotateKey(page, key);
     },
 
     async highlightTarget(instruction: string, screenshotName: string) {
