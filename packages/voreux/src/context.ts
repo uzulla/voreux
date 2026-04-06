@@ -1,6 +1,9 @@
 import type { Stagehand } from "@browserbasehq/stagehand";
 import path from "path";
-import { annotateKey, annotatePoint } from "./annotation.js";
+import {
+  annotateKey as annotateKeyHelper,
+  annotatePoint,
+} from "./annotation.js";
 import { frameworkConfig } from "./config.js";
 import {
   highlightElement,
@@ -184,7 +187,7 @@ export function createTestContext(
     },
 
     async annotateKey(key: string) {
-      await annotateKey(page, key);
+      await annotateKeyHelper(page, key);
     },
 
     async highlightTarget(instruction: string, screenshotName: string) {

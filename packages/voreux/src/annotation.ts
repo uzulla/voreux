@@ -1,5 +1,11 @@
+import type { Page } from "@browserbasehq/stagehand";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function annotatePoint(
-  page: any,
+  page: Page,
   opts: { x: number; y: number; label?: string; durationMs?: number },
 ): Promise<void> {
   const durationMs = opts.durationMs ?? 700;
@@ -50,11 +56,11 @@ export async function annotatePoint(
     },
     { ...opts, durationMs },
   );
-  await page.waitForTimeout(durationMs);
+  await sleep(durationMs);
 }
 
 export async function annotateKey(
-  page: any,
+  page: Page,
   key: string,
   durationMs = 1000,
 ): Promise<void> {
@@ -96,5 +102,5 @@ export async function annotateKey(
     },
     { key, durationMs },
   );
-  await page.waitForTimeout(durationMs);
+  await sleep(durationMs);
 }

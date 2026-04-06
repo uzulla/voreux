@@ -4,6 +4,18 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import type { Recorder } from "./recording.js";
 
+export class ImageSizeMismatchError extends Error {
+  constructor(
+    public currentSize: { width: number; height: number },
+    public baselineSize: { width: number; height: number },
+  ) {
+    super(
+      `Image size mismatch: current=${currentSize.width}x${currentSize.height}, baseline=${baselineSize.width}x${baselineSize.height}`,
+    );
+    this.name = "ImageSizeMismatchError";
+  }
+}
+
 export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
 
 /**
@@ -52,8 +64,9 @@ export function compareWithBaseline(
   const img2 = PNG.sync.read(fs.readFileSync(baselinePath));
 
   if (img1.width !== img2.width || img1.height !== img2.height) {
-    throw new Error(
-      `Image size mismatch: current=${img1.width}x${img1.height}, baseline=${img2.width}x${img2.height}`,
+    throw new ImageSizeMismatchError(
+      { width: img1.width, height: img1.height },
+      { width: img2.width, height: img2.height },
     );
   }
 

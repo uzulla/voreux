@@ -57,18 +57,22 @@ export function startRecording(
   let stopped = false;
   let injecting = false;
   let paused = false;
+  let captureChain = Promise.resolve();
 
   const captureFrameNow = async () => {
-    try {
-      const filePath = path.join(
-        framesDir,
-        `frame-${String(frameIndex).padStart(5, "0")}.png`,
-      );
-      await page.screenshot({ path: filePath });
-      frameIndex++;
-    } catch {
-      // ブラウザが閉じられた等の場合は無視
-    }
+    captureChain = captureChain.then(async () => {
+      try {
+        const filePath = path.join(
+          framesDir,
+          `frame-${String(frameIndex).padStart(5, "0")}.png`,
+        );
+        await page.screenshot({ path: filePath });
+        frameIndex++;
+      } catch {
+        // ブラウザが閉じられた等の場合は無視
+      }
+    });
+    await captureChain;
   };
 
   const capture = async () => {
