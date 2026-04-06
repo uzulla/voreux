@@ -1,3 +1,4 @@
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
@@ -14,14 +15,16 @@ import {
 import { compareWithBaseline, saveBaseline } from "./visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/base/carousel";
-const BASELINES_DIR = fileURLToPath(new URL("../baselines/", import.meta.url));
+const BASELINES_DIR = process.env.E2E_BASELINES_DIR
+  ? path.resolve(process.cwd(), process.env.E2E_BASELINES_DIR)
+  : fileURLToPath(new URL("../baselines/", import.meta.url));
 
 async function getPageText(page: any): Promise<string> {
   return page.evaluate(() => document.body.innerText ?? "");
 }
 
 defineScenarioSuite({
-  suiteName: "shadcn-carousel E2E",
+  suiteName: "shadcn-component E2E (carousel)",
   originUrl: ORIGIN_URL,
   steps: [
     {
