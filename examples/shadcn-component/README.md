@@ -44,7 +44,7 @@
 見せたいこと:
 - click で alert dialog が開くこと
 - dialog 表示中は overlay によって背景がボケること
-- `Cancel` / `Continue` のどちらでも dialog を閉じられること
+- `Cancel` / `Continue` / `Escape` のいずれでも dialog を閉じられること
 - hidden → visible の変化を部分 VRT で確認すること
 
 ## 実行

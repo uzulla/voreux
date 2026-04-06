@@ -6,6 +6,7 @@ import { expect } from "vitest";
 import {
   clickDialogAction,
   clickShowDialog,
+  dismissDialogWithEscape,
   getAlertDialogState,
   getOverlayVisualState,
   screenshotAlertDialogRegion,
@@ -99,6 +100,25 @@ defineScenarioSuite({
         await waitForDialogVisible(ctx.page);
 
         await clickDialogAction(ctx.page, "Continue");
+        await waitForDialogHidden(ctx.page);
+
+        const dialog = await getAlertDialogState(ctx.page);
+        expect(dialog.visible).toBe(false);
+      },
+    },
+    {
+      name: "Escape でも dialog が閉じられる",
+      run: async (ctx: TestContext) => {
+        await ctx.page.goto(ORIGIN_URL);
+        await ctx.page.waitForSelector('[data-slot="preview"]', {
+          timeout: 30_000,
+        });
+        await ctx.page.waitForTimeout(3000);
+
+        await clickShowDialog(ctx.page);
+        await waitForDialogVisible(ctx.page);
+
+        await dismissDialogWithEscape(ctx.page);
         await waitForDialogHidden(ctx.page);
 
         const dialog = await getAlertDialogState(ctx.page);

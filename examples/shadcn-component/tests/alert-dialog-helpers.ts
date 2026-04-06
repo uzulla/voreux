@@ -173,6 +173,15 @@ export async function waitForDialogHidden(page: any): Promise<void> {
  * overlay の backdrop-filter / background を観測して、
  * ダイアログ表示中に背景がボケていることを確認する。
  */
+export async function dismissDialogWithEscape(page: any): Promise<void> {
+  await page.evaluate(() => {
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+  });
+  await page.waitForTimeout(300);
+}
+
 export async function getOverlayVisualState(page: any): Promise<{
   visible: boolean;
   backdropFilter: string;
