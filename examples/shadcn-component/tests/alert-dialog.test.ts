@@ -4,11 +4,11 @@ import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
 import {
-  clickDialogAction,
-  clickShowDialog,
   dismissDialogWithEscape,
   getAlertDialogState,
+  getDialogActionClickPoint,
   getOverlayVisualState,
+  getShowDialogClickPoint,
   screenshotAlertDialogRegion,
   waitForDialogHidden,
   waitForDialogVisible,
@@ -41,7 +41,9 @@ defineScenarioSuite({
           "alert-dialog-hidden",
         );
 
-        await clickShowDialog(ctx.page);
+        const showPoint = await getShowDialogClickPoint(ctx.page);
+        await ctx.annotateClick(showPoint.x, showPoint.y, "Click: Show Dialog");
+        await ctx.page.click(showPoint.x, showPoint.y);
         await waitForDialogVisible(ctx.page);
 
         const dialog = await getAlertDialogState(ctx.page);
@@ -76,10 +78,14 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await clickShowDialog(ctx.page);
+        const showPoint = await getShowDialogClickPoint(ctx.page);
+        await ctx.annotateClick(showPoint.x, showPoint.y, "Click: Show Dialog");
+        await ctx.page.click(showPoint.x, showPoint.y);
         await waitForDialogVisible(ctx.page);
 
-        await clickDialogAction(ctx.page, "Cancel");
+        const cancelPoint = await getDialogActionClickPoint(ctx.page, "Cancel");
+        await ctx.annotateClick(cancelPoint.x, cancelPoint.y, "Click: Cancel");
+        await ctx.page.click(cancelPoint.x, cancelPoint.y);
         await waitForDialogHidden(ctx.page);
 
         const dialog = await getAlertDialogState(ctx.page);
@@ -95,10 +101,21 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await clickShowDialog(ctx.page);
+        const showPoint = await getShowDialogClickPoint(ctx.page);
+        await ctx.annotateClick(showPoint.x, showPoint.y, "Click: Show Dialog");
+        await ctx.page.click(showPoint.x, showPoint.y);
         await waitForDialogVisible(ctx.page);
 
-        await clickDialogAction(ctx.page, "Continue");
+        const continuePoint = await getDialogActionClickPoint(
+          ctx.page,
+          "Continue",
+        );
+        await ctx.annotateClick(
+          continuePoint.x,
+          continuePoint.y,
+          "Click: Continue",
+        );
+        await ctx.page.click(continuePoint.x, continuePoint.y);
         await waitForDialogHidden(ctx.page);
 
         const dialog = await getAlertDialogState(ctx.page);
@@ -114,9 +131,12 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await clickShowDialog(ctx.page);
+        const showPoint = await getShowDialogClickPoint(ctx.page);
+        await ctx.annotateClick(showPoint.x, showPoint.y, "Click: Show Dialog");
+        await ctx.page.click(showPoint.x, showPoint.y);
         await waitForDialogVisible(ctx.page);
 
+        await ctx.annotateKey("Escape");
         await dismissDialogWithEscape(ctx.page);
         await waitForDialogHidden(ctx.page);
 
