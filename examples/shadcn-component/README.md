@@ -52,3 +52,20 @@
 ```bash
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
+
+## 補足
+
+この sample 群では、suite 終了時の `hookTimeout` を長めにしています。
+
+理由はまだ原因未特定ですが、少なくとも次の層が候補です。
+
+- Stagehand が headless browser runtime を使うことによる browser/context/page cleanup
+- Stagehand wrapper / session の後始末
+- screenshot / recording の flush
+- 複数 sample を 1 package にまとめたことによる teardown 集中
+
+そのため現時点では、完全原因特定よりも
+- `hookTimeout` を長めに取る
+- 開発時は filter で対象 sample だけを見る
+
+運用を優先しています。
