@@ -56,7 +56,7 @@ export function startRecording(
   let frameIndex = 0;
   let stopped = false;
   let injecting = false;
-  let paused = false;
+  let pauseDepth = 0;
   let captureChain = Promise.resolve();
 
   const captureFrameNow = async () => {
@@ -79,7 +79,7 @@ export function startRecording(
     // 録画開始時の状態を必ず 1 フレーム残す。
     await captureFrameNow();
     while (!stopped) {
-      if (!injecting && !paused) {
+      if (!injecting && pauseDepth === 0) {
         await captureFrameNow();
       }
       await new Promise((r) => setTimeout(r, intervalMs));
@@ -90,10 +90,10 @@ export function startRecording(
 
   return {
     pause: () => {
-      paused = true;
+      pauseDepth++;
     },
     resume: () => {
-      paused = false;
+      pauseDepth = Math.max(0, pauseDepth - 1);
     },
     captureFrameNow,
     injectFrames: async (n = 3) => {
@@ -106,7 +106,7 @@ export function startRecording(
       injecting = false;
     },
     stop: async () => {
-      paused = true;
+      pauseDepth++;
       await captureFrameNow();
       stopped = true;
       await promise;
