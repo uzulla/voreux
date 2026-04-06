@@ -1,14 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
-  ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
-  : fileURLToPath(new URL("../screenshots/", import.meta.url));
-
-if (!fs.existsSync(SHOTS_DIR)) {
-  fs.mkdirSync(SHOTS_DIR, { recursive: true });
-}
+const HOVER_MARKER_DURATION_MS = 700;
 
 export async function pollUntil(
   page: any,
@@ -43,7 +33,7 @@ async function showHoverMarker(
   label: string,
 ): Promise<void> {
   await page.evaluate(
-    (point: { x: number; y: number; label: string }) => {
+    (point: { x: number; y: number; label: string; durationMs: number }) => {
       const marker = document.createElement("div");
       marker.setAttribute("data-voreux-hover-marker", "true");
       marker.style.position = "fixed";
@@ -80,20 +70,26 @@ async function showHoverMarker(
       setTimeout(() => {
         marker.remove();
         pill.remove();
-      }, 700);
+      }, point.durationMs);
     },
-    { x, y, label },
+    { x, y, label, durationMs: HOVER_MARKER_DURATION_MS },
   );
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(HOVER_MARKER_DURATION_MS);
 }
 
 /**
  * docs ページ内には複数サンプルがあるため、最上部 preview の button-group を対象に固定する。
  */
-export async function getPrimaryButtonGroupButtons(
-  page: any,
-): Promise<
-  Array<{ text: string; x: number; y: number; width: number; height: number }>
+export async function getPrimaryButtonGroupButtons(page: any): Promise<
+  Array<{
+    text: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    ariaHaspopup: string | null;
+    ariaControls: string | null;
+  }>
 > {
   const buttons = await page.evaluate(() => {
     const preview = document.querySelector(
@@ -112,6 +108,8 @@ export async function getPrimaryButtonGroupButtons(
         y: r.y,
         width: r.width,
         height: r.height,
+        ariaHaspopup: target.getAttribute("aria-haspopup"),
+        ariaControls: target.getAttribute("aria-controls"),
       };
     });
   });
@@ -137,22 +135,18 @@ export async function hoverButtonByText(
   await page.hover(point.x, point.y);
 }
 
-export async function clickButtonByText(
-  page: any,
-  label: string,
-): Promise<void> {
-  const point = await getButtonClickPoint(page, (text) => text === label);
-  await page.click(point.x, point.y);
-}
-
 export async function getOverflowButtonClickPoint(
   page: any,
 ): Promise<{ x: number; y: number }> {
   const buttons = await getPrimaryButtonGroupButtons(page);
-  const overflow = buttons
-    .filter((entry) => entry.text === "")
-    .sort((a, b) => a.x - b.x)
-    .at(-1);
+  const overflow =
+    buttons.find((entry) => entry.ariaHaspopup === "menu") ??
+    buttons.find((entry) => Boolean(entry.ariaControls)) ??
+    buttons
+      .filter((entry) => entry.text === "")
+      .sort((a, b) => a.x - b.x)
+      .at(-1);
+
   if (!overflow) throw new Error("overflow button not found");
   return toCenterPoint(overflow);
 }
@@ -232,10 +226,11 @@ export async function getMenuState(
   page: any,
 ): Promise<{ visible: boolean; items: string[] }> {
   return page.evaluate(() => {
-    const content = Array.from(
-      document.querySelectorAll('[data-slot="dropdown-menu-content"]'),
-    ).find((el) => {
-      const target = el as HTMLElement;
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
       const cs = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
       return (
@@ -245,8 +240,14 @@ export async function getMenuState(
         rect.width > 0 &&
         rect.height > 0
       );
-    }) as HTMLElement | undefined;
-    if (!content) return { visible: false, items: [] };
+    });
+    if (visibleContents.length === 0) return { visible: false, items: [] };
+    if (visibleContents.length > 1) {
+      throw new Error(
+        `multiple visible dropdown-menu-content found: ${visibleContents.length}`,
+      );
+    }
+    const content = visibleContents[0];
     const items = Array.from(
       content.querySelectorAll(
         '[role="menuitem"], [role="menuitemcheckbox"], [data-slot="dropdown-menu-sub-trigger"]',
@@ -262,10 +263,11 @@ export async function getSubmenuState(
   page: any,
 ): Promise<{ visible: boolean; items: string[] }> {
   return page.evaluate(() => {
-    const contents = Array.from(
-      document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
-    ) as HTMLElement[];
-    const content = contents.find((target) => {
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
       const cs = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
       return (
@@ -276,7 +278,13 @@ export async function getSubmenuState(
         rect.height > 0
       );
     });
-    if (!content) return { visible: false, items: [] };
+    if (visibleContents.length === 0) return { visible: false, items: [] };
+    if (visibleContents.length > 1) {
+      throw new Error(
+        `multiple visible dropdown-menu-sub-content found: ${visibleContents.length}`,
+      );
+    }
+    const content = visibleContents[0];
     const items = Array.from(content.querySelectorAll('[role="menuitemradio"]'))
       .map((el) => (el.textContent || "").trim())
       .filter(Boolean);
@@ -286,10 +294,11 @@ export async function getSubmenuState(
 
 export async function hoverMenuItem(page: any, label: string): Promise<void> {
   const point = await page.evaluate((targetLabel: string) => {
-    const content = Array.from(
-      document.querySelectorAll('[data-slot="dropdown-menu-content"]'),
-    ).find((el) => {
-      const target = el as HTMLElement;
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
       const cs = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
       return (
@@ -299,7 +308,13 @@ export async function hoverMenuItem(page: any, label: string): Promise<void> {
         rect.width > 0 &&
         rect.height > 0
       );
-    }) as HTMLElement | undefined;
+    });
+    if (visibleContents.length > 1) {
+      throw new Error(
+        `multiple visible dropdown-menu-content found: ${visibleContents.length}`,
+      );
+    }
+    const content = visibleContents[0];
     const item = Array.from(
       content?.querySelectorAll('[data-slot="dropdown-menu-sub-trigger"]') ??
         [],
@@ -322,10 +337,11 @@ export async function getCheckedLabelState(page: any): Promise<{
   checkedLabel: string | null;
 }> {
   return page.evaluate(() => {
-    const contents = Array.from(
-      document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
-    ) as HTMLElement[];
-    const content = contents.find((target) => {
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
       const cs = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
       return (
@@ -336,6 +352,12 @@ export async function getCheckedLabelState(page: any): Promise<{
         rect.height > 0
       );
     });
+    if (visibleContents.length > 1) {
+      throw new Error(
+        `multiple visible dropdown-menu-sub-content found: ${visibleContents.length}`,
+      );
+    }
+    const content = visibleContents[0];
     if (!content) return { checkedLabel: null };
     const checked = Array.from(
       content.querySelectorAll('[role="menuitemradio"]'),
@@ -357,10 +379,11 @@ export async function getLabelOptionClickPoint(
   label: string,
 ): Promise<{ x: number; y: number }> {
   const point = await page.evaluate((targetLabel: string) => {
-    const contents = Array.from(
-      document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
-    ) as HTMLElement[];
-    const content = contents.find((target) => {
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-sub-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
       const cs = getComputedStyle(target);
       const rect = target.getBoundingClientRect();
       return (
@@ -371,6 +394,12 @@ export async function getLabelOptionClickPoint(
         rect.height > 0
       );
     });
+    if (visibleContents.length > 1) {
+      throw new Error(
+        `multiple visible dropdown-menu-sub-content found: ${visibleContents.length}`,
+      );
+    }
+    const content = visibleContents[0];
     const item = Array.from(
       content?.querySelectorAll('[role="menuitemradio"]') ?? [],
     ).find((el) => (el.textContent || "").trim() === targetLabel) as

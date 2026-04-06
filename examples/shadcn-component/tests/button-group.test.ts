@@ -11,6 +11,7 @@ import {
   getSubmenuState,
   hoverButtonByText,
   hoverMenuItem,
+  pollUntil,
   waitForMenusHidden,
   waitForMenuVisible,
   waitForSubmenuVisible,
@@ -29,16 +30,36 @@ defineScenarioSuite({
         await ctx.page.waitForSelector('[data-slot="preview"]', {
           timeout: 30_000,
         });
-        await ctx.page.waitForTimeout(3000);
+
+        const archiveReady = await pollUntil(
+          ctx.page,
+          async () => {
+            try {
+              await getButtonVisualState(ctx.page, "Archive");
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          5000,
+          100,
+        );
+        if (!archiveReady) {
+          throw new Error("Archive button did not become ready");
+        }
 
         const beforeHover = await getButtonVisualState(ctx.page, "Archive");
         await hoverButtonByText(ctx.page, "Archive");
-        await ctx.page.waitForTimeout(300);
-        const afterHover = await getButtonVisualState(ctx.page, "Archive");
-
-        expect(afterHover.backgroundColor).not.toBe(
-          beforeHover.backgroundColor,
+        const hoverApplied = await pollUntil(
+          ctx.page,
+          async () => {
+            const afterHover = await getButtonVisualState(ctx.page, "Archive");
+            return afterHover.backgroundColor !== beforeHover.backgroundColor;
+          },
+          2000,
+          100,
         );
+        expect(hoverApplied).toBe(true);
 
         const overflowPoint = await getOverflowButtonClickPoint(ctx.page);
         await ctx.annotateClick(
