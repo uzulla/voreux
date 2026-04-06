@@ -144,6 +144,7 @@ export function createTestContext(
       try {
         await recorder.captureFrameNow();
         await page.screenshot({ path: ssPath });
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await recorder.captureFrameNow();
       } finally {
         recorder.resume();

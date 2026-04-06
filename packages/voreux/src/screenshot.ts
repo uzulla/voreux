@@ -22,6 +22,8 @@ export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
  * スクリーンショット撮影ヘルパーを生成する。
  * 返り値の関数は名前を受け取ってスクリーンショットを保存し、ファイルパスを返す。
  */
+const POST_VRT_STABILIZE_MS = 100;
+
 export function createScreenshotHelper(
   page: any,
   dir: string,
@@ -37,6 +39,9 @@ export function createScreenshotHelper(
       } catch {
         await targetPage.screenshot({ path: filePath });
       }
+      await new Promise((resolve) =>
+        setTimeout(resolve, POST_VRT_STABILIZE_MS),
+      );
       await recorder?.captureFrameNow();
     } finally {
       recorder?.resume();
