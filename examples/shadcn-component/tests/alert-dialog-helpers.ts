@@ -59,8 +59,25 @@ export async function clickDialogAction(
   text: "Cancel" | "Continue",
 ): Promise<void> {
   const box = await page.evaluate((targetText: string) => {
-    const button = Array.from(document.querySelectorAll("button")).find(
-      (el) => (el.textContent || "").trim() === targetText,
+    const isVisible = (el: HTMLElement) => {
+      const cs = getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return (
+        cs.display !== "none" &&
+        cs.visibility !== "hidden" &&
+        cs.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const content = Array.from(
+      document.querySelectorAll('[data-slot="alert-dialog-content"]'),
+    ).find((el) => isVisible(el as HTMLElement)) as HTMLElement | undefined;
+    const button = Array.from(content?.querySelectorAll("button") ?? []).find(
+      (el) =>
+        (el.textContent || "").trim() === targetText &&
+        isVisible(el as HTMLElement),
     ) as HTMLElement | undefined;
     if (!button) return null;
     const r = button.getBoundingClientRect();
@@ -82,23 +99,27 @@ export async function getAlertDialogState(page: any): Promise<{
   title: string;
 }> {
   return page.evaluate(() => {
-    const content = document.querySelector(
-      '[data-slot="alert-dialog-content"]',
-    ) as HTMLElement | null;
-    const title = document.querySelector(
+    const isVisible = (el: HTMLElement) => {
+      const cs = getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return (
+        cs.display !== "none" &&
+        cs.visibility !== "hidden" &&
+        cs.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const content = Array.from(
+      document.querySelectorAll('[data-slot="alert-dialog-content"]'),
+    ).find((el) => isVisible(el as HTMLElement)) as HTMLElement | undefined;
+    const title = content?.querySelector(
       '[data-slot="alert-dialog-title"]',
     ) as HTMLElement | null;
     if (!content) return { visible: false, title: "" };
-    const cs = getComputedStyle(content);
-    const rect = content.getBoundingClientRect();
-    const visible =
-      cs.display !== "none" &&
-      cs.visibility !== "hidden" &&
-      cs.opacity !== "0" &&
-      rect.width > 0 &&
-      rect.height > 0;
     return {
-      visible,
+      visible: true,
       title: (title?.textContent || "").trim(),
     };
   });
@@ -134,22 +155,27 @@ export async function getOverlayVisualState(page: any): Promise<{
   backgroundColor: string;
 }> {
   return page.evaluate(() => {
-    const overlay = document.querySelector(
-      '[data-slot="alert-dialog-overlay"]',
-    ) as HTMLElement | null;
+    const isVisible = (el: HTMLElement) => {
+      const cs = getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return (
+        cs.display !== "none" &&
+        cs.visibility !== "hidden" &&
+        cs.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    };
+
+    const overlay = Array.from(
+      document.querySelectorAll('[data-slot="alert-dialog-overlay"]'),
+    ).find((el) => isVisible(el as HTMLElement)) as HTMLElement | undefined;
     if (!overlay) {
       return { visible: false, backdropFilter: "", backgroundColor: "" };
     }
     const cs = getComputedStyle(overlay);
-    const rect = overlay.getBoundingClientRect();
-    const visible =
-      cs.display !== "none" &&
-      cs.visibility !== "hidden" &&
-      cs.opacity !== "0" &&
-      rect.width > 0 &&
-      rect.height > 0;
     return {
-      visible,
+      visible: true,
       backdropFilter: cs.backdropFilter,
       backgroundColor: cs.backgroundColor,
     };
