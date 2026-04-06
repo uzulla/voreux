@@ -41,12 +41,8 @@ defineScenarioSuite({
           "alert-dialog-hidden",
         );
 
-        // 初期状態を人間が録画で認識しやすいよう 1 フレームぶん待つ。
-        await ctx.page.waitForTimeout(500);
         await clickShowDialog(ctx.page);
         await waitForDialogVisible(ctx.page);
-        // 開いた状態もすぐ次へ進まず、dialog 表示を認識できるよう少し残す。
-        await ctx.page.waitForTimeout(1200);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(true);
@@ -80,14 +76,11 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await ctx.page.waitForTimeout(500);
         await clickShowDialog(ctx.page);
         await waitForDialogVisible(ctx.page);
-        await ctx.page.waitForTimeout(700);
 
         await clickDialogAction(ctx.page, "Cancel");
         await waitForDialogHidden(ctx.page);
-        await ctx.page.waitForTimeout(800);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
@@ -102,14 +95,11 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await ctx.page.waitForTimeout(500);
         await clickShowDialog(ctx.page);
         await waitForDialogVisible(ctx.page);
-        await ctx.page.waitForTimeout(700);
 
         await clickDialogAction(ctx.page, "Continue");
         await waitForDialogHidden(ctx.page);
-        await ctx.page.waitForTimeout(800);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
@@ -124,14 +114,11 @@ defineScenarioSuite({
         });
         await ctx.page.waitForTimeout(3000);
 
-        await ctx.page.waitForTimeout(500);
         await clickShowDialog(ctx.page);
         await waitForDialogVisible(ctx.page);
-        await ctx.page.waitForTimeout(700);
 
         await dismissDialogWithEscape(ctx.page);
         await waitForDialogHidden(ctx.page);
-        await ctx.page.waitForTimeout(1200);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
