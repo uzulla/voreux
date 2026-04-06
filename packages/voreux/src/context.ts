@@ -183,11 +183,31 @@ export function createTestContext(
     },
 
     async annotateClick(x: number, y: number, label?: string) {
-      await annotatePoint(page, { x, y, label });
+      recorder.pause();
+      try {
+        await annotatePoint(
+          page,
+          { x, y, label },
+          {
+            onShown: () => recorder.captureFrameNow(),
+          },
+        );
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
     },
 
     async annotateKey(key: string) {
-      await annotateKeyHelper(page, key);
+      recorder.pause();
+      try {
+        await annotateKeyHelper(page, key, undefined, {
+          onShown: () => recorder.captureFrameNow(),
+        });
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
     },
 
     async highlightTarget(instruction: string, screenshotName: string) {

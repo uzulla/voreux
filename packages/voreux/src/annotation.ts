@@ -7,6 +7,7 @@ function sleep(ms: number): Promise<void> {
 export async function annotatePoint(
   page: Page,
   opts: { x: number; y: number; label?: string; durationMs?: number },
+  hooks?: { onShown?: () => Promise<void> | void },
 ): Promise<void> {
   const durationMs = opts.durationMs ?? 700;
   await page.evaluate(
@@ -56,6 +57,7 @@ export async function annotatePoint(
     },
     { ...opts, durationMs },
   );
+  await hooks?.onShown?.();
   await sleep(durationMs);
 }
 
@@ -63,6 +65,7 @@ export async function annotateKey(
   page: Page,
   key: string,
   durationMs = 1000,
+  hooks?: { onShown?: () => Promise<void> | void },
 ): Promise<void> {
   await page.evaluate(
     (payload: { key: string; durationMs: number }) => {
@@ -102,5 +105,6 @@ export async function annotateKey(
     },
     { key, durationMs },
   );
+  await hooks?.onShown?.();
   await sleep(durationMs);
 }
