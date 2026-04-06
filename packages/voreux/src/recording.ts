@@ -76,6 +76,8 @@ export function startRecording(
   };
 
   const capture = async () => {
+    // 録画開始時の状態を必ず 1 フレーム残す。
+    await captureFrameNow();
     while (!stopped) {
       if (!injecting && !paused) {
         await captureFrameNow();
@@ -104,6 +106,8 @@ export function startRecording(
       injecting = false;
     },
     stop: async () => {
+      paused = true;
+      await captureFrameNow();
       stopped = true;
       await promise;
       return frameIndex;

@@ -185,6 +185,7 @@ export function createTestContext(
     async annotateClick(x: number, y: number, label?: string) {
       recorder.pause();
       try {
+        await recorder.captureFrameNow();
         await annotatePoint(
           page,
           { x, y, label },
@@ -201,6 +202,7 @@ export function createTestContext(
     async annotateKey(key: string) {
       recorder.pause();
       try {
+        await recorder.captureFrameNow();
         await annotateKeyHelper(page, key, undefined, {
           onShown: () => recorder.captureFrameNow(),
         });
