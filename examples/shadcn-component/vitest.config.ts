@@ -8,8 +8,14 @@ export default defineConfig({
     maxWorkers: 1,
     isolate: false,
     testTimeout: 120_000,
-    // Stagehand の browser teardown がこの sample では重く、
-    // screenshots と複数 sample / 複数 step を含むと既定の hookTimeout を超えやすいためさらに長めにしている。
+    // hookTimeout を長めにしている理由:
+    // - Stagehand が headless browser runtime を使うことによる browser/context/page cleanup
+    // - Stagehand wrapper / session の後始末
+    // - screenshots / recordings の flush
+    // - 複数 sample / 複数 step を 1 package にまとめた teardown 集中
+    //
+    // 原因はまだ未特定だが、現時点では teardown cost が既定 hookTimeout を超えやすいため、
+    // 開発時の filter 実行を前提にしつつ長め設定を採用している。
     hookTimeout: 720_000,
     watch: false,
     reporters: ["verbose"],
