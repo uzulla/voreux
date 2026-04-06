@@ -145,14 +145,20 @@ export async function clickButtonByText(
   await page.click(point.x, point.y);
 }
 
-export async function clickOverflowButton(page: any): Promise<void> {
+export async function getOverflowButtonClickPoint(
+  page: any,
+): Promise<{ x: number; y: number }> {
   const buttons = await getPrimaryButtonGroupButtons(page);
   const overflow = buttons
     .filter((entry) => entry.text === "")
     .sort((a, b) => a.x - b.x)
     .at(-1);
   if (!overflow) throw new Error("overflow button not found");
-  const point = toCenterPoint(overflow);
+  return toCenterPoint(overflow);
+}
+
+export async function clickOverflowButton(page: any): Promise<void> {
+  const point = await getOverflowButtonClickPoint(page);
   await page.click(point.x, point.y);
 }
 

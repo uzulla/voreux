@@ -3,11 +3,11 @@ import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
 import {
   clickOverflowButton,
-  getButtonClickPoint,
   getButtonVisualState,
   getCheckedLabelState,
   getLabelOptionClickPoint,
   getMenuState,
+  getOverflowButtonClickPoint,
   getSubmenuState,
   hoverButtonByText,
   hoverMenuItem,
@@ -40,10 +40,7 @@ defineScenarioSuite({
           beforeHover.backgroundColor,
         );
 
-        const overflowPoint = await getButtonClickPoint(
-          ctx.page,
-          (text) => text === "",
-        );
+        const overflowPoint = await getOverflowButtonClickPoint(ctx.page);
         await ctx.annotateClick(
           overflowPoint.x,
           overflowPoint.y,
@@ -74,10 +71,7 @@ defineScenarioSuite({
         await ctx.page.click(workPoint.x, workPoint.y);
         await waitForMenusHidden(ctx.page);
 
-        const secondOverflowPoint = await getButtonClickPoint(
-          ctx.page,
-          (text) => text === "",
-        );
+        const secondOverflowPoint = await getOverflowButtonClickPoint(ctx.page);
         await ctx.annotateClick(
           secondOverflowPoint.x,
           secondOverflowPoint.y,
