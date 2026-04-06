@@ -151,45 +151,6 @@ export async function waitForDialogHidden(page: any): Promise<void> {
  * overlay の backdrop-filter / background を観測して、
  * ダイアログ表示中に背景がボケていることを確認する。
  */
-async function showKeyMarker(page: any, text: string): Promise<void> {
-  await page.evaluate((label: string) => {
-    const backdrop = document.createElement("div");
-    backdrop.setAttribute("data-voreux-key-marker-backdrop", "true");
-    backdrop.style.position = "fixed";
-    backdrop.style.inset = "0";
-    backdrop.style.background = "rgba(0, 0, 0, 0.22)";
-    backdrop.style.zIndex = "2147483646";
-    backdrop.style.pointerEvents = "none";
-
-    const marker = document.createElement("div");
-    marker.setAttribute("data-voreux-key-marker", "true");
-    marker.textContent = `⌨ ${label}`;
-    marker.style.position = "fixed";
-    marker.style.left = "50%";
-    marker.style.top = "50%";
-    marker.style.transform = "translate(-50%, -50%)";
-    marker.style.padding = "20px 28px";
-    marker.style.borderRadius = "16px";
-    marker.style.background = "rgba(17, 24, 39, 0.96)";
-    marker.style.color = "white";
-    marker.style.fontSize = "32px";
-    marker.style.fontWeight = "800";
-    marker.style.fontFamily = "ui-sans-serif, system-ui, sans-serif";
-    marker.style.letterSpacing = "0.02em";
-    marker.style.zIndex = "2147483647";
-    marker.style.pointerEvents = "none";
-    marker.style.boxShadow = "0 16px 40px rgba(0, 0, 0, 0.35)";
-
-    document.body.appendChild(backdrop);
-    document.body.appendChild(marker);
-    setTimeout(() => {
-      backdrop.remove();
-      marker.remove();
-    }, 1000);
-  }, text);
-  await page.waitForTimeout(1000);
-}
-
 export async function dismissDialogWithEscape(page: any): Promise<void> {
   await page.evaluate(() => {
     document.body.dispatchEvent(
