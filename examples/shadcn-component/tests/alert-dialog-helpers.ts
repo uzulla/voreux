@@ -46,12 +46,36 @@ export async function getShowDialogButtonBox(
   return box;
 }
 
+async function showClickMarker(page: any, x: number, y: number): Promise<void> {
+  await page.evaluate(
+    (point: { x: number; y: number }) => {
+      const marker = document.createElement("div");
+      marker.setAttribute("data-voreux-click-marker", "true");
+      marker.style.position = "fixed";
+      marker.style.left = `${point.x - 12}px`;
+      marker.style.top = `${point.y - 12}px`;
+      marker.style.width = "24px";
+      marker.style.height = "24px";
+      marker.style.borderRadius = "9999px";
+      marker.style.background = "rgba(239, 68, 68, 0.9)";
+      marker.style.border = "3px solid white";
+      marker.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.35)";
+      marker.style.zIndex = "2147483647";
+      marker.style.pointerEvents = "none";
+      document.body.appendChild(marker);
+      setTimeout(() => marker.remove(), 450);
+    },
+    { x, y },
+  );
+  await page.waitForTimeout(500);
+}
+
 export async function clickShowDialog(page: any): Promise<void> {
   const box = await getShowDialogButtonBox(page);
-  await page.click(
-    Math.round(box.x + box.width / 2),
-    Math.round(box.y + box.height / 2),
-  );
+  const x = Math.round(box.x + box.width / 2);
+  const y = Math.round(box.y + box.height / 2);
+  await showClickMarker(page, x, y);
+  await page.click(x, y);
 }
 
 export async function clickDialogAction(
@@ -84,10 +108,10 @@ export async function clickDialogAction(
     return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, text);
   if (!box) throw new Error(`dialog action not found: ${text}`);
-  await page.click(
-    Math.round(box.x + box.width / 2),
-    Math.round(box.y + box.height / 2),
-  );
+  const x = Math.round(box.x + box.width / 2);
+  const y = Math.round(box.y + box.height / 2);
+  await showClickMarker(page, x, y);
+  await page.click(x, y);
 }
 
 /**
