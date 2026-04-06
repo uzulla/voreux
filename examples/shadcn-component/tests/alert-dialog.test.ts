@@ -82,6 +82,7 @@ defineScenarioSuite({
 
         await clickDialogAction(ctx.page, "Cancel");
         await waitForDialogHidden(ctx.page);
+        await ctx.page.waitForTimeout(800);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
@@ -101,6 +102,7 @@ defineScenarioSuite({
 
         await clickDialogAction(ctx.page, "Continue");
         await waitForDialogHidden(ctx.page);
+        await ctx.page.waitForTimeout(800);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
@@ -120,6 +122,7 @@ defineScenarioSuite({
 
         await dismissDialogWithEscape(ctx.page);
         await waitForDialogHidden(ctx.page);
+        await ctx.page.waitForTimeout(1200);
 
         const dialog = await getAlertDialogState(ctx.page);
         expect(dialog.visible).toBe(false);
