@@ -6,6 +6,7 @@
 現在含んでいる sample:
 - carousel
 - tooltip
+- alert-dialog
 
 ## このディレクトリの方針
 
@@ -25,11 +26,6 @@
 - アニメーション完了を待って次操作へ進む
 - centered item / button state / 部分 VRT で human-perceivable state change を確認する
 
-主なファイル:
-- `tests/carousel.test.ts`
-- `tests/carousel-helpers.ts`
-- `tests/visual-compare.ts`
-
 ### tooltip
 
 対象:
@@ -40,13 +36,36 @@
 - 部分 VRT で hidden → visible の変化を確認する
 - pointer を外したあと tooltip が消えるところまで確認する
 
-主なファイル:
-- `tests/tooltip.test.ts`
-- `tests/tooltip-helpers.ts`
-- `tests/tooltip-visual-compare.ts`
+### alert-dialog
+
+対象:
+- `https://ui.shadcn.com/docs/components/radix/alert-dialog`
+
+見せたいこと:
+- click で alert dialog が開くこと
+- dialog 表示中は overlay によって背景がボケること
+- `Cancel` / `Continue` / `Escape` のいずれでも dialog を閉じられること
+- hidden → visible の変化を部分 VRT で確認すること
 
 ## 実行
 
 ```bash
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
+
+## 補足
+
+この sample 群では、suite 終了時の `hookTimeout` を長めにしています。
+
+理由はまだ原因未特定ですが、少なくとも次の層が候補です。
+
+- Stagehand が headless browser runtime を使うことによる browser/context/page cleanup
+- Stagehand wrapper / session の後始末
+- screenshot / recording の flush
+- 複数 sample を 1 package にまとめたことによる teardown 集中
+
+そのため現時点では、完全原因特定よりも
+- `hookTimeout` を長めに取る
+- 開発時は filter で対象 sample だけを見る
+
+運用を優先しています。

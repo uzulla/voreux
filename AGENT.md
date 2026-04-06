@@ -83,6 +83,29 @@ Move UI-specific mechanics into helper files, especially when they involve:
 
 But do not hide the purpose of the test inside helpers.
 
+### 2.5. Grow helpers in this order: group → case → framework
+
+When a helper pattern seems reusable, do **not** rush it straight into the framework.
+
+Preferred incubation order:
+
+1. **test group**
+   - first let it live inside a focused group such as `examples/shadcn-component`
+   - confirm the pattern is genuinely recurring
+2. **test case family**
+   - then reuse it across multiple cases in that same group
+   - refine naming and scope based on actual usage
+3. **framework**
+   - only after it proves stable and broadly useful should it move into shared framework APIs
+
+Why this matters:
+
+- premature abstraction creates weak framework APIs
+- local duplication is often acceptable while patterns are still being discovered
+- samples in this repo are also executable design probes for future framework improvements
+
+In short: **brew helpers locally first, then promote them upward when the pattern is real**.
+
 ### 3. Samples are documentation
 
 For this repo, examples are expected to be readable by humans trying to learn how to author tests.
@@ -106,6 +129,27 @@ Examples:
 - a partial screenshot changed enough to be meaningful
 
 A passing test that only proves a weak internal detail is often not good enough here.
+
+### 4.5. Important actions should be understandable to a human observer
+
+When a sample is likely to be watched by a human (for example through a recording, demo video, or review artifact), the important actions should be recognizable.
+
+Especially consider making these visible when they matter to understanding the sample:
+
+- which button was clicked
+- which dismiss action was used
+- which key was pressed
+- which action caused a state transition
+
+Typical ways to do this:
+
+- click markers
+- key markers
+- action labels such as `Click: Continue`
+- comments in helper code explaining why such markers exist
+
+Do **not** add random waits just to make a video nicer.
+If visibility for humans is important, prefer explicit markers or capture-side improvements over distorting the test flow.
 
 ## Hosted docs / demo pages: expected complications
 
