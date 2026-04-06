@@ -83,6 +83,29 @@ Move UI-specific mechanics into helper files, especially when they involve:
 
 But do not hide the purpose of the test inside helpers.
 
+### 2.5. Grow helpers in this order: group → case → framework
+
+When a helper pattern seems reusable, do **not** rush it straight into the framework.
+
+Preferred incubation order:
+
+1. **test group**
+   - first let it live inside a focused group such as `examples/shadcn-component`
+   - confirm the pattern is genuinely recurring
+2. **test case family**
+   - then reuse it across multiple cases in that same group
+   - refine naming and scope based on actual usage
+3. **framework**
+   - only after it proves stable and broadly useful should it move into shared framework APIs
+
+Why this matters:
+
+- premature abstraction creates weak framework APIs
+- local duplication is often acceptable while patterns are still being discovered
+- samples in this repo are also executable design probes for future framework improvements
+
+In short: **brew helpers locally first, then promote them upward when the pattern is real**.
+
 ### 3. Samples are documentation
 
 For this repo, examples are expected to be readable by humans trying to learn how to author tests.
