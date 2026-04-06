@@ -7,6 +7,7 @@
 - carousel
 - tooltip
 - alert-dialog
+- button-group
 
 ## このディレクトリの方針
 
@@ -46,6 +47,17 @@
 - dialog 表示中は overlay によって背景がボケること
 - `Cancel` / `Continue` / `Escape` のいずれでも dialog を閉じられること
 - hidden → visible の変化を部分 VRT で確認すること
+
+### button-group
+
+対象:
+- `https://ui.shadcn.com/docs/components/radix/button-group`
+
+見せたいこと:
+- hover で button の visual state が変わること
+- overflow (`…`) から dropdown menu が開くこと
+- `Label As...` hover で submenu が開くこと
+- checked state が `Personal` から `Work` へ移ること
 
 ## 実行
 
