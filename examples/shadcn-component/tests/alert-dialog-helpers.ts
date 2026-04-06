@@ -173,7 +173,32 @@ export async function waitForDialogHidden(page: any): Promise<void> {
  * overlay の backdrop-filter / background を観測して、
  * ダイアログ表示中に背景がボケていることを確認する。
  */
+async function showKeyMarker(page: any, text: string): Promise<void> {
+  await page.evaluate((label: string) => {
+    const marker = document.createElement("div");
+    marker.setAttribute("data-voreux-key-marker", "true");
+    marker.textContent = `Key: ${label}`;
+    marker.style.position = "fixed";
+    marker.style.right = "24px";
+    marker.style.top = "24px";
+    marker.style.padding = "10px 14px";
+    marker.style.borderRadius = "12px";
+    marker.style.background = "rgba(17, 24, 39, 0.92)";
+    marker.style.color = "white";
+    marker.style.fontSize = "18px";
+    marker.style.fontWeight = "700";
+    marker.style.fontFamily = "ui-sans-serif, system-ui, sans-serif";
+    marker.style.zIndex = "2147483647";
+    marker.style.pointerEvents = "none";
+    marker.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.25)";
+    document.body.appendChild(marker);
+    setTimeout(() => marker.remove(), 700);
+  }, text);
+  await page.waitForTimeout(700);
+}
+
 export async function dismissDialogWithEscape(page: any): Promise<void> {
+  await showKeyMarker(page, "Escape");
   await page.evaluate(() => {
     document.body.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
