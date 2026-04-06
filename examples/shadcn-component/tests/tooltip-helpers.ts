@@ -2,14 +2,25 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// screenshot 出力先は env で差し替えられるようにしつつ、
+// sample 単体でそのまま読んでも分かるよう既定値もローカルに持つ。
 const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
   ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
   : fileURLToPath(new URL("../screenshots/", import.meta.url));
 
+// sample は「そのまま動かして読める教材」でありたいので、
+// 出力先ディレクトリの事前作成も helper 側で面倒を見る。
 if (!fs.existsSync(SHOTS_DIR)) {
   fs.mkdirSync(SHOTS_DIR, { recursive: true });
 }
 
+/**
+ * 条件成立まで待つ最小 polling helper。
+ *
+ * tooltip は「要素があるか」だけでは足りず、hover 後の visible / hidden の
+ * 状態遷移そのものを観測したいので、この sample では waitForSelector よりも
+ * poll ベースの待機を主軸にしている。
+ */
 export async function pollUntil(
   page: any,
   fn: () => Promise<boolean>,
@@ -46,6 +57,14 @@ export async function getTooltipTriggerBox(
   return box;
 }
 
+/**
+ * tooltip trigger に hover する。
+ *
+ * Stagehand の座標 hover を基本にしつつ、hosted docs 上で hover 起点の UI が
+ * 取りこぼされないように page.evaluate で pointer / mouse 系 event も補強する。
+ * ここは「通常の button click sample」と違って、hover 起点コンポーネント特有の
+ * 実装上のクセを集約している。
+ */
 export async function hoverTooltipTrigger(page: any): Promise<void> {
   const box = await getTooltipTriggerBox(page);
   await page.hover(
@@ -74,6 +93,16 @@ export async function hoverTooltipTrigger(page: any): Promise<void> {
   });
 }
 
+/**
+ * pointer を tooltip trigger から外す。
+ *
+ * docs 上の tooltip は pointer leave だけでなく focus / dismiss 系の影響も受けるため、
+ * この helper では
+ * - 画面端への hover
+ * - そこへの click
+ * - leave / blur / Escape の補助 event
+ * をまとめて扱い、「消えること」を安定して再現する。
+ */
 export async function movePointerAway(page: any): Promise<void> {
   await page.hover(10, 10);
   await page.click(10, 10);
@@ -103,6 +132,12 @@ export async function movePointerAway(page: any): Promise<void> {
   });
 }
 
+/**
+ * tooltip が見える状態になるまで待つ。
+ *
+ * ここで見ているのは DOM の存在ではなく、getTooltipState() が返す
+ * human-perceivable な visible 状態である。
+ */
 export async function waitForTooltipVisible(page: any): Promise<void> {
   const ok = await pollUntil(
     page,
@@ -116,6 +151,12 @@ export async function waitForTooltipVisible(page: any): Promise<void> {
   if (!ok) throw new Error("tooltip did not become visible");
 }
 
+/**
+ * tooltip が消えた状態になるまで待つ。
+ *
+ * 「表示される」だけでなく「消える」まで見て初めて tooltip の E2E として
+ * 使い物になるため、この helper を独立させている。
+ */
 export async function waitForTooltipHidden(page: any): Promise<void> {
   const ok = await pollUntil(
     page,
@@ -129,6 +170,19 @@ export async function waitForTooltipHidden(page: any): Promise<void> {
   if (!ok) throw new Error("tooltip did not become hidden");
 }
 
+/**
+ * tooltip の知覚可能な状態を取得する。
+ *
+ * この sample では、単に tooltip content node が存在するかではなく、
+ * - display
+ * - visibility
+ * - opacity
+ * - rect size
+ * を組み合わせて「人間が見えているか」を判定する。
+ *
+ * また、docs ページには複数の tooltip があるため、文言 `Add to library` を含む
+ * content に対象を絞っている。
+ */
 export async function getTooltipState(page: any): Promise<{
   visible: boolean;
   text: string;
@@ -171,6 +225,9 @@ export async function screenshotTooltipRegion(
 ): Promise<string> {
   const box = await getTooltipTriggerBox(page);
 
+  // hidden / visible の両方で同じ比較領域を使いたいため、
+  // tooltip content の実矩形ではなく trigger 基準の固定 clip を切り出す。
+  // これにより VRT 時の image size mismatch を避けやすくしている。
   const filePath = path.join(SHOTS_DIR, `${name}.png`);
   await page.screenshot({
     path: filePath,
