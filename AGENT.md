@@ -130,6 +130,27 @@ Examples:
 
 A passing test that only proves a weak internal detail is often not good enough here.
 
+### 4.5. Important actions should be understandable to a human observer
+
+When a sample is likely to be watched by a human (for example through a recording, demo video, or review artifact), the important actions should be recognizable.
+
+Especially consider making these visible when they matter to understanding the sample:
+
+- which button was clicked
+- which dismiss action was used
+- which key was pressed
+- which action caused a state transition
+
+Typical ways to do this:
+
+- click markers
+- key markers
+- action labels such as `Click: Continue`
+- comments in helper code explaining why such markers exist
+
+Do **not** add random waits just to make a video nicer.
+If visibility for humans is important, prefer explicit markers or capture-side improvements over distorting the test flow.
+
 ## Hosted docs / demo pages: expected complications
 
 Many samples in this repo target public hosted docs pages.
