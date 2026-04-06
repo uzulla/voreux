@@ -9,8 +9,8 @@ export default defineConfig({
     isolate: false,
     testTimeout: 120_000,
     // Stagehand の browser teardown がこの sample では重く、
-    // screenshots と複数 step を含むと既定の hookTimeout を超えやすかったため長めにしている。
-    hookTimeout: 420_000,
+    // screenshots と複数 sample / 複数 step を含むと既定の hookTimeout を超えやすいためさらに長めにしている。
+    hookTimeout: 720_000,
     watch: false,
     reporters: ["verbose"],
   },
