@@ -26,11 +26,6 @@
 - アニメーション完了を待って次操作へ進む
 - centered item / button state / 部分 VRT で human-perceivable state change を確認する
 
-主なファイル:
-- `tests/carousel.test.ts`
-- `tests/carousel-helpers.ts`
-- `tests/visual-compare.ts`
-
 ### tooltip
 
 対象:
@@ -40,11 +35,6 @@
 - hover で表示される tooltip を扱う
 - 部分 VRT で hidden → visible の変化を確認する
 - pointer を外したあと tooltip が消えるところまで確認する
-
-主なファイル:
-- `tests/tooltip.test.ts`
-- `tests/tooltip-helpers.ts`
-- `tests/tooltip-visual-compare.ts`
 
 ### alert-dialog
 
@@ -56,11 +46,6 @@
 - dialog 表示中は overlay によって背景がボケること
 - `Cancel` / `Continue` のどちらでも dialog を閉じられること
 - hidden → visible の変化を部分 VRT で確認すること
-
-主なファイル:
-- `tests/alert-dialog.test.ts`
-- `tests/alert-dialog-helpers.ts`
-- `tests/alert-dialog-visual-compare.ts`
 
 ## 実行
 

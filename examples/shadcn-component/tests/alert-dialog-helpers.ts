@@ -191,14 +191,29 @@ export async function screenshotAlertDialogRegion(
   name: string,
 ): Promise<string> {
   const box = await getShowDialogButtonBox(page);
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  const x = Math.min(
+    Math.max(0, Math.round(box.x - 160)),
+    Math.max(0, viewport.width - 1),
+  );
+  const y = Math.min(
+    Math.max(0, Math.round(box.y - 120)),
+    Math.max(0, viewport.height - 1),
+  );
+  const width = Math.max(1, Math.min(420, viewport.width - x));
+  const height = Math.max(1, Math.min(320, viewport.height - y));
+
   const filePath = path.join(SHOTS_DIR, `${name}.png`);
   await page.screenshot({
     path: filePath,
     clip: {
-      x: Math.max(0, Math.round(box.x - 160)),
-      y: Math.max(0, Math.round(box.y - 120)),
-      width: 420,
-      height: 320,
+      x,
+      y,
+      width,
+      height,
     },
   });
   return filePath;
