@@ -2,10 +2,11 @@ import type { TestContext } from "@uzulla/voreux";
 import { defineScenarioSuite } from "@uzulla/voreux";
 import { expect } from "vitest";
 import {
-  clickCheckedLabelOption,
   clickOverflowButton,
+  getButtonClickPoint,
   getButtonVisualState,
   getCheckedLabelState,
+  getLabelOptionClickPoint,
   getMenuState,
   getSubmenuState,
   hoverButtonByText,
@@ -39,6 +40,15 @@ defineScenarioSuite({
           beforeHover.backgroundColor,
         );
 
+        const overflowPoint = await getButtonClickPoint(
+          ctx.page,
+          (text) => text === "",
+        );
+        await ctx.annotateClick(
+          overflowPoint.x,
+          overflowPoint.y,
+          "Click: Overflow menu",
+        );
         await clickOverflowButton(ctx.page);
         await waitForMenuVisible(ctx.page);
         const menu = await getMenuState(ctx.page);
@@ -59,9 +69,20 @@ defineScenarioSuite({
         const checkedBefore = await getCheckedLabelState(ctx.page);
         expect(checkedBefore.checkedLabel).toContain("Personal");
 
-        await clickCheckedLabelOption(ctx.page, "Work");
+        const workPoint = await getLabelOptionClickPoint(ctx.page, "Work");
+        await ctx.annotateClick(workPoint.x, workPoint.y, "Click: Work");
+        await ctx.page.click(workPoint.x, workPoint.y);
         await waitForMenusHidden(ctx.page);
 
+        const secondOverflowPoint = await getButtonClickPoint(
+          ctx.page,
+          (text) => text === "",
+        );
+        await ctx.annotateClick(
+          secondOverflowPoint.x,
+          secondOverflowPoint.y,
+          "Click: Overflow menu",
+        );
         await clickOverflowButton(ctx.page);
         await waitForMenuVisible(ctx.page);
         await hoverMenuItem(ctx.page, "Label As...");
