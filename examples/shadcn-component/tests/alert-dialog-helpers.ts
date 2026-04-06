@@ -46,70 +46,20 @@ export async function getShowDialogButtonBox(
   return box;
 }
 
-async function showClickMarker(
+export async function getShowDialogClickPoint(
   page: any,
-  x: number,
-  y: number,
-  label = "Click",
-): Promise<void> {
-  await page.evaluate(
-    (point: { x: number; y: number; label: string }) => {
-      const marker = document.createElement("div");
-      marker.setAttribute("data-voreux-click-marker", "true");
-      marker.style.position = "fixed";
-      marker.style.left = `${point.x - 14}px`;
-      marker.style.top = `${point.y - 14}px`;
-      marker.style.width = "28px";
-      marker.style.height = "28px";
-      marker.style.borderRadius = "9999px";
-      marker.style.background = "rgba(239, 68, 68, 0.95)";
-      marker.style.border = "3px solid white";
-      marker.style.boxShadow = "0 0 0 6px rgba(239, 68, 68, 0.28)";
-      marker.style.zIndex = "2147483647";
-      marker.style.pointerEvents = "none";
-
-      const pill = document.createElement("div");
-      pill.setAttribute("data-voreux-click-marker-label", "true");
-      pill.textContent = point.label;
-      pill.style.position = "fixed";
-      pill.style.left = "50%";
-      pill.style.bottom = "32px";
-      pill.style.transform = "translateX(-50%)";
-      pill.style.padding = "10px 14px";
-      pill.style.borderRadius = "9999px";
-      pill.style.background = "rgba(239, 68, 68, 0.95)";
-      pill.style.color = "white";
-      pill.style.fontSize = "18px";
-      pill.style.fontWeight = "800";
-      pill.style.fontFamily = "ui-sans-serif, system-ui, sans-serif";
-      pill.style.zIndex = "2147483647";
-      pill.style.pointerEvents = "none";
-      pill.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.25)";
-
-      document.body.appendChild(marker);
-      document.body.appendChild(pill);
-      setTimeout(() => {
-        marker.remove();
-        pill.remove();
-      }, 700);
-    },
-    { x, y, label },
-  );
-  await page.waitForTimeout(700);
-}
-
-export async function clickShowDialog(page: any): Promise<void> {
+): Promise<{ x: number; y: number }> {
   const box = await getShowDialogButtonBox(page);
-  const x = Math.round(box.x + box.width / 2);
-  const y = Math.round(box.y + box.height / 2);
-  await showClickMarker(page, x, y, "Click: Show Dialog");
-  await page.click(x, y);
+  return {
+    x: Math.round(box.x + box.width / 2),
+    y: Math.round(box.y + box.height / 2),
+  };
 }
 
-export async function clickDialogAction(
+export async function getDialogActionClickPoint(
   page: any,
   text: "Cancel" | "Continue",
-): Promise<void> {
+): Promise<{ x: number; y: number }> {
   const box = await page.evaluate((targetText: string) => {
     const isVisible = (el: HTMLElement) => {
       const cs = getComputedStyle(el);
@@ -136,10 +86,10 @@ export async function clickDialogAction(
     return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, text);
   if (!box) throw new Error(`dialog action not found: ${text}`);
-  const x = Math.round(box.x + box.width / 2);
-  const y = Math.round(box.y + box.height / 2);
-  await showClickMarker(page, x, y, `Click: ${text}`);
-  await page.click(x, y);
+  return {
+    x: Math.round(box.x + box.width / 2),
+    y: Math.round(box.y + box.height / 2),
+  };
 }
 
 /**
@@ -201,47 +151,7 @@ export async function waitForDialogHidden(page: any): Promise<void> {
  * overlay の backdrop-filter / background を観測して、
  * ダイアログ表示中に背景がボケていることを確認する。
  */
-async function showKeyMarker(page: any, text: string): Promise<void> {
-  await page.evaluate((label: string) => {
-    const backdrop = document.createElement("div");
-    backdrop.setAttribute("data-voreux-key-marker-backdrop", "true");
-    backdrop.style.position = "fixed";
-    backdrop.style.inset = "0";
-    backdrop.style.background = "rgba(0, 0, 0, 0.22)";
-    backdrop.style.zIndex = "2147483646";
-    backdrop.style.pointerEvents = "none";
-
-    const marker = document.createElement("div");
-    marker.setAttribute("data-voreux-key-marker", "true");
-    marker.textContent = `⌨ ${label}`;
-    marker.style.position = "fixed";
-    marker.style.left = "50%";
-    marker.style.top = "50%";
-    marker.style.transform = "translate(-50%, -50%)";
-    marker.style.padding = "20px 28px";
-    marker.style.borderRadius = "16px";
-    marker.style.background = "rgba(17, 24, 39, 0.96)";
-    marker.style.color = "white";
-    marker.style.fontSize = "32px";
-    marker.style.fontWeight = "800";
-    marker.style.fontFamily = "ui-sans-serif, system-ui, sans-serif";
-    marker.style.letterSpacing = "0.02em";
-    marker.style.zIndex = "2147483647";
-    marker.style.pointerEvents = "none";
-    marker.style.boxShadow = "0 16px 40px rgba(0, 0, 0, 0.35)";
-
-    document.body.appendChild(backdrop);
-    document.body.appendChild(marker);
-    setTimeout(() => {
-      backdrop.remove();
-      marker.remove();
-    }, 1000);
-  }, text);
-  await page.waitForTimeout(1000);
-}
-
 export async function dismissDialogWithEscape(page: any): Promise<void> {
-  await showKeyMarker(page, "Escape");
   await page.evaluate(() => {
     document.body.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),

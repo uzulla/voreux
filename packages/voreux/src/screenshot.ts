@@ -2,6 +2,19 @@ import fs from "fs";
 import path from "path";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
+import type { Recorder } from "./recording.js";
+
+export class ImageSizeMismatchError extends Error {
+  constructor(
+    public currentSize: { width: number; height: number },
+    public baselineSize: { width: number; height: number },
+  ) {
+    super(
+      `Image size mismatch: current=${currentSize.width}x${currentSize.height}, baseline=${baselineSize.width}x${baselineSize.height}`,
+    );
+    this.name = "ImageSizeMismatchError";
+  }
+}
 
 export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
 
@@ -9,13 +22,29 @@ export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
  * スクリーンショット撮影ヘルパーを生成する。
  * 返り値の関数は名前を受け取ってスクリーンショットを保存し、ファイルパスを返す。
  */
-export function createScreenshotHelper(page: any, dir: string): ScreenshotFn {
+const POST_VRT_STABILIZE_MS = 100;
+
+export function createScreenshotHelper(
+  page: any,
+  dir: string,
+  recorder?: Recorder,
+): ScreenshotFn {
   return async (name: string, targetPage = page) => {
     const filePath = path.join(dir, `${name}.png`);
+    recorder?.pause();
     try {
-      await targetPage.screenshot({ path: filePath, fullPage: true });
-    } catch {
-      await targetPage.screenshot({ path: filePath });
+      await recorder?.captureFrameNow();
+      try {
+        await targetPage.screenshot({ path: filePath, fullPage: true });
+      } catch {
+        await targetPage.screenshot({ path: filePath });
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, POST_VRT_STABILIZE_MS),
+      );
+      await recorder?.captureFrameNow();
+    } finally {
+      recorder?.resume();
     }
     return filePath;
   };
@@ -39,9 +68,11 @@ export function compareWithBaseline(
   const img1 = PNG.sync.read(fs.readFileSync(currentPath));
   const img2 = PNG.sync.read(fs.readFileSync(baselinePath));
 
-  // サイズが異なる場合は大幅な変化とみなす
   if (img1.width !== img2.width || img1.height !== img2.height) {
-    return { mismatchRatio: 1, diffSaved: false, skipped: false };
+    throw new ImageSizeMismatchError(
+      { width: img1.width, height: img1.height },
+      { width: img2.width, height: img2.height },
+    );
   }
 
   const { width, height } = img1;
@@ -56,6 +87,10 @@ export function compareWithBaseline(
   );
 
   const mismatchRatio = numDiffPixels / (width * height);
+  const diffDir = path.dirname(opts.diffPath);
+  if (!fs.existsSync(diffDir)) {
+    fs.mkdirSync(diffDir, { recursive: true });
+  }
   fs.writeFileSync(opts.diffPath, PNG.sync.write(diff));
   return { mismatchRatio, diffSaved: true, skipped: false };
 }

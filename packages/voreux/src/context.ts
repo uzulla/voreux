@@ -1,5 +1,9 @@
 import type { Stagehand } from "@browserbasehq/stagehand";
 import path from "path";
+import {
+  annotateKey as annotateKeyHelper,
+  annotatePoint,
+} from "./annotation.js";
 import { frameworkConfig } from "./config.js";
 import {
   highlightElement,
@@ -63,6 +67,25 @@ export interface TestContext {
 
   /** observe() 結果を一括ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
   highlightObserved: (actions: any[], screenshotName: string) => Promise<void>;
+
+  /**
+   * click しようとしている位置を人間向けに可視化する。
+   *
+   * 用途:
+   * - 録画や demo で「どこを押したのか」を分かりやすくする
+   * - action label (`Click: Continue` など) を録画へ載せる
+   * - annotation 前後に boundary frame を打ち、interval capture 任せにしない
+   */
+  annotateClick: (x: number, y: number, label?: string) => Promise<void>;
+
+  /**
+   * key 操作を人間向けに可視化する。
+   *
+   * 用途:
+   * - `Escape` など keyboard dismiss の意図を録画で追えるようにする
+   * - annotation 前後に boundary frame を打ち、短い key 操作を取りこぼしにくくする
+   */
+  annotateKey: (key: string) => Promise<void>;
 
   /** observe() で要素を探し、単一ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
   highlightTarget: (
@@ -130,7 +153,15 @@ export function createTestContext(
 
     async assertNoVisualRegression(baselineName: string) {
       const ssPath = path.join(SCREENSHOT_DIR, `${baselineName}.png`);
-      await page.screenshot({ path: ssPath });
+      recorder.pause();
+      try {
+        await recorder.captureFrameNow();
+        await page.screenshot({ path: ssPath });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
       lastComparisonSsPath = ssPath;
 
       const diffPath = path.join(SCREENSHOT_DIR, `${baselineName}-diff.png`);
@@ -162,6 +193,43 @@ export function createTestContext(
         );
       } finally {
         await removeHighlights(page);
+      }
+    },
+
+    async annotateClick(x: number, y: number, label?: string) {
+      // 期待する録画順序:
+      // 1. 操作前の素の状態を 1 frame
+      // 2. annotation 付き状態を 1 frame
+      // 3. annotation 消失後も 1 frame
+      // これにより click が何を指していたかを動画で追いやすくする。
+      recorder.pause();
+      try {
+        await recorder.captureFrameNow();
+        await annotatePoint(
+          page,
+          { x, y, label },
+          {
+            onShown: () => recorder.captureFrameNow(),
+          },
+        );
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
+    },
+
+    async annotateKey(key: string) {
+      // key annotation も click と同じく、操作前 / annotation 中 / 復帰後の
+      // 境界 frame を明示して短い keyboard 操作を録画に残しやすくする。
+      recorder.pause();
+      try {
+        await recorder.captureFrameNow();
+        await annotateKeyHelper(page, key, undefined, {
+          onShown: () => recorder.captureFrameNow(),
+        });
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
       }
     },
 

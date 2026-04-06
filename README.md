@@ -110,6 +110,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/swagger-editor/tests/monaco-helpers.ts`
 - `examples/shadcn-component/tests/carousel.test.ts`
 - `examples/shadcn-component/tests/tooltip.test.ts`
+- `examples/shadcn-component/tests/alert-dialog.test.ts`
 
 特に Monaco のような特殊 widget を扱う場合、
 「Playwright らしい locator 操作」よりも、**Stagehand page で実際に通る最小手段** を優先してください。
@@ -138,6 +139,7 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 - `examples/shadcn-component` に shadcn UI サンプル群をまとめる
   - carousel: カルーセル操作 + アニメーション待機
   - tooltip: hover tooltip + 表示/非表示 VRT
+  - alert-dialog: click で dialog 表示 + overlay blur + close actions
 
 この構成のため、workspace 内で開発・検証する場合は以下の手順でセットアップします。
 
@@ -185,7 +187,8 @@ cp examples/shadcn-component/.env.example examples/shadcn-component/.env
     └── shadcn-component/   shadcn UI サンプル群
         └── tests/
             ├── carousel.test.ts
-            └── tooltip.test.ts
+            ├── tooltip.test.ts
+            └── alert-dialog.test.ts
 ```
 
 ## 公開されている型・関数
@@ -222,6 +225,33 @@ pnpm --filter @voreux/example-petstore-swagger-ui e2e
 # shadcn-component サンプル群を直接実行
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
+
+## Recording / annotation helpers for developers
+
+Voreux now has framework-level human-visible action annotations.
+Use these when a sample is likely to be watched by a human in a recording or demo artifact.
+
+Available from `TestContext`:
+- `ctx.annotateClick(x, y, label?)`
+- `ctx.annotateKey(key)`
+
+Intended behavior:
+- leave a frame before the action annotation
+- leave a frame with the annotation visible
+- leave a frame after the annotation disappears
+- reduce dependence on interval timing alone for human-readable recordings
+
+VRT-related screenshots also coordinate with recording now:
+- a boundary frame is captured before the screenshot
+- interval capture is paused during the screenshot
+- a short stabilization wait is applied after the screenshot
+- a boundary frame is captured before interval capture resumes
+
+See:
+- `packages/voreux/src/context.ts`
+- `packages/voreux/src/annotation.ts`
+- `packages/voreux/src/recording.ts`
+- `packages/voreux/src/screenshot.ts`
 
 ## npm 公開について
 

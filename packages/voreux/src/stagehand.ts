@@ -49,7 +49,6 @@ export async function initStagehand(originUrl: string): Promise<{
   await stagehand.init();
   const page = stagehand.context.pages()[0];
 
-  const screenshotFn = createScreenshotHelper(page, SCREENSHOT_DIR);
   const recorder = ffmpegAvailable
     ? startRecording(
         page,
@@ -57,6 +56,7 @@ export async function initStagehand(originUrl: string): Promise<{
         frameworkConfig.videoRecording.frameIntervalMs,
       )
     : createNoopRecorder();
+  const screenshotFn = createScreenshotHelper(page, SCREENSHOT_DIR, recorder);
 
   const ctx = createTestContext(
     stagehand,

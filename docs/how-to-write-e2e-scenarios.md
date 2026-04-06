@@ -203,6 +203,11 @@ await ctx.screenshot("02-after-login");
 await ctx.screenshot("new-tab", newPage);
 ```
 
+補足:
+- VRT や説明用 screenshot の前後では、recording 側で boundary frame を入れるようになっています
+- screenshot 中は interval capture を一時停止し、完了後に短い stabilization wait を置いてから recording を再開します
+- そのため、動画と VRT screenshot が干渉しにくくなることを狙っています
+
 
 ### `ctx.actAndWaitForNav(instruction, urlPattern)`
 
@@ -216,6 +221,37 @@ const nextPage = await ctx.actAndWaitForNav(
 await ctx.screenshot("03-github", nextPage);
 ```
 
+
+### `ctx.annotateClick(x, y, label?)`
+
+録画や demo artifact で、**どこをクリックしたのか** を人間に分かるようにします。
+
+```ts
+await ctx.annotateClick(420, 380, "Click: Continue");
+await ctx.page.click(420, 380);
+```
+
+意図:
+- click 位置を marker で見せる
+- `Click: Continue` のような action label を見せる
+- annotation 前後に boundary frame を打ち、短い操作も録画へ残しやすくする
+
+### `ctx.annotateKey(key)`
+
+録画や demo artifact で、**どのキーを押したのか** を人間に分かるようにします。
+
+```ts
+await ctx.annotateKey("Escape");
+await ctx.page.evaluate(() => {
+  document.body.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+});
+```
+
+意図:
+- keyboard dismiss や shortcut を録画で追いやすくする
+- key 操作の直前/直後の boundary frame を残しやすくする
 
 ### `ctx.highlightObserved(actions, screenshotName)`
 
