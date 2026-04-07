@@ -50,7 +50,7 @@ Do not push sample-specific DOM lookup into framework helpers.
 
 Promote in this order:
 1. group/sample helper
-2. case pattern reused in multiple places
+2. test case family reused in multiple places
 3. framework helper
 
 ## Good candidates for framework promotion
