@@ -240,7 +240,7 @@ defineScenarioSuite({
         // 初期選択日（today）を記憶
         const originalDay = await getSelectedDay(ctx.page);
         expect(originalDay).not.toBeNull();
-        if (originalDay == null) {
+        if (originalDay === null) {
           throw new Error("original selected day not found");
         }
 
