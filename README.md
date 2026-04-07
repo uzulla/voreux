@@ -279,6 +279,10 @@ What it is **not**:
 
 The repo still uses the Voreux / Stagehand stack for actual sample tests. `.mcp.json` is here to make the browser observation path available when an agent session needs it.
 
+Note:
+- the Playwright MCP server version is pinned in `.mcp.json` instead of using `@latest`
+- this keeps agent/browser behavior more reproducible across sessions and CI-like environments
+
 ## Recording / annotation helpers for developers
 
 Voreux now has framework-level human-visible action annotations.
