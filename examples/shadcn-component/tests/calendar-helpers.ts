@@ -88,9 +88,9 @@ async function getTargetCalendarBox(
     const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
       | HTMLElement
       | undefined;
-    const cal = preview?.querySelector('[data-slot="calendar"]') as
-      | HTMLElement
-      | null;
+    const cal = preview?.querySelector(
+      '[data-slot="calendar"]',
+    ) as HTMLElement | null;
     if (!cal) return null;
     const r = cal.getBoundingClientRect();
     return { x: r.x, y: r.y, width: r.width, height: r.height };
@@ -120,9 +120,9 @@ export async function getDateCellClickPoint(
       const preview = document.querySelectorAll('[data-slot="preview"]')[
         args.pi
       ] as HTMLElement | undefined;
-      const cal = preview?.querySelector('[data-slot="calendar"]') as
-        | HTMLElement
-        | null;
+      const cal = preview?.querySelector(
+        '[data-slot="calendar"]',
+      ) as HTMLElement | null;
       if (!cal) return null;
 
       // td.rdp-day で outside でないセルから探す
@@ -172,9 +172,9 @@ export async function getSafeDaysToClick(
     const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
       | HTMLElement
       | undefined;
-    const cal = preview?.querySelector('[data-slot="calendar"]') as
-      | HTMLElement
-      | null;
+    const cal = preview?.querySelector(
+      '[data-slot="calendar"]',
+    ) as HTMLElement | null;
     if (!cal) return null;
 
     const cells = Array.from(cal.querySelectorAll("td.rdp-day"));
@@ -191,8 +191,7 @@ export async function getSafeDaysToClick(
       }
       // selected / today は td に付く
       const isSelected =
-        el.dataset.selected === "true" ||
-        el.classList.contains("rdp-selected");
+        el.dataset.selected === "true" || el.classList.contains("rdp-selected");
       const isToday =
         el.dataset.today === "true" || el.classList.contains("rdp-today");
       if (isSelected || isToday) continue;
@@ -223,17 +222,15 @@ export async function getSafeDaysToClick(
  * 初期状態では today が選択されている。
  * round-trip テスト（別の日を選んでから元の日に戻る）で使う。
  */
-export async function getSelectedDay(
-  page: any,
-): Promise<number | null> {
+export async function getSelectedDay(page: any): Promise<number | null> {
   const { previewIndex } = await getTargetCalendarPreview(page);
   return page.evaluate((pi: number) => {
     const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
       | HTMLElement
       | undefined;
-    const cal = preview?.querySelector('[data-slot="calendar"]') as
-      | HTMLElement
-      | null;
+    const cal = preview?.querySelector(
+      '[data-slot="calendar"]',
+    ) as HTMLElement | null;
     if (!cal) return null;
 
     const selected = cal.querySelector(
@@ -282,9 +279,9 @@ export async function changeCalendarMonth(
       const preview = document.querySelectorAll('[data-slot="preview"]')[
         args.pi
       ] as HTMLElement | undefined;
-      const cal = preview?.querySelector('[data-slot="calendar"]') as
-        | HTMLElement
-        | null;
+      const cal = preview?.querySelector(
+        '[data-slot="calendar"]',
+      ) as HTMLElement | null;
       if (!cal) return false;
 
       const selects = cal.querySelectorAll("select");
@@ -323,9 +320,9 @@ export async function getCurrentMonth(page: any): Promise<number> {
     const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
       | HTMLElement
       | undefined;
-    const cal = preview?.querySelector('[data-slot="calendar"]') as
-      | HTMLElement
-      | null;
+    const cal = preview?.querySelector(
+      '[data-slot="calendar"]',
+    ) as HTMLElement | null;
     if (!cal) return null;
     const selects = cal.querySelectorAll("select");
     if (selects.length < 2) return null;

@@ -6,8 +6,8 @@ import { expect } from "vitest";
 import {
   changeCalendarMonth,
   clearCalendarHover,
-  getDateCellClickPoint,
   getCurrentMonth,
+  getDateCellClickPoint,
   getSafeDaysToClick,
   getSelectedDay,
   screenshotCalendarRegion,
@@ -44,10 +44,7 @@ async function setupPage(ctx: TestContext): Promise<void> {
 
 // VRT 撮影前に hover をクリアしてから clip screenshot を撮る。
 // selection 状態だけを純粋に比較するための共通パターン。
-async function vrtScreenshot(
-  ctx: TestContext,
-  name: string,
-): Promise<string> {
+async function vrtScreenshot(ctx: TestContext, name: string): Promise<string> {
   await clearCalendarHover(ctx.page);
   return screenshotCalendarRegion(ctx.page, name);
 }
@@ -94,14 +91,10 @@ defineScenarioSuite({
 
         // hover をクリアしてから撮影し、VRT で黒丸の移動を検出
         const afterShot = await vrtScreenshot(ctx, "calendar-after-select");
-        const diff = compareWithBaseline(
-          afterShot,
-          "calendar-before-select",
-          {
-            baselinesDir: BASELINES_DIR,
-            diffPath: `${BASELINES_DIR}/calendar-select-diff.png`,
-          },
-        );
+        const diff = compareWithBaseline(afterShot, "calendar-before-select", {
+          baselinesDir: BASELINES_DIR,
+          diffPath: `${BASELINES_DIR}/calendar-select-diff.png`,
+        });
         expect(diff.skipped).toBe(false);
         // today の黒丸が消えて別の日に移動するため、2 箇所が変化する。
         // hover をクリアしているので、mismatch は純粋な selection 変化のみ。
@@ -127,11 +120,7 @@ defineScenarioSuite({
           ctx,
           "calendar-before-month-change",
         );
-        saveBaseline(
-          beforeShot,
-          "calendar-before-month-change",
-          BASELINES_DIR,
-        );
+        saveBaseline(beforeShot, "calendar-before-month-change", BASELINES_DIR);
 
         // 前月に切り替える
         const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -183,11 +172,7 @@ defineScenarioSuite({
           ctx,
           "calendar-cross-month-before",
         );
-        saveBaseline(
-          beforeShot,
-          "calendar-cross-month-before",
-          BASELINES_DIR,
-        );
+        saveBaseline(beforeShot, "calendar-cross-month-before", BASELINES_DIR);
 
         // 前月に移動
         const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -246,7 +231,10 @@ defineScenarioSuite({
         await ctx.screenshot("calendar-04-initial");
 
         // hover をクリアして初期状態を baseline として撮影
-        const initialShot = await vrtScreenshot(ctx, "calendar-roundtrip-initial");
+        const initialShot = await vrtScreenshot(
+          ctx,
+          "calendar-roundtrip-initial",
+        );
         saveBaseline(initialShot, "calendar-roundtrip-initial", BASELINES_DIR);
 
         // 初期選択日（today）を記憶
@@ -255,10 +243,7 @@ defineScenarioSuite({
 
         // 別の日をクリック
         const safeDays = await getSafeDaysToClick(ctx.page);
-        const awayPoint = await getDateCellClickPoint(
-          ctx.page,
-          safeDays.first,
-        );
+        const awayPoint = await getDateCellClickPoint(ctx.page, safeDays.first);
         await ctx.annotateClick(
           awayPoint.x,
           awayPoint.y,
@@ -271,10 +256,7 @@ defineScenarioSuite({
         await ctx.screenshot("calendar-04-away");
 
         // 元の日（today）に戻る
-        const backPoint = await getDateCellClickPoint(
-          ctx.page,
-          originalDay!,
-        );
+        const backPoint = await getDateCellClickPoint(ctx.page, originalDay!);
         await ctx.annotateClick(
           backPoint.x,
           backPoint.y,

@@ -25,7 +25,11 @@ export function saveBaseline(
 export function compareWithBaseline(
   currentPath: string,
   baselineName: string,
-  opts: { baselinesDir: string; diffPath: string; pixelmatchThreshold?: number },
+  opts: {
+    baselinesDir: string;
+    diffPath: string;
+    pixelmatchThreshold?: number;
+  },
 ): { mismatchRatio: number; diffSaved: boolean; skipped: boolean } {
   const baselinePath = path.join(opts.baselinesDir, `${baselineName}.png`);
 
