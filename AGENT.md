@@ -236,3 +236,13 @@ It is the code that most clearly demonstrates:
 - how to think when a UI is tricky
 - how to verify real user-visible behavior
 - how to work within Stagehand constraints
+
+
+## Helper authoring
+
+When adding or changing helpers, especially interaction helpers, also read:
+- `references/helper-authoring.md`
+
+Important shortcut:
+- helpers must not only make tests pass
+- interaction helpers must leave enough recording/screenshot evidence that a human can inspect the action progression
