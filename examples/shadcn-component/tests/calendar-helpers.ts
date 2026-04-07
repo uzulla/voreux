@@ -284,10 +284,23 @@ export async function changeCalendarMonth(
       ) as HTMLElement | null;
       if (!cal) return false;
 
-      const selects = cal.querySelectorAll("select");
+      const selects = Array.from(cal.querySelectorAll("select"));
       if (selects.length < 2) return false;
 
-      const monthSelect = selects[0];
+      const monthSelect = selects.find((select) => {
+        const values = Array.from((select as HTMLSelectElement).options).map(
+          (option) => option.value,
+        );
+        // month dropdown は 0-11 を持つ。year dropdown は 2020 以降の年値を持つ。
+        return (
+          values.length >= 12 &&
+          values.every((value) => /^\d+$/.test(value)) &&
+          values.some((value) => Number.parseInt(value, 10) === 0) &&
+          values.some((value) => Number.parseInt(value, 10) === 11)
+        );
+      }) as HTMLSelectElement | undefined;
+      if (!monthSelect) return false;
+
       // React の制御下にある select は nativeInputValueSetter で値を変更し、
       // input + change イベントを発火する必要がある。
       const nativeSetter = Object.getOwnPropertyDescriptor(
@@ -324,9 +337,22 @@ export async function getCurrentMonth(page: any): Promise<number> {
       '[data-slot="calendar"]',
     ) as HTMLElement | null;
     if (!cal) return null;
-    const selects = cal.querySelectorAll("select");
+    const selects = Array.from(cal.querySelectorAll("select"));
     if (selects.length < 2) return null;
-    return Number.parseInt(selects[0].value, 10);
+
+    const monthSelect = selects.find((select) => {
+      const values = Array.from((select as HTMLSelectElement).options).map(
+        (option) => option.value,
+      );
+      return (
+        values.length >= 12 &&
+        values.every((value) => /^\d+$/.test(value)) &&
+        values.some((value) => Number.parseInt(value, 10) === 0) &&
+        values.some((value) => Number.parseInt(value, 10) === 11)
+      );
+    }) as HTMLSelectElement | undefined;
+    if (!monthSelect) return null;
+    return Number.parseInt(monthSelect.value, 10);
   }, previewIndex);
   if (month === null) throw new Error("could not read current month");
   return month;
