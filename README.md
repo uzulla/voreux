@@ -258,6 +258,27 @@ pnpm --filter @voreux/example-petstore-swagger-ui e2e
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
 
+## MCP project config for browser-grounded agent work
+
+This repo includes a project-scoped `.mcp.json`.
+
+Why it exists:
+- some ACP / Claude Code sessions only expose Playwright browser tools when the MCP server is configured at the **actual project root** the harness session is using
+- during authoring and debugging of tricky UI samples, browser-grounded observation was necessary to distinguish DOM inference from what a human can actually see
+- keeping the Playwright MCP server in project config makes that browser tool path reproducible for future agent sessions
+
+What it is for:
+- browser-grounded observation and debugging during scenario authoring
+- validating human-visible behavior on dynamic pages such as hosted docs demos
+- helping agents inspect live UI state before deciding how to encode assertions in Voreux tests
+
+What it is **not**:
+- a requirement for normal library users of Voreux
+- a signal that samples should be rewritten as Playwright test projects
+- a substitute for the existing Voreux / Stagehand test stack in `examples/`
+
+The repo still uses the Voreux / Stagehand stack for actual sample tests. `.mcp.json` is here to make the browser observation path available when an agent session needs it.
+
 ## Recording / annotation helpers for developers
 
 Voreux now has framework-level human-visible action annotations.
