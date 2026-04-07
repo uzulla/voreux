@@ -19,12 +19,21 @@ This applies to helpers around actions such as:
 
 ## Recording / screenshot expectation
 
-For interaction helpers, prefer flows where the recording can show the action progression, not only the final state.
+For interaction helpers, the required outcome is:
+- a human must be able to inspect the interaction from screenshots/recordings
+- the recording should not only show the final state, but also make the action progression understandable
 
-Target pattern:
+The default recommended pattern is:
 1. pre-action boundary/frame
 2. action-visible frame (annotation / marker / visible transition)
 3. post-action-applied frame
+
+This three-step pattern is the first choice, but it is not a blanket MUST for every helper.
+Some interactions may need a lighter shape as long as the resulting recording still makes the interaction understandable to a human.
+
+Examples where strict three-step handling may be excessive:
+- passive settle/wait helpers
+- low-value internal transitions that do not benefit from extra visible markers
 
 If the helper is paired with VRT, the timing should still make the same progression inspectable in the recording.
 
