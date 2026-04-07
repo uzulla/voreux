@@ -247,6 +247,95 @@ export async function getSelectedDay(
 }
 
 /**
+ * hover 状態をクリアする。
+ *
+ * VRT 撮影前に呼ぶことで、マウスカーソル位置由来の :hover スタイルが
+ * スクリーンショットに混入するのを防ぐ。
+ *
+ * shadcn calendar では hover 時に薄いグレー丸背景がセルに付く。
+ * click 後にマウスがセル上に残っていると、selection 状態と hover 状態が
+ * 重なり、VRT の mismatch に hover 由来のノイズが含まれてしまう。
+ */
+export async function clearCalendarHover(page: any): Promise<void> {
+  // カレンダー外の左上にマウスを移動し、hover を解除する。
+  // tooltip-helpers.ts の既存パターンに合わせて (10, 10) を使用。
+  await page.hover(10, 10);
+  await page.waitForTimeout(200);
+}
+
+/**
+ * 月を select 要素で切り替える。
+ *
+ * shadcn calendar (captionLayout="dropdown") は月と年の select を持つ。
+ * monthValue は 0-indexed (0=Jan, 1=Feb, ..., 11=Dec)。
+ *
+ * react-day-picker v9 の select は React の合成イベントで制御されているため、
+ * value の直接書き換え + change イベントの dispatch で月を切り替える。
+ */
+export async function changeCalendarMonth(
+  page: any,
+  monthValue: number,
+): Promise<void> {
+  const { previewIndex } = await getTargetCalendarPreview(page);
+  const changed = await page.evaluate(
+    (args: { pi: number; month: number }) => {
+      const preview = document.querySelectorAll('[data-slot="preview"]')[
+        args.pi
+      ] as HTMLElement | undefined;
+      const cal = preview?.querySelector('[data-slot="calendar"]') as
+        | HTMLElement
+        | null;
+      if (!cal) return false;
+
+      const selects = cal.querySelectorAll("select");
+      if (selects.length < 2) return false;
+
+      const monthSelect = selects[0];
+      // React の制御下にある select は nativeInputValueSetter で値を変更し、
+      // input + change イベントを発火する必要がある。
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        HTMLSelectElement.prototype,
+        "value",
+      )?.set;
+      if (nativeSetter) {
+        nativeSetter.call(monthSelect, String(args.month));
+      } else {
+        monthSelect.value = String(args.month);
+      }
+      monthSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    },
+    { pi: previewIndex, month: monthValue },
+  );
+  if (!changed) {
+    throw new Error(`failed to change month to ${monthValue}`);
+  }
+  // 月切り替え後のレンダリングを待つ
+  await page.waitForTimeout(500);
+}
+
+/**
+ * 現在表示中の月の value (0-indexed) を返す。
+ */
+export async function getCurrentMonth(page: any): Promise<number> {
+  const { previewIndex } = await getTargetCalendarPreview(page);
+  const month = await page.evaluate((pi: number) => {
+    const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
+      | HTMLElement
+      | undefined;
+    const cal = preview?.querySelector('[data-slot="calendar"]') as
+      | HTMLElement
+      | null;
+    if (!cal) return null;
+    const selects = cal.querySelectorAll("select");
+    if (selects.length < 2) return null;
+    return Number.parseInt(selects[0].value, 10);
+  }, previewIndex);
+  if (month === null) throw new Error("could not read current month");
+  return month;
+}
+
+/**
  * calendar 領域だけを clip screenshot する。
  *
  * 内部で scrollCalendarIntoView() を呼ぶため、呼び出し前のスクロール状態は問わない。
