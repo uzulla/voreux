@@ -16,6 +16,7 @@ import {
   waitForMenuVisible,
   waitForSubmenuVisible,
 } from "./button-group-helpers.js";
+import { assertArchiveHoverVisualChange } from "./button-group-visual-compare.js";
 
 const ORIGIN_URL = "https://ui.shadcn.com/docs/components/radix/button-group";
 
@@ -35,7 +36,16 @@ defineScenarioSuite({
           ctx.page,
           async () => {
             try {
-              await getButtonVisualState(ctx.page, "Archive");
+              await ctx.page.evaluate(() => {
+                const preview = document.querySelector('[data-slot="preview"]');
+                const group = preview?.querySelector(
+                  '[data-slot="button-group"]',
+                );
+                const button = Array.from(
+                  group?.querySelectorAll("button") ?? [],
+                ).find((el) => (el.textContent || "").trim() === "Archive");
+                return Boolean(button);
+              });
               return true;
             } catch {
               return false;
@@ -48,18 +58,38 @@ defineScenarioSuite({
           throw new Error("Archive button did not become ready");
         }
 
+        const screenshotsDir = new URL("../screenshots/", import.meta.url)
+          .pathname;
+        const baselinesDir = new URL("../baselines/", import.meta.url).pathname;
+
         const beforeHover = await getButtonVisualState(ctx.page, "Archive");
-        await hoverButtonByText(ctx.page, "Archive");
-        const hoverApplied = await pollUntil(
-          ctx.page,
-          async () => {
-            const afterHover = await getButtonVisualState(ctx.page, "Archive");
-            return afterHover.backgroundColor !== beforeHover.backgroundColor;
+        await assertArchiveHoverVisualChange(ctx.page, {
+          screenshotsDir,
+          baselinesDir,
+          hover: async () => {
+            await hoverButtonByText(ctx.page, "Archive");
           },
-          2000,
-          100,
-        );
-        expect(hoverApplied).toBe(true);
+          waitUntilHovered: async () => {
+            const hoverApplied = await pollUntil(
+              ctx.page,
+              async () => {
+                const afterHover = await getButtonVisualState(
+                  ctx.page,
+                  "Archive",
+                );
+                return (
+                  afterHover.backgroundColor !== beforeHover.backgroundColor ||
+                  afterHover.color !== beforeHover.color
+                );
+              },
+              2000,
+              100,
+            );
+            if (!hoverApplied) {
+              throw new Error("Archive hover style did not change before VRT");
+            }
+          },
+        });
 
         const overflowPoint = await getOverflowButtonClickPoint(ctx.page);
         await ctx.annotateClick(
