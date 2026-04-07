@@ -240,6 +240,9 @@ defineScenarioSuite({
         // 初期選択日（today）を記憶
         const originalDay = await getSelectedDay(ctx.page);
         expect(originalDay).not.toBeNull();
+        if (originalDay == null) {
+          throw new Error("original selected day not found");
+        }
 
         // 別の日をクリック
         const safeDays = await getSafeDaysToClick(ctx.page);
@@ -256,7 +259,7 @@ defineScenarioSuite({
         await ctx.screenshot("calendar-04-away");
 
         // 元の日（today）に戻る
-        const backPoint = await getDateCellClickPoint(ctx.page, originalDay!);
+        const backPoint = await getDateCellClickPoint(ctx.page, originalDay);
         await ctx.annotateClick(
           backPoint.x,
           backPoint.y,
