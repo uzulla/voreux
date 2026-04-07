@@ -238,6 +238,22 @@ It is the code that most clearly demonstrates:
 - how to work within Stagehand constraints
 
 
+## Agent behavior when authoring scenarios
+
+When an AI agent is developing or modifying scenarios in this repo, additional behavioral guidance applies.
+
+Read: [docs/agent-behavior-for-scenario-authoring.md](docs/agent-behavior-for-scenario-authoring.md)
+
+Key points:
+
+- **Report your observation paths honestly.** Before implementing UI-dependent tests, state which observation paths you have: browser-grounded (live browser), screenshot-based (static images), or DOM-based (text/attributes only). State what you are inferring vs directly observing.
+- **Prefer higher-fidelity observation.** Browser-grounded > screenshot-based > DOM/VRT numbers. If a higher-fidelity path is available, use it. DOM attribute changes and tiny VRT deltas alone are not proof of human-visible behavior.
+- **Collect evidence yourself.** If you have the means to run tests, read existing screenshots, or generate diff images, do so before making judgments. Do not return to the user for evidence you can collect yourself.
+- **Do not complete judgments on inference alone.** Labeling something as "inference" does not permit finishing a revise/drop/ship decision on that basis. Collect observational evidence first; hold the judgment if you cannot.
+- **Work in a staged loop.** Inspect state → perform one action → capture focused evidence → explain what visibly changed → only then continue.
+- **Do not force weak tests.** If a sample cannot produce human-visible interaction progression, say so and reconsider sample suitability rather than shipping a test that only proves machine-detectable change.
+- **Use framework APIs first.** Prefer `ctx.assertNoVisualRegression()`, `ctx.screenshot()`, `ctx.annotateClick()` over custom VRT pipelines.
+
 ## Helper authoring
 
 When adding or changing helpers, especially interaction helpers, also read:
