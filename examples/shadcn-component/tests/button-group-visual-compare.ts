@@ -53,11 +53,13 @@ async function screenshotArchiveButton(page: any, outputPath: string) {
     if (!button) return null;
     const rect = button.getBoundingClientRect();
     const padding = 8;
+    const x = Math.max(0, Math.floor(rect.x - padding));
+    const y = Math.max(0, Math.floor(rect.y - padding));
     return {
-      x: Math.max(0, Math.floor(rect.x - padding)),
-      y: Math.max(0, Math.floor(rect.y - padding)),
-      width: Math.ceil(rect.width + padding * 2),
-      height: Math.ceil(rect.height + padding * 2),
+      x,
+      y,
+      width: Math.ceil(rect.x + rect.width + padding - x),
+      height: Math.ceil(rect.y + rect.height + padding - y),
     };
   });
 

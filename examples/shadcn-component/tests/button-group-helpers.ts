@@ -92,9 +92,23 @@ export async function getPrimaryButtonGroupButtons(page: any): Promise<
   }>
 > {
   const buttons = await page.evaluate(() => {
-    const preview = document.querySelector(
-      '[data-slot="preview"]',
-    ) as HTMLElement | null;
+    const previews = Array.from(
+      document.querySelectorAll('[data-slot="preview"]'),
+    ) as HTMLElement[];
+    const preview = previews.find((candidate) => {
+      const group = candidate.querySelector(
+        '[data-slot="button-group"]',
+      ) as HTMLElement | null;
+      if (!group) return false;
+      const texts = Array.from(group.querySelectorAll("button")).map((el) =>
+        (el.textContent || "").trim(),
+      );
+      return (
+        texts.includes("Archive") &&
+        texts.includes("Report") &&
+        texts.includes("Snooze")
+      );
+    }) as HTMLElement | undefined;
     const group = preview?.querySelector(
       '[data-slot="button-group"]',
     ) as HTMLElement | null;
