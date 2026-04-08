@@ -219,7 +219,61 @@ Voreux は VRT やスクリーンショットのための API を提供してい
 
 ---
 
-## 10. まとめ
+## 10. Agent 向け Tips
+
+今回の実践から、特に agent がハマりやすい点と再現したいパターンを短くまとめる。
+
+### 10.1 観測・事実抽出・実装判断を混ぜない
+
+次の 3 段階を分ける。
+
+1. **観測**
+   - browser-grounded observation や focused screenshot で、実際に何が見えているか確認する
+2. **事実抽出**
+   - today / selected / hover / month change / persistence のように、テストへ反映すべき事実だけを箇条書きにする
+3. **実装判断**
+   - 既存の repo / framework の流儀に沿って、どの事実をどの test / helper に反映するか決める
+
+最初の失敗は、観測しながら同時に実装方針まで決めてしまい、既存の筋を外れた新規 project を作ったことだった。
+
+### 10.2 today と selected を混同しない
+
+calendar のような UI では、初期状態で today と selected が同じセルに重なっていることがある。
+そのため、最初の一回だけ見ると混同しやすい。
+
+観測時は少なくとも一度、**別の日をクリックして分離させてから** 理解を確定する。
+
+例:
+- selected = 黒丸 + 白文字
+- today = 薄い輪郭リング / “Today” ラベル
+
+### 10.3 DOM と見た目の対応を短絡しない
+
+- `aria-selected` が移動した
+- diff が出た
+- attribute が変わった
+
+だけでは、人間に見える変化が保証されない。
+一方で、見た目だけ追うと hover や anti-aliasing を誤認することがある。
+
+**DOM / accessibility / screenshot の 3 つを相互確認する** と誤認を減らせる。
+
+### 10.4 hover はノイズとして混入しやすい
+
+click 後にカーソルがその位置へ残ると、`:hover` の見た目が VRT に混ざることがある。
+これは selection 変化とは別物なので、必要なら hover をクリアしてから比較する。
+
+### 10.5 browser-grounded path が使えるなら先に観測する
+
+複雑 UI や stateful UI では、コードを読む前に browser-grounded observation を使って:
+- 何が本当に human-visible か
+- 何が state persistence か
+- 何が month change / dismiss / selection の本丸か
+を先に把握した方が、結果として実装も速く正確になる。
+
+ただし、その観測結果をそのまま別流儀の新規 project 化へ飛ばさず、**既存 stack へ戻して反映する** こと。
+
+## 11. まとめ
 
 Voreux のシナリオを書くエージェントに求められるのは、コードを正しく動かすことだけではありません。
 

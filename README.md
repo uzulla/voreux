@@ -258,6 +258,31 @@ pnpm --filter @voreux/example-petstore-swagger-ui e2e
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
 
+## browser-grounded agent work 用の MCP project config
+
+この repo には、project-scoped の `.mcp.json` を含めています。
+
+### なぜあるのか
+- ACP / Claude Code session によっては、**実際にその session が project root として見ている場所** に MCP server が設定されていないと、Playwright browser tools が露出しないことがある
+- tricky UI の authoring / debugging では、DOM 推論だけでなく **browser-grounded observation** が必要だった
+- Playwright MCP を project config に置いておくことで、その観測経路を後続 agent session でも再現しやすくするため
+
+### これは何のためか
+- scenario authoring 中の browser-grounded observation / debugging
+- hosted docs demo のような dynamic page で human-visible behavior を検証すること
+- agent が live UI state を見たうえで、Voreux test にどう assertion を落とすか判断すること
+
+### これは何ではないか
+- Voreux の通常利用者に必須な設定ではない
+- sample を Playwright test project に書き換える意図のものではない
+- `examples/` にある既存の Voreux / Stagehand stack の代替ではない
+
+実際の sample test は引き続き Voreux / Stagehand stack で書きます。`.mcp.json` は、agent が必要時に browser observation path を使えるようにするための project config です。
+
+### 補足
+- `.mcp.json` の Playwright MCP server は `@latest` ではなく固定 version を pin している
+- これは agent / browser の挙動を session 間や CI 近い環境で再現しやすくするため
+
 ## Recording / annotation helpers for developers
 
 Voreux now has framework-level human-visible action annotations.
