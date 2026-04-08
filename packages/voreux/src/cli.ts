@@ -99,13 +99,13 @@ baselines
     2,
   ),
 
-  "tests/example.test.ts": `import { defineScenarioSuite } from "@uzulla/voreux";
+  "tests/example.test.ts": `import { defineScenarioSuite, TestContext } from "@uzulla/voreux";
 
 const steps = [
   {
     name: "load page",
     selfHeal: false,
-    run: async (ctx) => {
+    run: async (ctx: TestContext) => {
       await ctx.page.goto("https://example.com/");
     },
   },
@@ -220,6 +220,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error("voreux: fatal error:", err);
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`voreux: fatal error: ${message}`);
   process.exit(1);
 });
