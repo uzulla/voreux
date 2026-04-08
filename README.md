@@ -158,6 +158,29 @@ cp examples/shadcn-component/.env.example examples/shadcn-component/.env
 
 `.env` は `examples/cfe-jp/.env` に置き、repo ルートには置きません。
 
+### ブラウザ（Chromium）のセットアップについて
+
+Voreux は内部で [Stagehand](https://github.com/browserbase/stagehand) を使用しており、Stagehand はブラウザの起動に `chrome-launcher` を利用しています。
+`chrome-launcher` はシステムにインストールされた Chrome/Chromium のみを自動検出するため、**`playwright install chromium` でダウンロードした Chromium は自動検出されません**。
+
+そのため、各 example の `.env` に `CHROME_PATH` を明示的に設定する必要があります。
+
+```bash
+# playwright install chromium でダウンロードした Chromium のパスを確認する
+# 例: /home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+# (~ はチルダ展開されないため、絶対パスで指定してください)
+
+# .env に追記
+CHROME_PATH=/home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+```
+
+システムに Chrome/Chromium がインストールされている場合（`/usr/bin/google-chrome` など）は `CHROME_PATH` の設定は不要です。
+
+#### WSL2 環境での追加対応
+
+WSL2 環境では Chromium のサンドボックス機能が使えないため、`--no-sandbox` フラグが必要です。
+これは WSL2 での既知の制約であり、Voreux のフレームワーク側（`packages/voreux/src/stagehand.ts`）で既に対応済みです。
+
 ## ディレクトリ構造
 
 ```text
