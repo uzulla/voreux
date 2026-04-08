@@ -65,6 +65,20 @@
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
 
+## Chromium / Chrome の指定
+
+この example は Voreux / Stagehand 経由でブラウザを起動します。
+そのため、`playwright install chromium` を実行しても、その Chromium が自動で使われるわけではありません。
+
+まずは `.env` に `CHROME_PATH` を明示してください。
+
+```bash
+CHROME_PATH=/usr/bin/chromium
+```
+
+Playwright が展開した Chromium を使いたい場合でも、
+その実パスを確認して `CHROME_PATH` に自分で設定する必要があります。
+
 ## 補足
 
 この sample 群では、suite 終了時の `hookTimeout` を長めにしています。

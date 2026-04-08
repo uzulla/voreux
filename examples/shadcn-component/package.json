@@ -7,7 +7,8 @@
     "e2e": "vitest run",
     "e2e:self-heal": "cross-env SELF_HEAL=1 vitest run",
     "test": "vitest run",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "install:chromium": "npx -y playwright@1.58.1 install chromium"
   },
   "dependencies": {
     "@uzulla/voreux": "workspace:*",
@@ -18,7 +19,6 @@
     "@types/node": "^25.2.1",
     "@types/pngjs": "^6.0.5",
     "cross-env": "^7.0.3",
-    "playwright": "^1.58.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

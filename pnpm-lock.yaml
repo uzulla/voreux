@@ -80,9 +80,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      playwright:
-        specifier: ^1.58.1
-        version: 1.58.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

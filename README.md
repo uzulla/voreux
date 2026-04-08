@@ -145,10 +145,6 @@ Voreux の `ctx.page` は、Stagehand 経由の page オブジェクトです。
 
 ```bash
 pnpm install
-pnpm --filter @voreux/example-cfe-jp exec playwright install chromium
-pnpm --filter @voreux/example-swagger-editor exec playwright install chromium
-pnpm --filter @voreux/example-petstore-swagger-ui exec playwright install chromium
-pnpm --filter @voreux/example-shadcn-component exec playwright install chromium
 cp examples/cfe-jp/.env.example examples/cfe-jp/.env
 cp examples/swagger-editor/.env.example examples/swagger-editor/.env
 cp examples/petstore-swagger-ui/.env.example examples/petstore-swagger-ui/.env
@@ -156,18 +152,31 @@ cp examples/shadcn-component/.env.example examples/shadcn-component/.env
 # 各 .env に OPENAI_API_KEY を設定
 ```
 
-`.env` は `examples/cfe-jp/.env` に置き、repo ルートには置きません。
+`.env` は各 example ディレクトリ配下に置き、repo ルートには置きません。
 
 ### ブラウザ（Chromium）のセットアップについて
 
-Voreux は内部で [Stagehand](https://github.com/browserbase/stagehand) を使用しており、Stagehand はブラウザの起動に `chrome-launcher` を利用しています。
-`chrome-launcher` はシステムにインストールされた Chrome/Chromium のみを自動検出するため、**`playwright install chromium` でダウンロードした Chromium は自動検出されません**。
+Voreux は内部で [Stagehand](https://github.com/browserbase/stagehand) を使用しており、Stagehand はブラウザ起動に `chrome-launcher` を利用します。
 
-そのため、各 example の `.env` に `CHROME_PATH` を明示的に設定する必要があります。
+重要な点:
+- `chrome-launcher` は **システムにインストールされた Chrome / Chromium** を探します
+- **`playwright install chromium` でダウンロードした Chromium を自動では使いません**
+
+そのため、この repo の examples では **`playwright install chromium` を前提手順として案内しません**。
+まずは、各 example の `.env` に `CHROME_PATH` を明示的に設定してください。
 
 ```bash
-# playwright install chromium でダウンロードした Chromium のパスを確認する
-# 例: /home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+# 例: システムにある Chromium / Chrome の実パスを設定
+CHROME_PATH=/usr/bin/chromium
+```
+
+もし Playwright 管理下の Chromium を使いたい場合でも、
+そのパスを自分で確認して `CHROME_PATH` に明示的に設定する必要があります。
+
+```bash
+# 例: Playwright が展開した Chromium を明示的に使う場合
+CHROME_PATH=/home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+```
 # (~ はチルダ展開されないため、絶対パスで指定してください)
 
 # .env に追記
