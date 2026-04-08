@@ -1,5 +1,6 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import fs from "fs";
+import os from "os";
 import { frameworkConfig } from "./config.js";
 import {
   createTestContext,
@@ -16,6 +17,20 @@ import {
   startRecording,
 } from "./recording.js";
 import { createScreenshotHelper } from "./screenshot.js";
+
+/**
+ * WSL2 環境かどうかを判定する。
+ * カーネルバージョン文字列に "microsoft" が含まれる場合を WSL2 とみなす。
+ */
+function isWsl2(): boolean {
+  if (os.platform() !== "linux") return false;
+  try {
+    const version = fs.readFileSync("/proc/version", "utf-8");
+    return version.toLowerCase().includes("microsoft");
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Stagehand を初期化し、テスト実行に必要な環境を準備する。
@@ -44,6 +59,9 @@ export async function initStagehand(originUrl: string): Promise<{
     localBrowserLaunchOptions: {
       headless: frameworkConfig.browser.headless,
       viewport: frameworkConfig.browser.viewport,
+      // WSL2 ではカーネルの制約により Chrome のサンドボックスが使えないため無効化する。
+      // 他の環境では sandbox を有効なままにする。
+      ...(isWsl2() ? { args: ["--no-sandbox", "--disable-setuid-sandbox"] } : {}),
     },
   });
   await stagehand.init();
