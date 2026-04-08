@@ -167,10 +167,11 @@ Voreux は内部で [Stagehand](https://github.com/browserbase/stagehand) を使
 
 ```bash
 # playwright install chromium でダウンロードした Chromium のパスを確認する
-# 例: ~/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+# 例: /home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+# (~ はチルダ展開されないため、絶対パスで指定してください)
 
 # .env に追記
-CHROME_PATH=~/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
+CHROME_PATH=/home/<username>/.cache/ms-playwright/chromium-XXXX/chrome-linux64/chrome
 ```
 
 システムに Chrome/Chromium がインストールされている場合（`/usr/bin/google-chrome` など）は `CHROME_PATH` の設定は不要です。
