@@ -258,30 +258,30 @@ pnpm --filter @voreux/example-petstore-swagger-ui e2e
 pnpm --filter @voreux/example-shadcn-component e2e
 ```
 
-## MCP project config for browser-grounded agent work
+## browser-grounded agent work 用の MCP project config
 
-This repo includes a project-scoped `.mcp.json`.
+この repo には、project-scoped の `.mcp.json` を含めています。
 
-Why it exists:
-- some ACP / Claude Code sessions only expose Playwright browser tools when the MCP server is configured at the **actual project root** the harness session is using
-- during authoring and debugging of tricky UI samples, browser-grounded observation was necessary to distinguish DOM inference from what a human can actually see
-- keeping the Playwright MCP server in project config makes that browser tool path reproducible for future agent sessions
+### なぜあるのか
+- ACP / Claude Code session によっては、**実際にその session が project root として見ている場所** に MCP server が設定されていないと、Playwright browser tools が露出しないことがある
+- tricky UI の authoring / debugging では、DOM 推論だけでなく **browser-grounded observation** が必要だった
+- Playwright MCP を project config に置いておくことで、その観測経路を後続 agent session でも再現しやすくするため
 
-What it is for:
-- browser-grounded observation and debugging during scenario authoring
-- validating human-visible behavior on dynamic pages such as hosted docs demos
-- helping agents inspect live UI state before deciding how to encode assertions in Voreux tests
+### これは何のためか
+- scenario authoring 中の browser-grounded observation / debugging
+- hosted docs demo のような dynamic page で human-visible behavior を検証すること
+- agent が live UI state を見たうえで、Voreux test にどう assertion を落とすか判断すること
 
-What it is **not**:
-- a requirement for normal library users of Voreux
-- a signal that samples should be rewritten as Playwright test projects
-- a substitute for the existing Voreux / Stagehand test stack in `examples/`
+### これは何ではないか
+- Voreux の通常利用者に必須な設定ではない
+- sample を Playwright test project に書き換える意図のものではない
+- `examples/` にある既存の Voreux / Stagehand stack の代替ではない
 
-The repo still uses the Voreux / Stagehand stack for actual sample tests. `.mcp.json` is here to make the browser observation path available when an agent session needs it.
+実際の sample test は引き続き Voreux / Stagehand stack で書きます。`.mcp.json` は、agent が必要時に browser observation path を使えるようにするための project config です。
 
-Note:
-- the Playwright MCP server version is pinned in `.mcp.json` instead of using `@latest`
-- this keeps agent/browser behavior more reproducible across sessions and CI-like environments
+### 補足
+- `.mcp.json` の Playwright MCP server は `@latest` ではなく固定 version を pin している
+- これは agent / browser の挙動を session 間や CI 近い環境で再現しやすくするため
 
 ## Recording / annotation helpers for developers
 
