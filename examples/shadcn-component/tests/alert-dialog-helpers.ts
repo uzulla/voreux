@@ -1,28 +1,17 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  createArtifactPath,
+  ensureDir,
+  getCenterPoint,
+  waitUntil,
+} from "@uzulla/voreux";
 
 const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
   ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
   : fileURLToPath(new URL("../screenshots/", import.meta.url));
 
-if (!fs.existsSync(SHOTS_DIR)) {
-  fs.mkdirSync(SHOTS_DIR, { recursive: true });
-}
-
-export async function pollUntil(
-  page: any,
-  fn: () => Promise<boolean>,
-  timeoutMs: number,
-  intervalMs = 100,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fn()) return true;
-    await page.waitForTimeout(intervalMs);
-  }
-  return false;
-}
+ensureDir(SHOTS_DIR);
 
 /**
  * docs ページには alert dialog demo が複数あるため、最上部 preview 内の
@@ -50,10 +39,7 @@ export async function getShowDialogClickPoint(
   page: any,
 ): Promise<{ x: number; y: number }> {
   const box = await getShowDialogButtonBox(page);
-  return {
-    x: Math.round(box.x + box.width / 2),
-    y: Math.round(box.y + box.height / 2),
-  };
+  return getCenterPoint(box);
 }
 
 export async function getDialogActionClickPoint(
@@ -86,10 +72,7 @@ export async function getDialogActionClickPoint(
     return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, text);
   if (!box) throw new Error(`dialog action not found: ${text}`);
-  return {
-    x: Math.round(box.x + box.width / 2),
-    y: Math.round(box.y + box.height / 2),
-  };
+  return getCenterPoint(box);
 }
 
 /**
@@ -128,23 +111,23 @@ export async function getAlertDialogState(page: any): Promise<{
 }
 
 export async function waitForDialogVisible(page: any): Promise<void> {
-  const ok = await pollUntil(
-    page,
-    async () => (await getAlertDialogState(page)).visible,
-    5000,
-    100,
-  );
-  if (!ok) throw new Error("alert dialog did not become visible");
+  await waitUntil(page, async () => (await getAlertDialogState(page)).visible, {
+    timeoutMs: 5000,
+    intervalMs: 100,
+    message: "alert dialog did not become visible",
+  });
 }
 
 export async function waitForDialogHidden(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => !(await getAlertDialogState(page)).visible,
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "alert dialog did not become hidden",
+    },
   );
-  if (!ok) throw new Error("alert dialog did not become hidden");
 }
 
 /**
@@ -217,7 +200,7 @@ export async function screenshotAlertDialogRegion(
   const width = Math.max(1, Math.min(420, viewport.width - x));
   const height = Math.max(1, Math.min(320, viewport.height - y));
 
-  const filePath = path.join(SHOTS_DIR, `${name}.png`);
+  const filePath = createArtifactPath(SHOTS_DIR, name);
   await page.screenshot({
     path: filePath,
     clip: {

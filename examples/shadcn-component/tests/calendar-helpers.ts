@@ -1,14 +1,17 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  clearPointerHover,
+  createArtifactPath,
+  ensureDir,
+  screenshotClipAroundBox,
+} from "@uzulla/voreux";
 
 const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
   ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
   : fileURLToPath(new URL("../screenshots/", import.meta.url));
 
-if (!fs.existsSync(SHOTS_DIR)) {
-  fs.mkdirSync(SHOTS_DIR, { recursive: true });
-}
+ensureDir(SHOTS_DIR);
 
 /**
  * このページには calendar demo が 11 個ある（basic, range, presets など）。
@@ -256,8 +259,7 @@ export async function getSelectedDay(page: any): Promise<number | null> {
 export async function clearCalendarHover(page: any): Promise<void> {
   // カレンダー外の左上にマウスを移動し、hover を解除する。
   // tooltip-helpers.ts の既存パターンに合わせて (10, 10) を使用。
-  await page.hover(10, 10);
-  await page.waitForTimeout(200);
+  await clearPointerHover(page, 200);
 }
 
 /**
@@ -390,10 +392,11 @@ export async function screenshotCalendarRegion(
     Math.min(Math.round(box.height + pad * 2), viewport.height - y),
   );
 
-  const filePath = path.join(SHOTS_DIR, `${name}.png`);
-  await page.screenshot({
-    path: filePath,
-    clip: { x, y, width, height },
-  });
-  return filePath;
+  const filePath = createArtifactPath(SHOTS_DIR, name);
+  return screenshotClipAroundBox(
+    page,
+    filePath,
+    { x, y, width, height },
+    { viewport, padding: 0 },
+  );
 }

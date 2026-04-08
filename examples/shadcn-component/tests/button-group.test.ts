@@ -1,5 +1,5 @@
 import type { TestContext } from "@uzulla/voreux";
-import { defineScenarioSuite } from "@uzulla/voreux";
+import { defineScenarioSuite, waitUntil } from "@uzulla/voreux";
 import { expect } from "vitest";
 import {
   clickOverflowButton,
@@ -11,7 +11,6 @@ import {
   getSubmenuState,
   hoverButtonByText,
   hoverMenuItem,
-  pollUntil,
   waitForMenusHidden,
   waitForMenuVisible,
   waitForSubmenuVisible,
@@ -32,7 +31,7 @@ defineScenarioSuite({
           timeout: 30_000,
         });
 
-        const archiveReady = await pollUntil(
+        await waitUntil(
           ctx.page,
           async () => {
             try {
@@ -51,12 +50,12 @@ defineScenarioSuite({
               return false;
             }
           },
-          5000,
-          100,
+          {
+            timeoutMs: 5000,
+            intervalMs: 100,
+            message: "Archive button did not become ready",
+          },
         );
-        if (!archiveReady) {
-          throw new Error("Archive button did not become ready");
-        }
 
         const screenshotsDir = new URL("../screenshots/", import.meta.url)
           .pathname;
@@ -70,7 +69,7 @@ defineScenarioSuite({
             await hoverButtonByText(ctx.page, "Archive");
           },
           waitUntilHovered: async () => {
-            const hoverApplied = await pollUntil(
+            await waitUntil(
               ctx.page,
               async () => {
                 const afterHover = await getButtonVisualState(
@@ -83,12 +82,12 @@ defineScenarioSuite({
                   afterHover.color !== beforeHover.color
                 );
               },
-              2000,
-              100,
+              {
+                timeoutMs: 2000,
+                intervalMs: 100,
+                message: "Archive hover style did not change before VRT",
+              },
             );
-            if (!hoverApplied) {
-              throw new Error("Archive hover style did not change before VRT");
-            }
           },
         });
 
