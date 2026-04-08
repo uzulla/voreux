@@ -65,7 +65,7 @@ export const frameworkConfig: E2EFrameworkConfig = {
     baselinesDir: process.env.E2E_BASELINES_DIR ?? "baselines",
   },
   browser: {
-    headless: toBool(process.env.E2E_HEADLESS, false),
+    headless: toBool(process.env.E2E_HEADLESS, true),
     viewport: {
       width: toInt(process.env.E2E_VIEWPORT_WIDTH, 1280),
       height: toInt(process.env.E2E_VIEWPORT_HEIGHT, 720),

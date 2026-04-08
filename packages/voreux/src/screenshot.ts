@@ -18,6 +18,30 @@ export class ImageSizeMismatchError extends Error {
 
 export type ScreenshotFn = (name: string, targetPage?: any) => Promise<string>;
 
+const WHITESPACE_CHARS = /\s+/g;
+const REPEATED_HYPHENS = /-+/g;
+const RESERVED_FILENAME_CHARS = '<>:"/\\|?*';
+
+function replaceInvalidFilenameChars(input: string): string {
+  return Array.from(input, (char) => {
+    const codePoint = char.codePointAt(0) ?? 0;
+    if (codePoint < 0x20 || RESERVED_FILENAME_CHARS.includes(char)) {
+      return "-";
+    }
+    return char;
+  }).join("");
+}
+
+export function sanitizeArtifactName(name: string): string {
+  const normalized = name.normalize("NFKC").replace(WHITESPACE_CHARS, "-");
+  const pathSafe = replaceInvalidFilenameChars(normalized);
+  const sanitized = pathSafe
+    .replace(REPEATED_HYPHENS, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return sanitized || "screenshot";
+}
+
 /**
  * スクリーンショット撮影ヘルパーを生成する。
  * 返り値の関数は名前を受け取ってスクリーンショットを保存し、ファイルパスを返す。
@@ -30,7 +54,7 @@ export function createScreenshotHelper(
   recorder?: Recorder,
 ): ScreenshotFn {
   return async (name: string, targetPage = page) => {
-    const filePath = path.join(dir, `${name}.png`);
+    const filePath = path.join(dir, `${sanitizeArtifactName(name)}.png`);
     recorder?.pause();
     try {
       await recorder?.captureFrameNow();
