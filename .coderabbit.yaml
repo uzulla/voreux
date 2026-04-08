@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: ja
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: local
