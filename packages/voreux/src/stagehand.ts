@@ -61,7 +61,9 @@ export async function initStagehand(originUrl: string): Promise<{
       viewport: frameworkConfig.browser.viewport,
       // WSL2 ではカーネルの制約により Chrome のサンドボックスが使えないため無効化する。
       // 他の環境では sandbox を有効なままにする。
-      ...(isWsl2() ? { args: ["--no-sandbox", "--disable-setuid-sandbox"] } : {}),
+      ...(isWsl2()
+        ? { args: ["--no-sandbox", "--disable-setuid-sandbox"] }
+        : {}),
     },
   });
   await stagehand.init();
