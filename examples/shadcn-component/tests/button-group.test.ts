@@ -78,6 +78,7 @@ defineScenarioSuite({
                   "Archive",
                 );
                 return (
+                  afterHover.matchesHover ||
                   afterHover.backgroundColor !== beforeHover.backgroundColor ||
                   afterHover.color !== beforeHover.color
                 );

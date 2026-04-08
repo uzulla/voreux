@@ -147,6 +147,47 @@ export async function hoverButtonByText(
   const point = await getButtonClickPoint(page, (text) => text === label);
   await showHoverMarker(page, point.x, point.y, `Hover: ${label}`);
   await page.hover(point.x, point.y);
+  await page.evaluate((targetLabel: string) => {
+    const previews = Array.from(
+      document.querySelectorAll('[data-slot="preview"]'),
+    ) as HTMLElement[];
+    const preview = previews.find((candidate) => {
+      const group = candidate.querySelector(
+        '[data-slot="button-group"]',
+      ) as HTMLElement | null;
+      if (!group) return false;
+      const texts = Array.from(group.querySelectorAll("button")).map((el) =>
+        (el.textContent || "").trim(),
+      );
+      return (
+        texts.includes("Archive") &&
+        texts.includes("Report") &&
+        texts.includes("Snooze")
+      );
+    });
+    const group = preview?.querySelector(
+      '[data-slot="button-group"]',
+    ) as HTMLElement | null;
+    const button = Array.from(group?.querySelectorAll("button") ?? []).find(
+      (el) => (el.textContent || "").trim() === targetLabel,
+    ) as HTMLElement | undefined;
+    if (!button) return;
+    for (const type of [
+      "pointerenter",
+      "mouseenter",
+      "mouseover",
+      "pointermove",
+      "mousemove",
+    ]) {
+      button.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        }),
+      );
+    }
+  }, label);
 }
 
 export async function getOverflowButtonClickPoint(
@@ -176,6 +217,7 @@ export async function getButtonVisualState(
 ): Promise<{
   backgroundColor: string;
   color: string;
+  matchesHover: boolean;
 }> {
   return page.evaluate((targetLabel: string) => {
     const preview = document.querySelector(
@@ -192,6 +234,7 @@ export async function getButtonVisualState(
     return {
       backgroundColor: cs.backgroundColor,
       color: cs.color,
+      matchesHover: button.matches(":hover"),
     };
   }, label);
 }
@@ -345,6 +388,46 @@ export async function hoverMenuItem(page: any, label: string): Promise<void> {
   if (!point) throw new Error(`menu item not found: ${label}`);
   await showHoverMarker(page, point.x, point.y, `Hover: ${label}`);
   await page.hover(point.x, point.y);
+  await page.evaluate((targetLabel: string) => {
+    const visibleContents = (
+      Array.from(
+        document.querySelectorAll('[data-slot="dropdown-menu-content"]'),
+      ) as HTMLElement[]
+    ).filter((target) => {
+      const cs = getComputedStyle(target);
+      const rect = target.getBoundingClientRect();
+      return (
+        cs.display !== "none" &&
+        cs.visibility !== "hidden" &&
+        cs.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    });
+    const content = visibleContents[0];
+    const item = Array.from(
+      content?.querySelectorAll('[data-slot="dropdown-menu-sub-trigger"]') ??
+        [],
+    ).find((el) => (el.textContent || "").trim() === targetLabel) as
+      | HTMLElement
+      | undefined;
+    if (!item) return;
+    for (const type of [
+      "pointerenter",
+      "mouseenter",
+      "mouseover",
+      "pointermove",
+      "mousemove",
+    ]) {
+      item.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        }),
+      );
+    }
+  }, label);
 }
 
 export async function getCheckedLabelState(page: any): Promise<{
