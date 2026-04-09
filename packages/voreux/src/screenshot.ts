@@ -4,6 +4,15 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import type { Recorder } from "./recording.js";
 
+export class ArtifactNameCollisionError extends Error {
+  constructor(public filePath: string) {
+    super(
+      `Screenshot artifact already exists: ${filePath}\nEach screenshot name must be unique within a run. Use a scenario-scoped, descriptive name at the callsite.`,
+    );
+    this.name = "ArtifactNameCollisionError";
+  }
+}
+
 export class ImageSizeMismatchError extends Error {
   constructor(
     public currentSize: { width: number; height: number },
@@ -53,8 +62,22 @@ export function createScreenshotHelper(
   dir: string,
   recorder?: Recorder,
 ): ScreenshotFn {
+  // ヘルパー生成時にディレクトリを作成しておく。
+  // 呼び出し元に依存せずファイル書き込みを保証するため。
+  fs.mkdirSync(dir, { recursive: true });
+
+  // クロージャ内で予約済みパスを管理する。
+  // fs.existsSync によるチェックは TOCTOU で破られるため、
+  // チェックと登録を単一の同期操作として行う。
+  const reservedPaths = new Set<string>();
+
   return async (name: string, targetPage = page) => {
     const filePath = path.join(dir, `${sanitizeArtifactName(name)}.png`);
+    if (reservedPaths.has(filePath)) {
+      throw new ArtifactNameCollisionError(filePath);
+    }
+    reservedPaths.add(filePath);
+    let succeeded = false;
     recorder?.pause();
     try {
       await recorder?.captureFrameNow();
@@ -63,12 +86,18 @@ export function createScreenshotHelper(
       } catch {
         await targetPage.screenshot({ path: filePath });
       }
+      succeeded = true;
       await new Promise((resolve) =>
         setTimeout(resolve, POST_VRT_STABILIZE_MS),
       );
       await recorder?.captureFrameNow();
     } finally {
       recorder?.resume();
+      // 撮影が失敗した場合はファイルが存在しないので予約を解放する。
+      // 次回の呼び出しで再試行できるようにするため。
+      if (!succeeded) {
+        reservedPaths.delete(filePath);
+      }
     }
     return filePath;
   };
