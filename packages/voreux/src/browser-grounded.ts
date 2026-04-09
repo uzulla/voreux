@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import type { TestContext } from "./context.js";
 import { sanitizeArtifactName } from "./screenshot.js";
 
 export async function waitUntil(
@@ -63,10 +64,13 @@ export async function screenshotClipAroundBox(
   box: { x: number; y: number; width: number; height: number },
   opts?: {
     padding?: number;
+    paddingX?: number;
+    paddingY?: number;
     viewport?: { width: number; height: number };
   },
 ): Promise<string> {
-  const padding = opts?.padding ?? 0;
+  const paddingX = opts?.paddingX ?? opts?.padding ?? 0;
+  const paddingY = opts?.paddingY ?? opts?.padding ?? 0;
   const viewport =
     opts?.viewport ??
     (await page.evaluate(() => ({
@@ -74,15 +78,21 @@ export async function screenshotClipAroundBox(
       height: window.innerHeight,
     })));
 
-  const x = Math.max(0, Math.floor(box.x - padding));
-  const y = Math.max(0, Math.floor(box.y - padding));
+  const x = Math.max(0, Math.floor(box.x - paddingX));
+  const y = Math.max(0, Math.floor(box.y - paddingY));
   const width = Math.max(
     1,
-    Math.min(Math.ceil(box.x + box.width + padding - x), viewport.width - x),
+    Math.min(
+      Math.ceil(box.x + box.width + paddingX - x),
+      Math.max(1, viewport.width - x),
+    ),
   );
   const height = Math.max(
     1,
-    Math.min(Math.ceil(box.y + box.height + padding - y), viewport.height - y),
+    Math.min(
+      Math.ceil(box.y + box.height + paddingY - y),
+      Math.max(1, viewport.height - y),
+    ),
   );
 
   return screenshotClip(page, outputPath, { x, y, width, height });
@@ -107,6 +117,98 @@ export async function isPerceivablyVisible(
   }, selector);
 }
 
+export async function getClosestToContainerCenter(
+  page: any,
+  opts: {
+    containerSelector: string;
+    itemSelector: string;
+    textFrom?: "textContent" | "innerText";
+  },
+): Promise<{ text: string; left: number; right: number } | null> {
+  return page.evaluate(
+    (args: {
+      containerSelector: string;
+      itemSelector: string;
+      textFrom: "textContent" | "innerText";
+    }) => {
+      const container = document.querySelector(
+        args.containerSelector,
+      ) as HTMLElement | null;
+      if (!container) return null;
+      const containerRect = container.getBoundingClientRect();
+      const centerX = containerRect.left + containerRect.width / 2;
+      const items = Array.from(
+        container.querySelectorAll(args.itemSelector),
+      ) as HTMLElement[];
+      if (items.length === 0) return null;
+
+      const candidates = items.map((el) => {
+        const r = el.getBoundingClientRect();
+        const itemCenter = r.left + r.width / 2;
+        const text =
+          args.textFrom === "innerText"
+            ? (el.innerText || "").trim()
+            : (el.textContent || "").trim();
+        return {
+          text,
+          left: r.left,
+          right: r.right,
+          dist: Math.abs(itemCenter - centerX),
+        };
+      });
+      candidates.sort((a, b) => a.dist - b.dist);
+      const best = candidates[0];
+      return {
+        text: best.text,
+        left: best.left,
+        right: best.right,
+      };
+    },
+    {
+      containerSelector: opts.containerSelector,
+      itemSelector: opts.itemSelector,
+      textFrom: opts.textFrom ?? "textContent",
+    },
+  );
+}
+
+export async function findSelectByOptionValues(
+  page: any,
+  opts: {
+    rootSelector: string;
+    requiredValues: Array<string | number>;
+    minOptions?: number;
+  },
+): Promise<number | null> {
+  return page.evaluate(
+    (args: {
+      rootSelector: string;
+      requiredValues: string[];
+      minOptions: number;
+    }) => {
+      const root = document.querySelector(
+        args.rootSelector,
+      ) as HTMLElement | null;
+      if (!root) return null;
+      const selects = Array.from(root.querySelectorAll("select"));
+      return selects.findIndex((select) => {
+        const values = Array.from((select as HTMLSelectElement).options).map(
+          (option) => option.value,
+        );
+        return (
+          values.length >= args.minOptions &&
+          args.requiredValues.every((value) => values.includes(value))
+        );
+      });
+    },
+    {
+      rootSelector: opts.rootSelector,
+      requiredValues: opts.requiredValues.map(String),
+      minOptions: opts.minOptions ?? opts.requiredValues.length,
+    },
+  );
+}
+
 export function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -116,4 +218,21 @@ export function ensureDir(dir: string): void {
 export function createArtifactPath(dir: string, name: string): string {
   ensureDir(dir);
   return path.join(dir, `${sanitizeArtifactName(name)}.png`);
+}
+
+export async function humanHover(
+  ctx: TestContext,
+  point: { x: number; y: number },
+  opts?: {
+    label?: string;
+    settleMs?: number;
+    reinforce?: () => Promise<void>;
+  },
+): Promise<void> {
+  await ctx.annotateHover(point.x, point.y, opts?.label);
+  await ctx.page.hover(point.x, point.y);
+  await opts?.reinforce?.();
+  if ((opts?.settleMs ?? 0) > 0) {
+    await ctx.page.waitForTimeout(opts?.settleMs ?? 0);
+  }
 }

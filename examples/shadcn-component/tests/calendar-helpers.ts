@@ -4,6 +4,7 @@ import {
   clearPointerHover,
   createArtifactPath,
   ensureDir,
+  findSelectByOptionValues,
   screenshotClipAroundBox,
 } from "@uzulla/voreux";
 
@@ -289,19 +290,16 @@ export async function changeCalendarMonth(
       const selects = Array.from(cal.querySelectorAll("select"));
       if (selects.length < 2) return false;
 
-      const monthSelect = selects.find((select) => {
+      const monthSelectIndex = selects.findIndex((select) => {
         const values = Array.from((select as HTMLSelectElement).options).map(
           (option) => option.value,
         );
-        // month dropdown は 0-11 を持つ。year dropdown は 2020 以降の年値を持つ。
         return (
-          values.length >= 12 &&
-          values.every((value) => /^\d+$/.test(value)) &&
-          values.some((value) => Number.parseInt(value, 10) === 0) &&
-          values.some((value) => Number.parseInt(value, 10) === 11)
+          values.length >= 12 && values.includes("0") && values.includes("11")
         );
-      }) as HTMLSelectElement | undefined;
-      if (!monthSelect) return false;
+      });
+      if (monthSelectIndex < 0) return false;
+      const monthSelect = selects[monthSelectIndex] as HTMLSelectElement;
 
       // React の制御下にある select は nativeInputValueSetter で値を変更し、
       // input + change イベントを発火する必要がある。
@@ -331,7 +329,7 @@ export async function changeCalendarMonth(
  */
 export async function getCurrentMonth(page: any): Promise<number> {
   const { previewIndex } = await getTargetCalendarPreview(page);
-  const month = await page.evaluate((pi: number) => {
+  const rootSelector = await page.evaluate((pi: number) => {
     const preview = document.querySelectorAll('[data-slot="preview"]')[pi] as
       | HTMLElement
       | undefined;
@@ -339,23 +337,32 @@ export async function getCurrentMonth(page: any): Promise<number> {
       '[data-slot="calendar"]',
     ) as HTMLElement | null;
     if (!cal) return null;
-    const selects = Array.from(cal.querySelectorAll("select"));
-    if (selects.length < 2) return null;
-
-    const monthSelect = selects.find((select) => {
-      const values = Array.from((select as HTMLSelectElement).options).map(
-        (option) => option.value,
-      );
-      return (
-        values.length >= 12 &&
-        values.every((value) => /^\d+$/.test(value)) &&
-        values.some((value) => Number.parseInt(value, 10) === 0) &&
-        values.some((value) => Number.parseInt(value, 10) === 11)
-      );
-    }) as HTMLSelectElement | undefined;
-    if (!monthSelect) return null;
-    return Number.parseInt(monthSelect.value, 10);
+    cal.setAttribute("data-voreux-calendar-target", "true");
+    return '[data-voreux-calendar-target="true"]';
   }, previewIndex);
+  if (!rootSelector) throw new Error("could not locate calendar root");
+  const monthIndex = await findSelectByOptionValues(page, {
+    rootSelector,
+    requiredValues: [0, 11],
+    minOptions: 12,
+  });
+  if (monthIndex === null || monthIndex < 0) {
+    throw new Error("could not read current month");
+  }
+  const month = await page.evaluate(
+    (args: { rootSelector: string; index: number }) => {
+      const root = document.querySelector(
+        args.rootSelector,
+      ) as HTMLElement | null;
+      if (!root) return null;
+      const select = root.querySelectorAll("select")[args.index] as
+        | HTMLSelectElement
+        | undefined;
+      if (!select) return null;
+      return Number.parseInt(select.value, 10);
+    },
+    { rootSelector, index: monthIndex },
+  );
   if (month === null) throw new Error("could not read current month");
   return month;
 }
