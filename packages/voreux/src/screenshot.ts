@@ -4,6 +4,15 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import type { Recorder } from "./recording.js";
 
+export class ArtifactNameCollisionError extends Error {
+  constructor(public filePath: string) {
+    super(
+      `Screenshot artifact already exists: ${filePath}\nEach screenshot name must be unique within a run. Use a scenario-scoped, descriptive name at the callsite.`,
+    );
+    this.name = "ArtifactNameCollisionError";
+  }
+}
+
 export class ImageSizeMismatchError extends Error {
   constructor(
     public currentSize: { width: number; height: number },
@@ -55,6 +64,9 @@ export function createScreenshotHelper(
 ): ScreenshotFn {
   return async (name: string, targetPage = page) => {
     const filePath = path.join(dir, `${sanitizeArtifactName(name)}.png`);
+    if (fs.existsSync(filePath)) {
+      throw new ArtifactNameCollisionError(filePath);
+    }
     recorder?.pause();
     try {
       await recorder?.captureFrameNow();
