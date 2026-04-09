@@ -1,5 +1,5 @@
 import type { TestContext } from "@uzulla/voreux";
-import { defineScenarioSuite } from "@uzulla/voreux";
+import { defineScenarioSuite, waitUntil } from "@uzulla/voreux";
 import { expect } from "vitest";
 
 /**
@@ -19,20 +19,6 @@ import { expect } from "vitest";
  */
 
 const ORIGIN_URL = "https://petstore.swagger.io/";
-
-async function pollUntil(
-  page: any,
-  fn: () => Promise<boolean>,
-  timeoutMs: number,
-  intervalMs = 300,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fn()) return true;
-    await page.waitForTimeout(intervalMs);
-  }
-  return false;
-}
 
 async function getPageText(page: any): Promise<string> {
   return page.evaluate(() => document.body.innerText ?? "");
@@ -58,16 +44,18 @@ async function dismissCookieBanner(page: any): Promise<void> {
 }
 
 async function waitForSwaggerPetstore(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const text = await getPageText(page);
       return text.includes("Swagger Petstore");
     },
-    30_000,
-    500,
+    {
+      timeoutMs: 30_000,
+      intervalMs: 500,
+      message: "Swagger Petstore UI did not become ready in time",
+    },
   );
-  if (!ok) throw new Error("Swagger Petstore UI did not become ready in time");
 }
 
 async function getSummaryBox(
@@ -109,16 +97,19 @@ async function isOperationOpen(
  * - summary 要素は座標 click の方が安定した
  */
 async function expandOperation(page: any, operationId: string): Promise<void> {
-  const exists = await pollUntil(
+  await waitUntil(
     page,
     () =>
       page.evaluate(
         (id: string) => !!document.querySelector(`#operations-pet-${id}`),
         operationId,
       ),
-    15_000,
+    {
+      timeoutMs: 15_000,
+      intervalMs: 300,
+      message: `operation not found: ${operationId}`,
+    },
   );
-  if (!exists) throw new Error(`operation not found: ${operationId}`);
 
   if (await isOperationOpen(page, operationId)) return;
 
@@ -135,12 +126,11 @@ async function expandOperation(page: any, operationId: string): Promise<void> {
     Math.round(box.y + box.height / 2),
   );
 
-  const opened = await pollUntil(
-    page,
-    () => isOperationOpen(page, operationId),
-    10_000,
-  );
-  if (!opened) throw new Error(`operation did not open: ${operationId}`);
+  await waitUntil(page, () => isOperationOpen(page, operationId), {
+    timeoutMs: 10_000,
+    intervalMs: 300,
+    message: `operation did not open: ${operationId}`,
+  });
 }
 
 async function getButtonBox(
@@ -251,7 +241,7 @@ async function waitForResponse(
   page: any,
   operationId: string,
 ): Promise<{ code: string; body: string }> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     () =>
       page.evaluate((id: string) => {
@@ -271,13 +261,12 @@ async function waitForResponse(
           .filter((text) => text !== "Code");
         return codes.length > 0;
       }, operationId),
-    30_000,
-    500,
+    {
+      timeoutMs: 30_000,
+      intervalMs: 500,
+      message: `response did not appear for operation: ${operationId}`,
+    },
   );
-
-  if (!ok) {
-    throw new Error(`response did not appear for operation: ${operationId}`);
-  }
 
   return page.evaluate((id: string) => {
     const section = document.querySelector(`#operations-pet-${id}`);
