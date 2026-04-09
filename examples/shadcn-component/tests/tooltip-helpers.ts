@@ -1,6 +1,13 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  clearPointerHover,
+  createArtifactPath,
+  ensureDir,
+  getCenterPoint,
+  screenshotClipAroundBox,
+  waitUntil,
+} from "@uzulla/voreux";
 
 // screenshot 出力先は env で差し替えられるようにしつつ、
 // sample 単体でそのまま読んでも分かるよう既定値もローカルに持つ。
@@ -10,30 +17,7 @@ const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
 
 // sample は「そのまま動かして読める教材」でありたいので、
 // 出力先ディレクトリの事前作成も helper 側で面倒を見る。
-if (!fs.existsSync(SHOTS_DIR)) {
-  fs.mkdirSync(SHOTS_DIR, { recursive: true });
-}
-
-/**
- * 条件成立まで待つ最小 polling helper。
- *
- * tooltip は「要素があるか」だけでは足りず、hover 後の visible / hidden の
- * 状態遷移そのものを観測したいので、この sample では waitForSelector よりも
- * poll ベースの待機を主軸にしている。
- */
-export async function pollUntil(
-  page: any,
-  fn: () => Promise<boolean>,
-  timeoutMs: number,
-  intervalMs = 100,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fn()) return true;
-    await page.waitForTimeout(intervalMs);
-  }
-  return false;
-}
+ensureDir(SHOTS_DIR);
 
 /**
  * docs ページには tooltip サンプルが複数あるため、最上部 preview 内の
@@ -67,10 +51,8 @@ export async function getTooltipTriggerBox(
  */
 export async function hoverTooltipTrigger(page: any): Promise<void> {
   const box = await getTooltipTriggerBox(page);
-  await page.hover(
-    Math.round(box.x + box.width / 2),
-    Math.round(box.y + box.height / 2),
-  );
+  const point = getCenterPoint(box);
+  await page.hover(point.x, point.y);
   await page.evaluate(() => {
     const preview = document.querySelector(
       '[data-slot="preview"]',
@@ -104,7 +86,7 @@ export async function hoverTooltipTrigger(page: any): Promise<void> {
  * をまとめて扱い、「消えること」を安定して再現する。
  */
 export async function movePointerAway(page: any): Promise<void> {
-  await page.hover(10, 10);
+  await clearPointerHover(page, 0);
   await page.click(10, 10);
   await page.evaluate(() => {
     const preview = document.querySelector(
@@ -139,16 +121,18 @@ export async function movePointerAway(page: any): Promise<void> {
  * human-perceivable な visible 状態である。
  */
 export async function waitForTooltipVisible(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const state = await getTooltipState(page);
       return state.visible;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "tooltip did not become visible",
+    },
   );
-  if (!ok) throw new Error("tooltip did not become visible");
 }
 
 /**
@@ -158,16 +142,18 @@ export async function waitForTooltipVisible(page: any): Promise<void> {
  * 使い物になるため、この helper を独立させている。
  */
 export async function waitForTooltipHidden(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const state = await getTooltipState(page);
       return !state.visible;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "tooltip did not become hidden",
+    },
   );
-  if (!ok) throw new Error("tooltip did not become hidden");
 }
 
 /**
@@ -228,15 +214,6 @@ export async function screenshotTooltipRegion(
   // hidden / visible の両方で同じ比較領域を使いたいため、
   // tooltip content の実矩形ではなく trigger 基準の固定 clip を切り出す。
   // これにより VRT 時の image size mismatch を避けやすくしている。
-  const filePath = path.join(SHOTS_DIR, `${name}.png`);
-  await page.screenshot({
-    path: filePath,
-    clip: {
-      x: Math.max(0, Math.round(box.x - 48)),
-      y: Math.max(0, Math.round(box.y - 72)),
-      width: Math.round(box.width + 96),
-      height: Math.round(box.height + 128),
-    },
-  });
-  return filePath;
+  const filePath = createArtifactPath(SHOTS_DIR, name);
+  return screenshotClipAroundBox(page, filePath, box, { padding: 48 });
 }
