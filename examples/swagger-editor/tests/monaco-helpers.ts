@@ -26,6 +26,8 @@ export async function ensureMonacoIsVisible(page: any): Promise<void> {
  * We use page.evaluate() because Stagehand's Page API does not expose the same
  * locator bounding-box API shape we would normally rely on in Playwright code.
  */
+import { getCenterPoint } from "@uzulla/voreux";
+
 export async function getMonacoBox(
   page: any,
 ): Promise<{ x: number; y: number; width: number; height: number }> {
@@ -56,13 +58,14 @@ export async function getMonacoBox(
  */
 export async function placeCaretNearSwaggerTitleLine(page: any): Promise<void> {
   const box = await getMonacoBox(page);
-  const clamp = (value: number, min: number, max: number) =>
-    Math.min(Math.max(value, min), max);
-
-  const clickX = clamp(box.x + 180, box.x, box.x + box.width - 1);
-  const clickY = clamp(box.y + 55, box.y, box.y + box.height - 1);
-
-  await page.click(Math.round(clickX), Math.round(clickY));
+  const titleLineBox = {
+    x: box.x,
+    y: box.y + 28,
+    width: Math.min(box.width, 360),
+    height: 54,
+  };
+  const point = getCenterPoint(titleLineBox);
+  await page.click(point.x, point.y);
 }
 
 /**

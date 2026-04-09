@@ -1,4 +1,9 @@
-import { getCenterPoint, type TestContext, waitUntil } from "@uzulla/voreux";
+import {
+  getCenterPoint,
+  humanHover,
+  type TestContext,
+  waitUntil,
+} from "@uzulla/voreux";
 
 /**
  * docs ページ内には複数サンプルがあるため、最上部 preview の button-group を対象に固定する。
@@ -69,49 +74,52 @@ export async function hoverButtonByText(
 ): Promise<void> {
   const page = ctx.page;
   const point = await getButtonClickPoint(page, (text) => text === label);
-  await ctx.annotateHover(point.x, point.y, `Hover: ${label}`);
-  await page.hover(point.x, point.y);
-  await page.evaluate((targetLabel: string) => {
-    const previews = Array.from(
-      document.querySelectorAll('[data-slot="preview"]'),
-    ) as HTMLElement[];
-    const preview = previews.find((candidate) => {
-      const group = candidate.querySelector(
-        '[data-slot="button-group"]',
-      ) as HTMLElement | null;
-      if (!group) return false;
-      const texts = Array.from(group.querySelectorAll("button")).map((el) =>
-        (el.textContent || "").trim(),
-      );
-      return (
-        texts.includes("Archive") &&
-        texts.includes("Report") &&
-        texts.includes("Snooze")
-      );
-    });
-    const group = preview?.querySelector(
-      '[data-slot="button-group"]',
-    ) as HTMLElement | null;
-    const button = Array.from(group?.querySelectorAll("button") ?? []).find(
-      (el) => (el.textContent || "").trim() === targetLabel,
-    ) as HTMLElement | undefined;
-    if (!button) return;
-    for (const type of [
-      "pointerenter",
-      "mouseenter",
-      "mouseover",
-      "pointermove",
-      "mousemove",
-    ]) {
-      button.dispatchEvent(
-        new MouseEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        }),
-      );
-    }
-  }, label);
+  await humanHover(ctx, point, {
+    label: `Hover: ${label}`,
+    reinforce: async () => {
+      await page.evaluate((targetLabel: string) => {
+        const previews = Array.from(
+          document.querySelectorAll('[data-slot="preview"]'),
+        ) as HTMLElement[];
+        const preview = previews.find((candidate) => {
+          const group = candidate.querySelector(
+            '[data-slot="button-group"]',
+          ) as HTMLElement | null;
+          if (!group) return false;
+          const texts = Array.from(group.querySelectorAll("button")).map((el) =>
+            (el.textContent || "").trim(),
+          );
+          return (
+            texts.includes("Archive") &&
+            texts.includes("Report") &&
+            texts.includes("Snooze")
+          );
+        });
+        const group = preview?.querySelector(
+          '[data-slot="button-group"]',
+        ) as HTMLElement | null;
+        const button = Array.from(group?.querySelectorAll("button") ?? []).find(
+          (el) => (el.textContent || "").trim() === targetLabel,
+        ) as HTMLElement | undefined;
+        if (!button) return;
+        for (const type of [
+          "pointerenter",
+          "mouseenter",
+          "mouseover",
+          "pointermove",
+          "mousemove",
+        ]) {
+          button.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            }),
+          );
+        }
+      }, label);
+    },
+  });
 }
 
 export async function getOverflowButtonClickPoint(
