@@ -1,30 +1,6 @@
+import { getCenterPoint, waitUntil } from "@uzulla/voreux";
+
 const HOVER_MARKER_DURATION_MS = 700;
-
-export async function pollUntil(
-  page: any,
-  fn: () => Promise<boolean>,
-  timeoutMs: number,
-  intervalMs = 100,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fn()) return true;
-    await page.waitForTimeout(intervalMs);
-  }
-  return false;
-}
-
-function toCenterPoint(box: {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}) {
-  return {
-    x: Math.round(box.x + box.width / 2),
-    y: Math.round(box.y + box.height / 2),
-  };
-}
 
 async function showHoverMarker(
   page: any,
@@ -137,7 +113,7 @@ export async function getButtonClickPoint(
   const buttons = await getPrimaryButtonGroupButtons(page);
   const button = buttons.find((entry) => matcher(entry.text));
   if (!button) throw new Error("button in primary button group not found");
-  return toCenterPoint(button);
+  return getCenterPoint(button);
 }
 
 export async function hoverButtonByText(
@@ -203,7 +179,7 @@ export async function getOverflowButtonClickPoint(
       .at(-1);
 
   if (!overflow) throw new Error("overflow button not found");
-  return toCenterPoint(overflow);
+  return getCenterPoint(overflow);
 }
 
 export async function clickOverflowButton(page: any): Promise<void> {
@@ -240,43 +216,49 @@ export async function getButtonVisualState(
 }
 
 export async function waitForMenuVisible(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const state = await getMenuState(page);
       return state.visible;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "button group menu did not become visible",
+    },
   );
-  if (!ok) throw new Error("button group menu did not become visible");
 }
 
 export async function waitForSubmenuVisible(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const state = await getSubmenuState(page);
       return state.visible;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "button group submenu did not become visible",
+    },
   );
-  if (!ok) throw new Error("button group submenu did not become visible");
 }
 
 export async function waitForMenusHidden(page: any): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const menu = await getMenuState(page);
       const submenu = await getSubmenuState(page);
       return !menu.visible && !submenu.visible;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: "button group menus did not become hidden",
+    },
   );
-  if (!ok) throw new Error("button group menus did not become hidden");
 }
 
 export async function getMenuState(
@@ -380,14 +362,12 @@ export async function hoverMenuItem(page: any, label: string): Promise<void> {
       | undefined;
     if (!item) return null;
     const r = item.getBoundingClientRect();
-    return {
-      x: Math.round(r.x + r.width / 2),
-      y: Math.round(r.y + r.height / 2),
-    };
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, label);
   if (!point) throw new Error(`menu item not found: ${label}`);
-  await showHoverMarker(page, point.x, point.y, `Hover: ${label}`);
-  await page.hover(point.x, point.y);
+  const center = getCenterPoint(point);
+  await showHoverMarker(page, center.x, center.y, `Hover: ${label}`);
+  await page.hover(center.x, center.y);
   await page.evaluate((targetLabel: string) => {
     const visibleContents = (
       Array.from(
@@ -504,11 +484,8 @@ export async function getLabelOptionClickPoint(
       | undefined;
     if (!item) return null;
     const r = item.getBoundingClientRect();
-    return {
-      x: Math.round(r.x + r.width / 2),
-      y: Math.round(r.y + r.height / 2),
-    };
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, label);
   if (!point) throw new Error(`submenu option not found: ${label}`);
-  return point;
+  return getCenterPoint(point);
 }

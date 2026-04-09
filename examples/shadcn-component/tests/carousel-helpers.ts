@@ -1,28 +1,17 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  createArtifactPath,
+  ensureDir,
+  screenshotClipAroundBox,
+  waitUntil,
+} from "@uzulla/voreux";
 
 const SHOTS_DIR = process.env.E2E_SCREENSHOTS_DIR
   ? path.resolve(process.cwd(), process.env.E2E_SCREENSHOTS_DIR)
   : fileURLToPath(new URL("../screenshots/", import.meta.url));
 
-if (!fs.existsSync(SHOTS_DIR)) {
-  fs.mkdirSync(SHOTS_DIR, { recursive: true });
-}
-
-export async function pollUntil(
-  page: any,
-  fn: () => Promise<boolean>,
-  timeoutMs: number,
-  intervalMs = 100,
-): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fn()) return true;
-    await page.waitForTimeout(intervalMs);
-  }
-  return false;
-}
+ensureDir(SHOTS_DIR);
 
 /**
  * このページは carousel サンプルが複数ありノイジーなので、
@@ -121,16 +110,18 @@ export async function waitForCenteredItem(
   page: any,
   expectedText: string,
 ): Promise<void> {
-  const ok = await pollUntil(
+  await waitUntil(
     page,
     async () => {
       const item = await getCenteredItem(page);
       return item.text === expectedText;
     },
-    5000,
-    100,
+    {
+      timeoutMs: 5000,
+      intervalMs: 100,
+      message: `centered item did not become ${expectedText}`,
+    },
   );
-  if (!ok) throw new Error(`centered item did not become ${expectedText}`);
 }
 
 /**
@@ -152,15 +143,15 @@ export async function advanceUntilCenteredItem(
     if (nextState.disabled) break;
 
     await clickCarouselButton(page, "carousel-next");
-    const moved = await pollUntil(
+    await waitUntil(
       page,
       async () => (await getCenteredItem(page)).text !== current.text,
-      3000,
-      100,
+      {
+        timeoutMs: 3000,
+        intervalMs: 100,
+        message: "carousel did not progress after next click",
+      },
     );
-    if (!moved) {
-      throw new Error("carousel did not progress after next click");
-    }
   }
   throw new Error(`failed to advance carousel until ${expectedText}`);
 }
@@ -203,15 +194,6 @@ export async function screenshotCarouselClip(
   name: string,
 ): Promise<string> {
   const box = await getTargetCarouselBox(page);
-  const filePath = path.join(SHOTS_DIR, `${name}.png`);
-  await page.screenshot({
-    path: filePath,
-    clip: {
-      x: Math.max(0, Math.round(box.x - 24)),
-      y: Math.max(0, Math.round(box.y - 24)),
-      width: Math.round(box.width + 48),
-      height: Math.round(box.height + 48),
-    },
-  });
-  return filePath;
+  const filePath = createArtifactPath(SHOTS_DIR, name);
+  return screenshotClipAroundBox(page, filePath, box, { padding: 24 });
 }
