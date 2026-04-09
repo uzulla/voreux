@@ -73,6 +73,7 @@ export function createScreenshotHelper(
       throw new ArtifactNameCollisionError(filePath);
     }
     reservedPaths.add(filePath);
+    let succeeded = false;
     recorder?.pause();
     try {
       await recorder?.captureFrameNow();
@@ -81,12 +82,18 @@ export function createScreenshotHelper(
       } catch {
         await targetPage.screenshot({ path: filePath });
       }
+      succeeded = true;
       await new Promise((resolve) =>
         setTimeout(resolve, POST_VRT_STABILIZE_MS),
       );
       await recorder?.captureFrameNow();
     } finally {
       recorder?.resume();
+      // 撮影が失敗した場合はファイルが存在しないので予約を解放する。
+      // 次回の呼び出しで再試行できるようにするため。
+      if (!succeeded) {
+        reservedPaths.delete(filePath);
+      }
     }
     return filePath;
   };
