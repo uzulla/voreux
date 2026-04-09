@@ -1,6 +1,7 @@
 import type { Stagehand } from "@browserbasehq/stagehand";
 import path from "path";
 import {
+  annotateHover as annotateHoverHelper,
   annotateKey as annotateKeyHelper,
   annotatePoint,
 } from "./annotation.js";
@@ -86,6 +87,16 @@ export interface TestContext {
    * - annotation 前後に boundary frame を打ち、短い key 操作を取りこぼしにくくする
    */
   annotateKey: (key: string) => Promise<void>;
+
+  /**
+   * hover アクションを人間向けに可視化する。
+   *
+   * 用途:
+   * - 録画や demo で「どこにホバーしたのか」を青いマーカーで分かりやすくする
+   * - action label (`Hover: Archive` など) を録画へ載せる
+   * - annotation 前後に boundary frame を打ち、hover 遷移を録画で追いやすくする
+   */
+  annotateHover: (x: number, y: number, label?: string) => Promise<void>;
 
   /** observe() で要素を探し、単一ハイライト → screenshot → 録画フレーム注入 → ハイライト除去 */
   highlightTarget: (
@@ -227,6 +238,25 @@ export function createTestContext(
         await annotateKeyHelper(page, key, undefined, {
           onShown: () => recorder.captureFrameNow(),
         });
+        await recorder.captureFrameNow();
+      } finally {
+        recorder.resume();
+      }
+    },
+
+    async annotateHover(x: number, y: number, label?: string) {
+      // hover annotation も click / key と同じく、操作前 / annotation 中 / 復帰後の
+      // 境界 frame を明示して hover アクションの進行を録画で追いやすくする。
+      recorder.pause();
+      try {
+        await recorder.captureFrameNow();
+        await annotateHoverHelper(
+          page,
+          { x, y, label },
+          {
+            onShown: () => recorder.captureFrameNow(),
+          },
+        );
         await recorder.captureFrameNow();
       } finally {
         recorder.resume();
