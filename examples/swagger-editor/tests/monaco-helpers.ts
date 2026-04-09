@@ -1,3 +1,5 @@
+import { getCenterPoint } from "@uzulla/voreux";
+
 /**
  * Monaco editor helper utilities for the swagger-editor sample.
  *
@@ -26,8 +28,6 @@ export async function ensureMonacoIsVisible(page: any): Promise<void> {
  * We use page.evaluate() because Stagehand's Page API does not expose the same
  * locator bounding-box API shape we would normally rely on in Playwright code.
  */
-import { getCenterPoint } from "@uzulla/voreux";
-
 export async function getMonacoBox(
   page: any,
 ): Promise<{ x: number; y: number; width: number; height: number }> {
