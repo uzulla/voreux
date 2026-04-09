@@ -1,4 +1,4 @@
-import { type TestContext, getCenterPoint, waitUntil } from "@uzulla/voreux";
+import { getCenterPoint, type TestContext, waitUntil } from "@uzulla/voreux";
 
 /**
  * docs ページ内には複数サンプルがあるため、最上部 preview の button-group を対象に固定する。
