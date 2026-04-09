@@ -362,14 +362,12 @@ export async function hoverMenuItem(page: any, label: string): Promise<void> {
       | undefined;
     if (!item) return null;
     const r = item.getBoundingClientRect();
-    return {
-      x: Math.round(r.x + r.width / 2),
-      y: Math.round(r.y + r.height / 2),
-    };
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, label);
   if (!point) throw new Error(`menu item not found: ${label}`);
-  await showHoverMarker(page, point.x, point.y, `Hover: ${label}`);
-  await page.hover(point.x, point.y);
+  const center = getCenterPoint(point);
+  await showHoverMarker(page, center.x, center.y, `Hover: ${label}`);
+  await page.hover(center.x, center.y);
   await page.evaluate((targetLabel: string) => {
     const visibleContents = (
       Array.from(
@@ -486,11 +484,8 @@ export async function getLabelOptionClickPoint(
       | undefined;
     if (!item) return null;
     const r = item.getBoundingClientRect();
-    return {
-      x: Math.round(r.x + r.width / 2),
-      y: Math.round(r.y + r.height / 2),
-    };
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
   }, label);
   if (!point) throw new Error(`submenu option not found: ${label}`);
-  return point;
+  return getCenterPoint(point);
 }
