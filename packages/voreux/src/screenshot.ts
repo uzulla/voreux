@@ -62,6 +62,10 @@ export function createScreenshotHelper(
   dir: string,
   recorder?: Recorder,
 ): ScreenshotFn {
+  // ヘルパー生成時にディレクトリを作成しておく。
+  // 呼び出し元に依存せずファイル書き込みを保証するため。
+  fs.mkdirSync(dir, { recursive: true });
+
   // クロージャ内で予約済みパスを管理する。
   // fs.existsSync によるチェックは TOCTOU で破られるため、
   // チェックと登録を単一の同期操作として行う。
