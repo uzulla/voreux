@@ -66,7 +66,7 @@ defineScenarioSuite({
           screenshotsDir,
           baselinesDir,
           hover: async () => {
-            await hoverButtonByText(ctx.page, "Archive");
+            await hoverButtonByText(ctx, "Archive");
           },
           waitUntilHovered: async () => {
             await waitUntil(
@@ -103,7 +103,7 @@ defineScenarioSuite({
         expect(menu.visible).toBe(true);
         expect(menu.items.some((item) => item.includes("Label As"))).toBe(true);
 
-        await hoverMenuItem(ctx.page, "Label As...");
+        await hoverMenuItem(ctx, "Label As...");
         await waitForSubmenuVisible(ctx.page);
         const submenuBefore = await getSubmenuState(ctx.page);
         expect(submenuBefore.visible).toBe(true);
@@ -130,7 +130,7 @@ defineScenarioSuite({
         );
         await clickOverflowButton(ctx.page);
         await waitForMenuVisible(ctx.page);
-        await hoverMenuItem(ctx.page, "Label As...");
+        await hoverMenuItem(ctx, "Label As...");
         await waitForSubmenuVisible(ctx.page);
 
         const checkedAfter = await getCheckedLabelState(ctx.page);

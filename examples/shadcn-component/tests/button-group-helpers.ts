@@ -1,57 +1,4 @@
-import { getCenterPoint, waitUntil } from "@uzulla/voreux";
-
-const HOVER_MARKER_DURATION_MS = 700;
-
-async function showHoverMarker(
-  page: any,
-  x: number,
-  y: number,
-  label: string,
-): Promise<void> {
-  await page.evaluate(
-    (point: { x: number; y: number; label: string; durationMs: number }) => {
-      const marker = document.createElement("div");
-      marker.setAttribute("data-voreux-hover-marker", "true");
-      marker.style.position = "fixed";
-      marker.style.left = `${point.x - 14}px`;
-      marker.style.top = `${point.y - 14}px`;
-      marker.style.width = "28px";
-      marker.style.height = "28px";
-      marker.style.borderRadius = "9999px";
-      marker.style.background = "rgba(59, 130, 246, 0.92)";
-      marker.style.border = "3px solid white";
-      marker.style.boxShadow = "0 0 0 6px rgba(59, 130, 246, 0.24)";
-      marker.style.zIndex = "2147483647";
-      marker.style.pointerEvents = "none";
-
-      const pill = document.createElement("div");
-      pill.textContent = point.label;
-      pill.style.position = "fixed";
-      pill.style.left = "50%";
-      pill.style.bottom = "32px";
-      pill.style.transform = "translateX(-50%)";
-      pill.style.padding = "10px 14px";
-      pill.style.borderRadius = "9999px";
-      pill.style.background = "rgba(59, 130, 246, 0.95)";
-      pill.style.color = "white";
-      pill.style.fontSize = "18px";
-      pill.style.fontWeight = "800";
-      pill.style.fontFamily = "ui-sans-serif, system-ui, sans-serif";
-      pill.style.zIndex = "2147483647";
-      pill.style.pointerEvents = "none";
-      pill.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.25)";
-
-      document.body.appendChild(marker);
-      document.body.appendChild(pill);
-      setTimeout(() => {
-        marker.remove();
-        pill.remove();
-      }, point.durationMs);
-    },
-    { x, y, label, durationMs: HOVER_MARKER_DURATION_MS },
-  );
-  await page.waitForTimeout(HOVER_MARKER_DURATION_MS);
-}
+import { getCenterPoint, type TestContext, waitUntil } from "@uzulla/voreux";
 
 /**
  * docs ページ内には複数サンプルがあるため、最上部 preview の button-group を対象に固定する。
@@ -117,11 +64,12 @@ export async function getButtonClickPoint(
 }
 
 export async function hoverButtonByText(
-  page: any,
+  ctx: TestContext,
   label: string,
 ): Promise<void> {
+  const page = ctx.page;
   const point = await getButtonClickPoint(page, (text) => text === label);
-  await showHoverMarker(page, point.x, point.y, `Hover: ${label}`);
+  await ctx.annotateHover(point.x, point.y, `Hover: ${label}`);
   await page.hover(point.x, point.y);
   await page.evaluate((targetLabel: string) => {
     const previews = Array.from(
@@ -331,7 +279,11 @@ export async function getSubmenuState(
   });
 }
 
-export async function hoverMenuItem(page: any, label: string): Promise<void> {
+export async function hoverMenuItem(
+  ctx: TestContext,
+  label: string,
+): Promise<void> {
+  const page = ctx.page;
   const point = await page.evaluate((targetLabel: string) => {
     const visibleContents = (
       Array.from(
@@ -366,7 +318,7 @@ export async function hoverMenuItem(page: any, label: string): Promise<void> {
   }, label);
   if (!point) throw new Error(`menu item not found: ${label}`);
   const center = getCenterPoint(point);
-  await showHoverMarker(page, center.x, center.y, `Hover: ${label}`);
+  await ctx.annotateHover(center.x, center.y, `Hover: ${label}`);
   await page.hover(center.x, center.y);
   await page.evaluate((targetLabel: string) => {
     const visibleContents = (

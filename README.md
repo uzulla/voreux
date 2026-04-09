@@ -232,6 +232,17 @@ import type { ScenarioStep, ScenarioSuiteOptions } from "@uzulla/voreux";
 
 ## 実行方法（開発時）
 
+> **重要: examples のテストを実行する前に必ず `pnpm build` を先に実行してください。**
+>
+> `packages/voreux` は TypeScript ソースを `dist/` にコンパイルして成果物を出力します。
+> examples は `dist/` を参照するため、**build 前にテストを実行すると古い成果物を参照してしまい、
+> 新しいAPIが見つからないなどのエラーが発生します。**
+>
+> ```bash
+> pnpm build   # 必ず先に実行
+> pnpm test    # その後テスト
+> ```
+
 ```bash
 # サンプルを実行
 pnpm e2e
@@ -291,6 +302,7 @@ Use these when a sample is likely to be watched by a human in a recording or dem
 Available from `TestContext`:
 - `ctx.annotateClick(x, y, label?)`
 - `ctx.annotateKey(key)`
+- `ctx.annotateHover(x, y, label?)`
 
 Intended behavior:
 - leave a frame before the action annotation
