@@ -62,11 +62,17 @@ export function createScreenshotHelper(
   dir: string,
   recorder?: Recorder,
 ): ScreenshotFn {
+  // クロージャ内で予約済みパスを管理する。
+  // fs.existsSync によるチェックは TOCTOU で破られるため、
+  // チェックと登録を単一の同期操作として行う。
+  const reservedPaths = new Set<string>();
+
   return async (name: string, targetPage = page) => {
     const filePath = path.join(dir, `${sanitizeArtifactName(name)}.png`);
-    if (fs.existsSync(filePath)) {
+    if (reservedPaths.has(filePath)) {
       throw new ArtifactNameCollisionError(filePath);
     }
+    reservedPaths.add(filePath);
     recorder?.pause();
     try {
       await recorder?.captureFrameNow();
