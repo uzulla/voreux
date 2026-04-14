@@ -164,20 +164,40 @@ function matchesPattern(filePath: string, pattern?: string): boolean {
   return filePath.includes(pattern);
 }
 
+export interface ScenarioSelectionResult {
+  selected: string[];
+  excludedDrafts: string[];
+}
+
 export function resolveScenarioTargets(
   cwd: string,
   pattern: string | undefined,
   includeDrafts: boolean,
   onlyDrafts: boolean,
-): string[] {
+): ScenarioSelectionResult {
   const files = collectTestTargets(cwd);
-  return files.filter((file) => {
-    if (!matchesPattern(file, pattern)) return false;
+  const selected: string[] = [];
+  const excludedDrafts: string[] = [];
+
+  for (const file of files) {
+    if (!matchesPattern(file, pattern)) continue;
     const isDraft = isDraftScenario(file);
-    if (onlyDrafts) return isDraft;
-    if (includeDrafts) return true;
-    return !isDraft;
-  });
+    if (onlyDrafts) {
+      if (isDraft) selected.push(file);
+      continue;
+    }
+    if (includeDrafts) {
+      selected.push(file);
+      continue;
+    }
+    if (isDraft) {
+      excludedDrafts.push(file);
+      continue;
+    }
+    selected.push(file);
+  }
+
+  return { selected, excludedDrafts };
 }
 
 async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
@@ -234,14 +254,14 @@ async function cmdTest(options: {
   const onlyDrafts =
     options.onlyDrafts ?? isTruthyEnv(process.env.VOREUX_ONLY_DRAFTS);
 
-  const targets = resolveScenarioTargets(
+  const { selected, excludedDrafts } = resolveScenarioTargets(
     process.cwd(),
     options.pattern,
     includeDrafts,
     onlyDrafts,
   );
 
-  if (targets.length === 0) {
+  if (selected.length === 0) {
     const mode = onlyDrafts
       ? "draft scenarios"
       : includeDrafts
@@ -251,8 +271,13 @@ async function cmdTest(options: {
     process.exit(1);
   }
 
-  const args = ["vitest", "run", ...targets];
-  console.log(`Running vitest on ${targets.length} scenario file(s)...`);
+  const args = ["vitest", "run", ...selected];
+  console.log(`Running vitest on ${selected.length} scenario file(s)...`);
+  if (!includeDrafts && !onlyDrafts && excludedDrafts.length > 0) {
+    console.log(
+      `Excluded ${excludedDrafts.length} draft scenario file(s): ${excludedDrafts.join(", ")}`,
+    );
+  }
   const result = spawnSync("pnpm", args, {
     cwd: process.cwd(),
     stdio: "inherit",
