@@ -10,7 +10,10 @@ function makeTempProject(): string {
   tempDirs.push(dir);
   fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
   fs.writeFileSync(path.join(dir, "tests", "alpha.test.ts"), "// alpha\n");
-  fs.writeFileSync(path.join(dir, "tests", "beta.draft.test.ts"), "// beta draft\n");
+  fs.writeFileSync(
+    path.join(dir, "tests", "beta.draft.test.ts"),
+    "// beta draft\n",
+  );
   fs.writeFileSync(path.join(dir, "tests", "gamma.test.ts"), "// gamma\n");
   return dir;
 }
