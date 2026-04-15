@@ -10,7 +10,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "voreux": "./dist/cli.js"
+    "voreux": "./dist/cli.js",
+    "voreux-devtools-recorder": "./dist/devtools-recorder-cli.js"
   },
   "exports": {
     ".": {

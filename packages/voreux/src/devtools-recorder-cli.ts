@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import {
+  stderr as errorOutput,
+  exit,
+  stdin as input,
+  stdout as output,
+} from "node:process";
+import {
+  generateDraftScenarioFromRecorder,
+  parseDevToolsRecorderJson,
+} from "./devtools-recorder-import.js";
+
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of input) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function printUsage() {
+  errorOutput.write(`Usage:
+  voreux-devtools-recorder < recording.json > scaffold.draft.test.ts
+  voreux-devtools-recorder path/to/recording.json > scaffold.draft.test.ts
+
+This tool converts Chrome DevTools Recorder JSON into a Voreux draft scenario scaffold.
+`);
+}
+
+async function main() {
+  const arg = process.argv[2];
+  if (arg === "--help" || arg === "-h") {
+    printUsage();
+    return;
+  }
+
+  try {
+    const source = arg ? readFileSync(arg, "utf8") : await readStdin();
+    const parsed = parseDevToolsRecorderJson(source);
+    const generated = generateDraftScenarioFromRecorder(parsed);
+    output.write(generated);
+  } catch (error) {
+    errorOutput.write(
+      `voreux-devtools-recorder: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    exit(1);
+  }
+}
+
+await main();
