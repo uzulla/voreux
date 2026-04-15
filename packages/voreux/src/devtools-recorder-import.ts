@@ -174,6 +174,7 @@ function buildStepCode(step: RecorderStep, index: number): string {
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Click recorded target`)},
+      selfHeal: false,
       run: async (ctx) => {
 ${comments}
         await ${locator}.click();
@@ -195,6 +196,7 @@ ${comments}
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Fill recorded input`)},
+      selfHeal: false,
       run: async (ctx) => {
 ${comments}
         await ${locator}.fill(${toJsString(value)});
@@ -211,6 +213,7 @@ ${comments}
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Select recorded option`)},
+      selfHeal: false,
       run: async (ctx) => {
 ${comments}
         await ${locator}.selectOption(${toJsString(value)});
@@ -226,6 +229,7 @@ ${comments}
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Wait for recorded element`)},
+      selfHeal: false,
       run: async (ctx) => {
 ${comments}
         await ${locator}.waitFor();
