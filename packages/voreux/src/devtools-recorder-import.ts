@@ -80,6 +80,9 @@ export function parseDevToolsRecorderJson(
 function escapeText(value: string): string {
   return value
     .replaceAll("\\", "\\\\")
+    .replaceAll("\r\n", "\\r\\n")
+    .replaceAll("\n", "\\n")
+    .replaceAll("\r", "\\r")
     .replaceAll("`", "\\`")
     .replaceAll("${", "\\${");
 }
@@ -122,20 +125,20 @@ function selectorsComment(selectors: string[][]): string[] {
     .map((selector) => `      // - ${escapeText(selector)}`);
 }
 
-function buildSelectorLocator(selector: string): string {
+function toStagehandSelector(selector: string): string {
   if (selector.startsWith("aria/")) {
-    return `ctx.page.getByLabel(${toJsString(selector.slice(5))})`;
+    return `[aria-label=${JSON.stringify(selector.slice(5))}]`;
   }
   if (selector.startsWith("xpath//")) {
-    return `ctx.page.locator(${toJsString(`xpath=${selector.slice(5)}`)})`;
+    return `xpath=${selector.slice(5)}`;
   }
   if (selector.startsWith("xpath/")) {
-    return `ctx.page.locator(${toJsString(`xpath=${selector.slice(6)}`)})`;
+    return `xpath=${selector.slice(6)}`;
   }
   if (selector.startsWith("pierce/")) {
-    return `ctx.page.locator(${toJsString(selector.slice(7))})`;
+    return selector.slice(7);
   }
-  return `ctx.page.locator(${toJsString(selector)})`;
+  return selector;
 }
 
 function buildStepCode(step: RecorderStep, index: number): string {
@@ -170,14 +173,21 @@ function buildStepCode(step: RecorderStep, index: number): string {
     case "click": {
       const selectors = asStringArrayMatrix(step.selectors, "selectors");
       const primarySelector = choosePrimarySelector(selectors);
-      const locator = buildSelectorLocator(primarySelector);
+      const selectorString = toStagehandSelector(primarySelector);
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Click recorded target`)},
       selfHeal: false,
       run: async (ctx) => {
 ${comments}
-        await ${locator}.click();
+        await ctx.page.waitForSelector(${toJsString(selectorString)});
+        await ctx.page.evaluate((selector) => {
+          const element = document.querySelector(selector);
+          if (!(element instanceof HTMLElement)) {
+            throw new Error(\`Element not found for selector: \${selector}\`);
+          }
+          element.click();
+        }, ${toJsString(selectorString)});
         await ctx.page.waitForLoadState("networkidle").catch(() => {});
         await ctx.screenshot(${toJsString(`${stepNo}-click`)});
         // TODO: confirm where this click is supposed to navigate or what should change.
@@ -188,7 +198,7 @@ ${comments}
     case "type": {
       const selectors = asStringArrayMatrix(step.selectors, "selectors");
       const primarySelector = choosePrimarySelector(selectors);
-      const locator = buildSelectorLocator(primarySelector);
+      const selectorString = toStagehandSelector(primarySelector);
       const value =
         typeof step.value === "string"
           ? step.value
@@ -199,7 +209,19 @@ ${comments}
       selfHeal: false,
       run: async (ctx) => {
 ${comments}
-        await ${locator}.fill(${toJsString(value)});
+        await ctx.page.waitForSelector(${toJsString(selectorString)});
+        await ctx.page.evaluate(
+          ({ selector, nextValue }) => {
+            const element = document.querySelector(selector);
+            if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) {
+              throw new Error(\`Fill target not found or not text-like: \${selector}\`);
+            }
+            element.value = nextValue;
+            element.dispatchEvent(new Event("input", { bubbles: true }));
+            element.dispatchEvent(new Event("change", { bubbles: true }));
+          },
+          { selector: ${toJsString(selectorString)}, nextValue: ${toJsString(value)} },
+        );
         await ctx.screenshot(${toJsString(`${stepNo}-fill`)});
         // TODO: confirm this input value and any validation state that should appear.
       },
@@ -208,7 +230,7 @@ ${comments}
     case "select": {
       const selectors = asStringArrayMatrix(step.selectors, "selectors");
       const primarySelector = choosePrimarySelector(selectors);
-      const locator = buildSelectorLocator(primarySelector);
+      const selectorString = toStagehandSelector(primarySelector);
       const value = asString(step.value, "value");
       const comments = selectorsComment(selectors).join("\n");
       return `    {
@@ -216,7 +238,19 @@ ${comments}
       selfHeal: false,
       run: async (ctx) => {
 ${comments}
-        await ${locator}.selectOption(${toJsString(value)});
+        await ctx.page.waitForSelector(${toJsString(selectorString)});
+        await ctx.page.evaluate(
+          ({ selector, nextValue }) => {
+            const element = document.querySelector(selector);
+            if (!(element instanceof HTMLSelectElement)) {
+              throw new Error(\`Select target not found or not a select element: \${selector}\`);
+            }
+            element.value = nextValue;
+            element.dispatchEvent(new Event("input", { bubbles: true }));
+            element.dispatchEvent(new Event("change", { bubbles: true }));
+          },
+          { selector: ${toJsString(selectorString)}, nextValue: ${toJsString(value)} },
+        );
         await ctx.screenshot(${toJsString(`${stepNo}-select`)});
         // TODO: confirm the selected state or resulting navigation.
       },
@@ -225,14 +259,14 @@ ${comments}
     case "waitForElement": {
       const selectors = asStringArrayMatrix(step.selectors, "selectors");
       const primarySelector = choosePrimarySelector(selectors);
-      const locator = buildSelectorLocator(primarySelector);
+      const selectorString = toStagehandSelector(primarySelector);
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Wait for recorded element`)},
       selfHeal: false,
       run: async (ctx) => {
 ${comments}
-        await ${locator}.waitFor();
+        await ctx.page.waitForSelector(${toJsString(selectorString)});
         await ctx.screenshot(${toJsString(`${stepNo}-wait`)});
         // TODO: decide whether this wait should become an assertion instead.
       },

@@ -47,9 +47,12 @@ describe("devtools recorder scaffold generator", () => {
     expect(generated).toContain(
       'await ctx.page.goto("https://example.com/login")',
     );
-    expect(generated).toContain('await ctx.page.getByLabel("Log in").click()');
     expect(generated).toContain(
-      'await ctx.page.locator("#email").fill("hello@example.com")',
+      'await ctx.page.waitForSelector("[aria-label=\\"Log in\\"]")',
+    );
+    expect(generated).toContain("element.click();");
+    expect(generated).toContain(
+      'selector: "#email", nextValue: "hello@example.com"',
     );
     expect(generated).toContain(
       "// TODO: add assertions for the expected happy-path landing state.",
