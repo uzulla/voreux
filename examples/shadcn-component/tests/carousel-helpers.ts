@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import {
   createArtifactPath,
   ensureDir,
+  getClosestToContainerCenter,
   screenshotClipAroundBox,
   waitUntil,
 } from "@uzulla/voreux";
@@ -47,31 +48,10 @@ export async function getCenteredItem(
   page: any,
 ): Promise<{ text: string; left: number; right: number }> {
   const index = await getTargetCarousel(page);
-  const result = await page.evaluate((i: number) => {
-    const carousel = document.querySelectorAll('[data-slot="carousel"]')[i] as
-      | HTMLElement
-      | undefined;
-    const content = carousel?.querySelector(
-      '[data-slot="carousel-content"]',
-    ) as HTMLElement | null;
-    if (!carousel || !content) return null;
-    const contentRect = content.getBoundingClientRect();
-    const centerX = contentRect.left + contentRect.width / 2;
-    const items = Array.from(
-      carousel.querySelectorAll('[data-slot="carousel-item"]'),
-    ).map((el) => {
-      const r = (el as HTMLElement).getBoundingClientRect();
-      const itemCenter = r.left + r.width / 2;
-      return {
-        text: (el.textContent || "").trim(),
-        left: r.left,
-        right: r.right,
-        dist: Math.abs(itemCenter - centerX),
-      };
-    });
-    items.sort((a, b) => a.dist - b.dist);
-    return items[0] ?? null;
-  }, index);
+  const result = await getClosestToContainerCenter(page, {
+    containerSelector: `[data-slot="carousel-content"]:nth-of-type(${index + 1})`,
+    itemSelector: '[data-slot="carousel-item"]',
+  });
   if (!result) throw new Error("centered item not found");
   return result;
 }
