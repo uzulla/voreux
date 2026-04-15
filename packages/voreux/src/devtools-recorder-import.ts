@@ -116,7 +116,14 @@ function choosePrimarySelector(selectors: string[][]): string {
   if (flat.length === 0) {
     throw new Error("No selectors found for step");
   }
-  return flat[0];
+
+  const preferred =
+    flat.find(
+      (selector) =>
+        !selector.startsWith("aria/") && !selector.startsWith("pierce/"),
+    ) ?? flat.find((selector) => !selector.startsWith("pierce/"));
+
+  return preferred ?? flat[0];
 }
 
 function selectorsComment(selectors: string[][]): string[] {

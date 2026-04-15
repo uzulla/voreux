@@ -33,12 +33,20 @@ defineScenarioSuite({
 
     {
       name: "03. Click recorded target",
+      selfHeal: false,
       run: async (ctx) => {
         // - aria/GitHub
         // - a.github
         // - xpath//html/body/div[1]/div/section[1]/div/a[2]
         // - pierce/a.github
-        await ctx.page.getByLabel("GitHub").click();
+        await ctx.page.waitForSelector("a.github");
+        await ctx.page.evaluate((selector) => {
+          const element = document.querySelector(selector);
+          if (!(element instanceof HTMLElement)) {
+            throw new Error(`Element not found for selector: ${selector}`);
+          }
+          element.click();
+        }, "a.github");
         await ctx.page.waitForLoadState("networkidle").catch(() => {});
         await ctx.screenshot("03-click");
         // TODO: confirm where this click is supposed to navigate or what should change.
