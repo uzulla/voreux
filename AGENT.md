@@ -227,6 +227,19 @@ If a suggestion is not adopted:
 - reply in the review thread
 - explain why it is not being applied in this repo context
 
+## Formatting and pre-push discipline
+
+This repo uses Biome, and formatting misses have already caused CI failures.
+Treat formatting and static checks as mandatory, not optional cleanup.
+
+Before push, and ideally before commit, run the repo checks that matter for the files you changed.
+At minimum, if you touched code or docs that Biome checks, run:
+
+- `pnpm check`
+
+If you changed package code, also run the relevant targeted tests/build steps.
+Do not rely on CI to be the first formatter feedback loop.
+
 ## Preferred outcome
 
 The best contribution to this repo is usually not the shortest code.

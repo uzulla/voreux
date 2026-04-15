@@ -40,6 +40,23 @@ pnpm test
 > 通常の公開版では `npx @uzulla/voreux init my-e2e` をそのまま使えます。
 > まだ publish していないローカル変更や未公開ブランチを試す場合は、repo からの別手順で検証してください。
 
+## Draft scenario の扱い
+
+Voreux では `*.draft.test.ts` を Draft scenario として扱います。
+
+- 通常の `voreux test` / `voreux run` では Draft は除外
+- `--include-drafts` で Draft を含めて実行
+- `--only-drafts` で Draft のみ実行
+- `VOREUX_INCLUDE_DRAFTS=1` でも opt-in 可能
+
+```bash
+voreux test
+voreux test --include-drafts
+voreux test --only-drafts
+VOREUX_INCLUDE_DRAFTS=1 voreux test
+voreux test login-flow --include-drafts
+```
+
 ## 最初のテストを書く
 
 ```ts

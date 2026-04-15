@@ -25,6 +25,25 @@ pnpm add @uzulla/voreux
 - pnpm >= 10.x（推奨）または npm
 - Windows ユーザーは **WSL2** が必要です
 
+## Draft scenario の扱い
+
+Voreux では `*.draft.test.ts` を Draft scenario として扱えます。
+
+- 通常の `voreux test` / `voreux run` では Draft は除外されます
+- `--include-drafts` を付けると Draft も含めて実行されます
+- `--only-drafts` を付けると Draft だけ実行されます
+- `VOREUX_INCLUDE_DRAFTS=1` でも opt-in できます
+
+例:
+
+```bash
+voreux test
+voreux test --include-drafts
+voreux test --only-drafts
+VOREUX_INCLUDE_DRAFTS=1 voreux test
+voreux test login-flow --include-drafts
+```
+
 ## クイックスタート
 
 ```bash

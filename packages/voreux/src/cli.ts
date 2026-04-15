@@ -16,23 +16,32 @@ const PKG_VERSION = JSON.parse(
   ),
 ).version;
 
-const HELP_TEXT = `Voreux — Stagehand + Vitest E2E testing framework
+const HELP_TEXT = `Voreux, Stagehand + Vitest E2E testing framework
 
 Usage:
-  voreux init [dir] [--force]  Scaffold a project (default: skips existing files)
-  voreux test [pattern]         Run vitest tests (default: all)
-  voreux --help                Show this help
-  voreux --version             Show version
+  voreux init [dir] [--force]                         Scaffold a project (default: skips existing files)
+  voreux test [pattern] [--include-drafts] [--only-drafts]  Run vitest tests
+  voreux run [pattern] [--include-drafts] [--only-drafts]   Alias of test
+  voreux --help                                      Show this help
+  voreux --version                                   Show version
 
 Options:
-  --force, -f   Overwrite existing files during init
+  --force, -f         Overwrite existing files during init
+  --include-drafts    Include *.draft.test.ts in test runs
+  --only-drafts       Run only *.draft.test.ts
+
+Environment:
+  VOREUX_INCLUDE_DRAFTS=1   Include draft scenarios by default
+  VOREUX_ONLY_DRAFTS=1      Run only draft scenarios
 
 Examples:
   voreux init my-e2e
-  voreux init my-e2e --force   (overwrites any existing files)
-  cd my-e2e
-  # add OPENAI_API_KEY to .env
+  voreux init my-e2e --force
   voreux test
+  voreux test login-flow
+  voreux test --include-drafts
+  voreux test --only-drafts
+  VOREUX_INCLUDE_DRAFTS=1 voreux test
 
 For more details, see: https://github.com/uzulla/voreux`;
 
@@ -44,8 +53,8 @@ const INIT_TEMPLATE_FILES: Record<string, string> = {
       type: "module",
       private: true,
       scripts: {
-        test: "vitest run",
-        "test:self-heal": "cross-env SELF_HEAL=1 vitest run",
+        test: "voreux test",
+        "test:self-heal": "cross-env SELF_HEAL=1 voreux test",
         build: "tsc --noEmit",
       },
       dependencies: {
@@ -119,6 +128,78 @@ defineScenarioSuite({
 `,
 };
 
+function isTruthyEnv(value: string | undefined): boolean {
+  if (!value) return false;
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
+function collectTestTargets(cwd: string): string[] {
+  const results: string[] = [];
+
+  function walk(dir: string): void {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === "node_modules" || entry.name === ".git") continue;
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (entry.isFile() && entry.name.endsWith(".test.ts")) {
+        results.push(path.relative(cwd, fullPath));
+      }
+    }
+  }
+
+  walk(cwd);
+  return results.sort();
+}
+
+function isDraftScenario(filePath: string): boolean {
+  return filePath.endsWith(".draft.test.ts");
+}
+
+function matchesPattern(filePath: string, pattern?: string): boolean {
+  if (!pattern) return true;
+  return filePath.includes(pattern);
+}
+
+export interface ScenarioSelectionResult {
+  selected: string[];
+  excludedDrafts: string[];
+}
+
+export function resolveScenarioTargets(
+  cwd: string,
+  pattern: string | undefined,
+  includeDrafts: boolean,
+  onlyDrafts: boolean,
+): ScenarioSelectionResult {
+  const files = collectTestTargets(cwd);
+  const selected: string[] = [];
+  const excludedDrafts: string[] = [];
+
+  for (const file of files) {
+    if (!matchesPattern(file, pattern)) continue;
+    const isDraft = isDraftScenario(file);
+    if (onlyDrafts) {
+      if (isDraft) selected.push(file);
+      continue;
+    }
+    if (includeDrafts) {
+      selected.push(file);
+      continue;
+    }
+    if (isDraft) {
+      excludedDrafts.push(file);
+      continue;
+    }
+    selected.push(file);
+  }
+
+  return { selected, excludedDrafts };
+}
+
 async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
   const resolved = targetDir ? path.resolve(targetDir) : process.cwd();
 
@@ -161,12 +242,42 @@ async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
   );
 }
 
-async function cmdTest(pattern?: string): Promise<void> {
-  const args = ["vitest", "run"];
-  if (pattern) {
-    args.push(pattern);
+async function cmdTest(options: {
+  pattern?: string;
+  includeDrafts?: boolean;
+  onlyDrafts?: boolean;
+}): Promise<void> {
+  const includeDrafts = options.onlyDrafts
+    ? false
+    : (options.includeDrafts ?? false) ||
+      isTruthyEnv(process.env.VOREUX_INCLUDE_DRAFTS);
+  const onlyDrafts =
+    options.onlyDrafts ?? isTruthyEnv(process.env.VOREUX_ONLY_DRAFTS);
+
+  const { selected, excludedDrafts } = resolveScenarioTargets(
+    process.cwd(),
+    options.pattern,
+    includeDrafts,
+    onlyDrafts,
+  );
+
+  if (selected.length === 0) {
+    const mode = onlyDrafts
+      ? "draft scenarios"
+      : includeDrafts
+        ? "scenarios"
+        : "non-draft scenarios";
+    console.error(`voreux test: no matching ${mode} found.`);
+    process.exit(1);
   }
-  console.log(`Running vitest...`);
+
+  const args = ["vitest", "run", ...selected];
+  console.log(`Running vitest on ${selected.length} scenario file(s)...`);
+  if (!includeDrafts && !onlyDrafts && excludedDrafts.length > 0) {
+    console.log(
+      `Excluded ${excludedDrafts.length} draft scenario file(s): ${excludedDrafts.join(", ")}`,
+    );
+  }
   const result = spawnSync("pnpm", args, {
     cwd: process.cwd(),
     stdio: "inherit",
@@ -183,6 +294,8 @@ async function main(): Promise<void> {
       force: { type: "boolean", short: "f" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
+      "include-drafts": { type: "boolean" },
+      "only-drafts": { type: "boolean" },
     },
     allowPositionals: true,
   });
@@ -205,7 +318,12 @@ async function main(): Promise<void> {
       break;
 
     case "test":
-      await cmdTest(rest[0]);
+    case "run":
+      await cmdTest({
+        pattern: rest[0],
+        includeDrafts: values["include-drafts"] ?? false,
+        onlyDrafts: values["only-drafts"] ?? false,
+      });
       break;
 
     case undefined:
