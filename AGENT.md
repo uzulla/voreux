@@ -250,6 +250,21 @@ It is the code that most clearly demonstrates:
 - how to verify real user-visible behavior
 - how to work within Stagehand constraints
 
+## PR description guidance
+
+For this repo, PR descriptions should not stop at implementation intent.
+When practical, include evidence of actual behavior after the change.
+
+Prefer including:
+
+- which command was actually run
+- which sample or scenario was used
+- what files were selected or excluded
+- what visibly happened or what the test result was
+
+In other words, include not only "what was implemented" but also "how it actually behaved when run".
+This makes review easier and fits this repo's nature as an executable example/testing library.
+
 
 ## Agent behavior when authoring scenarios
 
