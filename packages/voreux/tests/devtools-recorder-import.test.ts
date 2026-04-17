@@ -4,7 +4,7 @@ import {
   parseDevToolsRecorderJson,
 } from "../src/devtools-recorder-import.js";
 
-describe("devtools recorder scaffold generator", () => {
+describe("scenario scaffold generation from DevTools Recorder JSON", () => {
   test("generates a Voreux draft scenario from basic recorder json", () => {
     const input = JSON.stringify({
       title: "Login happy path",

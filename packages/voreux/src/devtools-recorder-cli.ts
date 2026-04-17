@@ -21,10 +21,11 @@ async function readStdin(): Promise<string> {
 
 function printUsage() {
   errorOutput.write(`Usage:
-  voreux-devtools-recorder < recording.json > scaffold.draft.test.ts
-  voreux-devtools-recorder path/to/recording.json > scaffold.draft.test.ts
+  voreux-scaffold-from-devtools-recorder-json < recording.json > scaffold.draft.test.ts
+  voreux-scaffold-from-devtools-recorder-json path/to/recording.json > scaffold.draft.test.ts
 
-This tool converts Chrome DevTools Recorder JSON into a Voreux draft scenario scaffold.
+This CLI generates a Voreux draft scenario scaffold from Chrome DevTools Recorder JSON.
+This command is the current entrypoint for the Scenario scaffold generation feature.
 `);
 }
 
@@ -42,7 +43,7 @@ async function main() {
     output.write(generated);
   } catch (error) {
     errorOutput.write(
-      `voreux-devtools-recorder: ${error instanceof Error ? error.message : String(error)}\n`,
+      `voreux-scaffold-from-devtools-recorder-json: ${error instanceof Error ? error.message : String(error)}\n`,
     );
     exit(1);
   }
