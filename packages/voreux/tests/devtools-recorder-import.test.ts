@@ -48,7 +48,7 @@ describe("devtools recorder scaffold generator", () => {
       'await ctx.page.goto("https://example.com/login")',
     );
     expect(generated).toContain(
-      'await ctx.page.waitForSelector("[aria-label=\\"Log in\\"]")',
+      'await ctx.page.waitForSelector("button.login")',
     );
     expect(generated).toContain("element.click();");
     expect(generated).toContain(

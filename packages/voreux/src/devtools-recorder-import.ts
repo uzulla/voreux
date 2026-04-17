@@ -112,18 +112,26 @@ function titleToSuiteName(
 }
 
 function choosePrimarySelector(selectors: string[][]): string {
-  const flat = selectors.flat();
+  const flat = selectors.flat().filter((selector) => selector.length > 0);
   if (flat.length === 0) {
     throw new Error("No selectors found for step");
   }
 
-  const preferred =
-    flat.find(
-      (selector) =>
-        !selector.startsWith("aria/") && !selector.startsWith("pierce/"),
-    ) ?? flat.find((selector) => !selector.startsWith("pierce/"));
+  const cssSelector = flat.find(
+    (selector) =>
+      !selector.startsWith("aria/") &&
+      !selector.startsWith("pierce/") &&
+      !selector.startsWith("xpath/") &&
+      !selector.startsWith("xpath//"),
+  );
 
-  return preferred ?? flat[0];
+  if (!cssSelector) {
+    throw new Error(
+      "Recorder step does not contain a CSS selector compatible with document.querySelector",
+    );
+  }
+
+  return cssSelector;
 }
 
 function selectorsComment(selectors: string[][]): string[] {
