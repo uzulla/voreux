@@ -57,6 +57,12 @@ VOREUX_INCLUDE_DRAFTS=1 voreux test
 voreux test login-flow --include-drafts
 ```
 
+## API リファレンス
+
+- [Voreux / Stagehand API リファレンス](./docs/api-reference.md)
+- [Voreux で E2E テストシナリオを書く方法](./docs/how-to-write-e2e-scenarios.md)
+- [AI エージェントがシナリオを開発するときの行動指針](./docs/agent-behavior-for-scenario-authoring.md)
+
 ## 最初のテストを書く
 
 ```ts
