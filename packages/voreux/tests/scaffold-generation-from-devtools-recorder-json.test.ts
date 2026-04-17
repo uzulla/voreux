@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   generateDraftScenarioFromRecorder,
   parseDevToolsRecorderJson,
-} from "../src/scaffold-generation-from-devtools-recorder-json.js";
+} from "../src/scaffold-generation/from-devtools-recorder-json.js";
 
 describe("scenario scaffold generation from DevTools Recorder JSON", () => {
   test("generates a Voreux draft scenario from basic recorder json", () => {

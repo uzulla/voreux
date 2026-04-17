@@ -68,7 +68,7 @@ Recorder JSON には主に操作手順が入っており、
 ```bash
 voreux-scaffold-from-devtools-recorder-json < recording.json > scaffold.draft.test.ts
 # または
-node ./dist/scaffold-from-devtools-recorder-json-cli.js recording.json > scaffold.draft.test.ts
+node ./dist/scaffold-generation/from-devtools-recorder-json-cli.js recording.json > scaffold.draft.test.ts
 ```
 
 現状のPoC方針:

@@ -32,7 +32,7 @@
 PoC ツールは標準入力またはファイル入力から JSON を受け取り、標準出力に Draft scenario を出します。
 
 ```bash
-node ./packages/voreux/dist/scaffold-from-devtools-recorder-json-cli.js \
+node ./packages/voreux/dist/scaffold-generation/from-devtools-recorder-json-cli.js \
   ./examples/devtools-recorder-cfe-jp/recorder/cfe-github-link.json \
   > ./examples/devtools-recorder-cfe-jp/tests/cfe-github-link.generated.draft.test.ts
 ```
@@ -41,7 +41,7 @@ node ./packages/voreux/dist/scaffold-from-devtools-recorder-json-cli.js \
 
 ```bash
 cat ./examples/devtools-recorder-cfe-jp/recorder/cfe-github-link.json \
-  | node ./packages/voreux/dist/scaffold-from-devtools-recorder-json-cli.js \
+  | node ./packages/voreux/dist/scaffold-generation/from-devtools-recorder-json-cli.js \
   > ./examples/devtools-recorder-cfe-jp/tests/cfe-github-link.generated.draft.test.ts
 ```
 
