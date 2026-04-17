@@ -10,7 +10,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "voreux": "./dist/cli.js"
+    "voreux": "./dist/cli.js",
+    "voreux-scaffold-from-devtools-recorder-json": "./dist/scaffold-generation/from-devtools-recorder-json-cli.js"
   },
   "exports": {
     ".": {
