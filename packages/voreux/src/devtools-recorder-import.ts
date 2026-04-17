@@ -318,7 +318,7 @@ export function generateDraftScenarioFromRecorder(
 const ORIGIN_URL = ${toJsString(originUrl)};
 
 // Generated from Chrome DevTools Recorder JSON.
-// Purpose: create a happy-path E2E draft scaffold that humans or agents can refine.
+// Purpose: support Scenario scaffold generation from Chrome DevTools Recorder JSON.
 // This scaffold captures recorded browser actions, but assertions and observation points
 // still need to be added explicitly.
 
