@@ -11,7 +11,7 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "voreux": "./dist/cli.js",
-    "voreux-scaffold-from-devtools-recorder-json": "./dist/devtools-recorder-cli.js"
+    "voreux-scaffold-from-devtools-recorder-json": "./dist/scaffold-from-devtools-recorder-json-cli.js"
   },
   "exports": {
     ".": {
