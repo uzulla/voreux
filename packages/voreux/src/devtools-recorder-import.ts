@@ -246,7 +246,10 @@ ${comments}
       const selectors = asStringArrayMatrix(step.selectors, "selectors");
       const primarySelector = choosePrimarySelector(selectors);
       const selectorString = toStagehandSelector(primarySelector);
-      const value = asString(step.value, "value");
+      if (typeof step.value !== "string") {
+        throw new Error("Invalid or missing string field: value");
+      }
+      const value = step.value;
       const comments = selectorsComment(selectors).join("\n");
       return `    {
       name: ${toJsString(`${stepNo}. Select recorded option`)},
