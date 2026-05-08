@@ -1,6 +1,6 @@
 {
   "name": "@uzulla/voreux",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "description": "Voreux: Stagehand + Vitest based E2E testing framework",
   "license": "MIT",
   "engines": {
