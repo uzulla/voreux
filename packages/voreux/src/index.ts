@@ -9,6 +9,7 @@ export {
   humanHover,
   isPerceivablyVisible,
   movePointerToSafeCorner,
+  readElementVisualState,
   screenshotClip,
   screenshotClipAroundBox,
   waitUntil,
