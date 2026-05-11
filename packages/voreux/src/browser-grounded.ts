@@ -150,7 +150,9 @@ export async function readElementVisualState(
         : document;
       const target =
         args.selector === ":scope" || args.selector === ""
-          ? (root && root !== document ? (root as HTMLElement) : null)
+          ? root && root !== document
+            ? (root as HTMLElement)
+            : null
           : (root?.querySelector(args.selector) as HTMLElement | null);
       if (!target) {
         return {
