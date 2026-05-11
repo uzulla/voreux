@@ -2,6 +2,7 @@ export {
   clearPointerHover,
   createArtifactPath,
   ensureDir,
+  findPreviewIndex,
   findSelectByOptionValues,
   getCenterPoint,
   getClosestToContainerCenter,

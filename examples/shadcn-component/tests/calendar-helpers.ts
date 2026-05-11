@@ -4,6 +4,7 @@ import {
   clearPointerHover,
   createArtifactPath,
   ensureDir,
+  findPreviewIndex,
   findSelectByOptionValues,
   screenshotClipAroundBox,
 } from "@uzulla/voreux";
@@ -29,36 +30,20 @@ ensureDir(SHOTS_DIR);
 export async function getTargetCalendarPreview(
   page: any,
 ): Promise<{ previewIndex: number }> {
-  const result = await page.evaluate(() => {
-    const previews = Array.from(
-      document.querySelectorAll('[data-slot="preview"]'),
-    );
-    for (let pi = 0; pi < previews.length; pi++) {
-      const cal = previews[pi].querySelector(
-        '[data-slot="calendar"][data-mode="single"]',
-      ) as HTMLElement | null;
-      if (!cal) continue;
+  const previewIndex = await findPreviewIndex(page, (preview) => {
+    const cal = preview.querySelector(
+      '[data-slot="calendar"][data-mode="single"]',
+    ) as HTMLElement | null;
+    if (!cal) return false;
 
-      // single-date calendar は month grid が 1 つだけ
-      const grids = cal.querySelectorAll('table[role="grid"]');
-      if (grids.length !== 1) continue;
+    const grids = cal.querySelectorAll('table[role="grid"]');
+    if (grids.length !== 1) return false;
 
-      // basic demo は captionLayout="dropdown" で select を持つ
-      const selects = cal.querySelectorAll("select");
-      if (selects.length < 2) continue;
-
-      return { previewIndex: pi };
-    }
-    return null;
+    const selects = cal.querySelectorAll("select");
+    return selects.length >= 2;
   });
-  if (!result) {
-    throw new Error(
-      "basic single-date calendar preview not found — " +
-        'expected [data-slot="calendar"][data-mode="single"] ' +
-        "with 1 grid table and dropdown selects",
-    );
-  }
-  return result;
+
+  return { previewIndex };
 }
 
 /**

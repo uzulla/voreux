@@ -220,6 +220,53 @@ export function createArtifactPath(dir: string, name: string): string {
   return path.join(dir, `${sanitizeArtifactName(name)}.png`);
 }
 
+/**
+ * Find the 0-based index of the first `[data-slot="preview"]` element
+ * matching the given criteria.
+ *
+ * `match` may be either:
+ * - a CSS selector that must exist inside the preview, or
+ * - a self-contained predicate that can run in browser context.
+ */
+export async function findPreviewIndex(
+  page: any,
+  match: string | ((preview: Element) => boolean),
+): Promise<number> {
+  const index: number | null =
+    typeof match === "string"
+      ? await page.evaluate((selector: string) => {
+          const previews = Array.from(
+            document.querySelectorAll('[data-slot="preview"]'),
+          );
+          for (let i = 0; i < previews.length; i++) {
+            if (previews[i].querySelector(selector)) return i;
+          }
+          return null;
+        }, match)
+      : await page.evaluate((predicateSource: string) => {
+          const predicate = new Function(`return (${predicateSource});`)() as (
+            preview: Element,
+          ) => boolean;
+          const previews = Array.from(
+            document.querySelectorAll('[data-slot="preview"]'),
+          );
+          for (let i = 0; i < previews.length; i++) {
+            if (predicate(previews[i])) return i;
+          }
+          return null;
+        }, match.toString());
+
+  if (index === null) {
+    const hint =
+      typeof match === "string"
+        ? `innerSelector: ${match}`
+        : "predicate returned false for all previews";
+    throw new Error(`No [data-slot="preview"] matched — ${hint}`);
+  }
+
+  return index;
+}
+
 export async function humanHover(
   ctx: TestContext,
   point: { x: number; y: number },
