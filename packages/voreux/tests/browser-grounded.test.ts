@@ -4,25 +4,33 @@ import { findPreviewIndex } from "../src/index.js";
 type PreviewSpec = {
   selectors?: string[];
   buttonTexts?: string[];
+  counts?: Record<string, number>;
 };
+
+function createMockElement(spec: PreviewSpec) {
+  const element = {
+    querySelector(selector: string) {
+      return spec.selectors?.includes(selector)
+        ? createMockElement(spec)
+        : null;
+    },
+    querySelectorAll(selector: string) {
+      if (selector === "button") {
+        return (spec.buttonTexts ?? []).map((text) => ({
+          textContent: text,
+        }));
+      }
+      const count = spec.counts?.[selector] ?? 0;
+      return Array.from({ length: count }, () => createMockElement({}));
+    },
+  };
+
+  return element;
+}
 
 function mockPage(previews: PreviewSpec[]) {
   function createPreview(spec: PreviewSpec) {
-    const preview = {
-      querySelector(selector: string) {
-        return spec.selectors?.includes(selector) ? preview : null;
-      },
-      querySelectorAll(selector: string) {
-        if (selector === "button") {
-          return (spec.buttonTexts ?? []).map((text) => ({
-            textContent: text,
-          }));
-        }
-        return [];
-      },
-    };
-
-    return preview;
+    return createMockElement(spec);
   }
 
   return {
@@ -81,7 +89,7 @@ describe("findPreviewIndex", () => {
     ).resolves.toBe(1);
   });
 
-  it("returns index of first preview passing predicate", async () => {
+  it("returns index of first preview matching structured criteria", async () => {
     const page = mockPage([
       { selectors: ['[data-slot="button-group"]'], buttonTexts: ["Other"] },
       {
@@ -91,19 +99,32 @@ describe("findPreviewIndex", () => {
     ]);
 
     await expect(
-      findPreviewIndex(page, (preview) => {
-        const group = preview.querySelector(
-          '[data-slot="button-group"]',
-        ) as Element | null;
-        if (!group) return false;
-        const texts = Array.from(group.querySelectorAll("button")).map((el) =>
-          (el.textContent || "").trim(),
-        );
-        return (
-          texts.includes("Archive") &&
-          texts.includes("Report") &&
-          texts.includes("Snooze")
-        );
+      findPreviewIndex(page, {
+        targetSelector: '[data-slot="button-group"]',
+        buttonTextsAll: ["Archive", "Report", "Snooze"],
+      }),
+    ).resolves.toBe(1);
+  });
+
+  it("supports selector count constraints", async () => {
+    const page = mockPage([
+      {
+        selectors: ['[data-slot="calendar"][data-mode="single"]'],
+        counts: { 'table[role="grid"]': 2, select: 2 },
+      },
+      {
+        selectors: ['[data-slot="calendar"][data-mode="single"]'],
+        counts: { 'table[role="grid"]': 1, select: 2 },
+      },
+    ]);
+
+    await expect(
+      findPreviewIndex(page, {
+        targetSelector: '[data-slot="calendar"][data-mode="single"]',
+        selectorCounts: [
+          { selector: 'table[role="grid"]', equals: 1 },
+          { selector: "select", atLeast: 2 },
+        ],
       }),
     ).resolves.toBe(1);
   });

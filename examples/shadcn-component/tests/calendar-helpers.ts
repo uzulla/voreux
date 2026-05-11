@@ -30,17 +30,12 @@ ensureDir(SHOTS_DIR);
 export async function getTargetCalendarPreview(
   page: any,
 ): Promise<{ previewIndex: number }> {
-  const previewIndex = await findPreviewIndex(page, (preview) => {
-    const cal = preview.querySelector(
-      '[data-slot="calendar"][data-mode="single"]',
-    ) as HTMLElement | null;
-    if (!cal) return false;
-
-    const grids = cal.querySelectorAll('table[role="grid"]');
-    if (grids.length !== 1) return false;
-
-    const selects = cal.querySelectorAll("select");
-    return selects.length >= 2;
+  const previewIndex = await findPreviewIndex(page, {
+    targetSelector: '[data-slot="calendar"][data-mode="single"]',
+    selectorCounts: [
+      { selector: 'table[role="grid"]', equals: 1 },
+      { selector: "select", atLeast: 2 },
+    ],
   });
 
   return { previewIndex };
