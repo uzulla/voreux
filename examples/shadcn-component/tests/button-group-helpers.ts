@@ -163,6 +163,8 @@ export async function getButtonVisualState(
   );
   if (!state) throw new Error(`button not found: ${label}`);
 
+  // Use nth-of-type here because the preview renders the button-group as
+  // flat sibling buttons; this would need revisiting if buttons became nested.
   const visual = await readElementVisualState(page, {
     rootSelector: '[data-slot="preview"]',
     rootIndex: state.previewIndex,

@@ -234,6 +234,37 @@ describe("readElementVisualState", () => {
     expect(state.matches[":hover"]).toBe(true);
   });
 
+  it("reads the root element when selector is :scope", async () => {
+    const page = mockPage([
+      {
+        computedStyle: {
+          display: "block",
+          visibility: "visible",
+          opacity: "1",
+          "background-color": "rgb(10, 20, 30)",
+        },
+        attributes: { "data-state": "open" },
+        matches: { ":scope": true },
+        rect: { width: 48, height: 24 },
+      },
+    ]);
+
+    const state = await readElementVisualState(page, {
+      rootSelector: '[data-slot="preview"]',
+      rootIndex: 0,
+      selector: ":scope",
+      css: ["background-color"],
+      attributes: ["data-state"],
+      matches: [":scope"],
+    });
+
+    expect(state.found).toBe(true);
+    expect(state.visible).toBe(true);
+    expect(state.css["background-color"]).toBe("rgb(10, 20, 30)");
+    expect(state.attributes["data-state"]).toBe("open");
+    expect(state.matches[":scope"]).toBe(true);
+  });
+
   it("returns not found state when target is missing", async () => {
     const page = mockPage([{}]);
 
