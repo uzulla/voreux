@@ -1,4 +1,5 @@
 import {
+  findPreviewIndex,
   getCenterPoint,
   humanHover,
   type TestContext,
@@ -8,6 +9,13 @@ import {
 /**
  * docs ページ内には複数サンプルがあるため、最上部 preview の button-group を対象に固定する。
  */
+async function findButtonGroupPreviewIndex(page: any): Promise<number> {
+  return findPreviewIndex(page, {
+    targetSelector: '[data-slot="button-group"]',
+    buttonTextsAll: ["Archive", "Report", "Snooze"],
+  });
+}
+
 export async function getPrimaryButtonGroupButtons(page: any): Promise<
   Array<{
     text: string;
@@ -19,24 +27,11 @@ export async function getPrimaryButtonGroupButtons(page: any): Promise<
     ariaControls: string | null;
   }>
 > {
-  const buttons = await page.evaluate(() => {
-    const previews = Array.from(
-      document.querySelectorAll('[data-slot="preview"]'),
-    ) as HTMLElement[];
-    const preview = previews.find((candidate) => {
-      const group = candidate.querySelector(
-        '[data-slot="button-group"]',
-      ) as HTMLElement | null;
-      if (!group) return false;
-      const texts = Array.from(group.querySelectorAll("button")).map((el) =>
-        (el.textContent || "").trim(),
-      );
-      return (
-        texts.includes("Archive") &&
-        texts.includes("Report") &&
-        texts.includes("Snooze")
-      );
-    }) as HTMLElement | undefined;
+  const pi = await findButtonGroupPreviewIndex(page);
+  const buttons = await page.evaluate((previewIndex: number) => {
+    const preview = document.querySelectorAll('[data-slot="preview"]')[
+      previewIndex
+    ] as HTMLElement | undefined;
     const group = preview?.querySelector(
       '[data-slot="button-group"]',
     ) as HTMLElement | null;
@@ -54,7 +49,7 @@ export async function getPrimaryButtonGroupButtons(page: any): Promise<
         ariaControls: target.getAttribute("aria-controls"),
       };
     });
-  });
+  }, pi);
   return buttons;
 }
 
@@ -73,51 +68,43 @@ export async function hoverButtonByText(
   label: string,
 ): Promise<void> {
   const page = ctx.page;
+  const pi = await findButtonGroupPreviewIndex(page);
   const point = await getButtonClickPoint(page, (text) => text === label);
   await humanHover(ctx, point, {
     label: `Hover: ${label}`,
     reinforce: async () => {
-      await page.evaluate((targetLabel: string) => {
-        const previews = Array.from(
-          document.querySelectorAll('[data-slot="preview"]'),
-        ) as HTMLElement[];
-        const preview = previews.find((candidate) => {
-          const group = candidate.querySelector(
+      await page.evaluate(
+        (args: { previewIndex: number; targetLabel: string }) => {
+          const preview = document.querySelectorAll('[data-slot="preview"]')[
+            args.previewIndex
+          ] as HTMLElement | undefined;
+          const group = preview?.querySelector(
             '[data-slot="button-group"]',
           ) as HTMLElement | null;
-          if (!group) return false;
-          const texts = Array.from(group.querySelectorAll("button")).map((el) =>
-            (el.textContent || "").trim(),
-          );
-          return (
-            texts.includes("Archive") &&
-            texts.includes("Report") &&
-            texts.includes("Snooze")
-          );
-        });
-        const group = preview?.querySelector(
-          '[data-slot="button-group"]',
-        ) as HTMLElement | null;
-        const button = Array.from(group?.querySelectorAll("button") ?? []).find(
-          (el) => (el.textContent || "").trim() === targetLabel,
-        ) as HTMLElement | undefined;
-        if (!button) return;
-        for (const type of [
-          "pointerenter",
-          "mouseenter",
-          "mouseover",
-          "pointermove",
-          "mousemove",
-        ]) {
-          button.dispatchEvent(
-            new MouseEvent(type, {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-            }),
-          );
-        }
-      }, label);
+          const button = Array.from(
+            group?.querySelectorAll("button") ?? [],
+          ).find((el) => (el.textContent || "").trim() === args.targetLabel) as
+            | HTMLElement
+            | undefined;
+          if (!button) return;
+          for (const type of [
+            "pointerenter",
+            "mouseenter",
+            "mouseover",
+            "pointermove",
+            "mousemove",
+          ]) {
+            button.dispatchEvent(
+              new MouseEvent(type, {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+              }),
+            );
+          }
+        },
+        { previewIndex: pi, targetLabel: label },
+      );
     },
   });
 }
@@ -151,24 +138,28 @@ export async function getButtonVisualState(
   color: string;
   matchesHover: boolean;
 }> {
-  return page.evaluate((targetLabel: string) => {
-    const preview = document.querySelector(
-      '[data-slot="preview"]',
-    ) as HTMLElement | null;
-    const group = preview?.querySelector(
-      '[data-slot="button-group"]',
-    ) as HTMLElement | null;
-    const button = Array.from(group?.querySelectorAll("button") ?? []).find(
-      (el) => (el.textContent || "").trim() === targetLabel,
-    ) as HTMLElement | undefined;
-    if (!button) throw new Error(`button not found: ${targetLabel}`);
-    const cs = getComputedStyle(button);
-    return {
-      backgroundColor: cs.backgroundColor,
-      color: cs.color,
-      matchesHover: button.matches(":hover"),
-    };
-  }, label);
+  const previewIndex = await findButtonGroupPreviewIndex(page);
+  return page.evaluate(
+    (args: { previewIndex: number; targetLabel: string }) => {
+      const preview = document.querySelectorAll('[data-slot="preview"]')[
+        args.previewIndex
+      ] as HTMLElement | undefined;
+      const group = preview?.querySelector(
+        '[data-slot="button-group"]',
+      ) as HTMLElement | null;
+      const button = Array.from(group?.querySelectorAll("button") ?? []).find(
+        (el) => (el.textContent || "").trim() === args.targetLabel,
+      ) as HTMLElement | undefined;
+      if (!button) throw new Error(`button not found: ${args.targetLabel}`);
+      const cs = getComputedStyle(button);
+      return {
+        backgroundColor: cs.backgroundColor,
+        color: cs.color,
+        matchesHover: button.matches(":hover"),
+      };
+    },
+    { previewIndex, targetLabel: label },
+  );
 }
 
 export async function waitForMenuVisible(page: any): Promise<void> {

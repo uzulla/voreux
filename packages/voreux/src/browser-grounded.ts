@@ -220,6 +220,90 @@ export function createArtifactPath(dir: string, name: string): string {
   return path.join(dir, `${sanitizeArtifactName(name)}.png`);
 }
 
+type PreviewMatch =
+  | string
+  | {
+      targetSelector: string;
+      buttonTextsAll?: string[];
+      selectorCounts?: Array<{
+        selector: string;
+        equals?: number;
+        atLeast?: number;
+      }>;
+    };
+
+/**
+ * Find the 0-based index of the first `[data-slot="preview"]` element
+ * matching the given criteria.
+ *
+ * `match` may be either:
+ * - a CSS selector that must exist inside the preview, or
+ * - a small serializable matcher object scoped by `targetSelector`.
+ */
+export async function findPreviewIndex(
+  page: any,
+  match: PreviewMatch,
+): Promise<number> {
+  const index: number | null =
+    typeof match === "string"
+      ? await page.evaluate((selector: string) => {
+          const previews = Array.from(
+            document.querySelectorAll('[data-slot="preview"]'),
+          );
+          for (let i = 0; i < previews.length; i++) {
+            if (previews[i].querySelector(selector)) return i;
+          }
+          return null;
+        }, match)
+      : await page.evaluate((criteria: Exclude<PreviewMatch, string>) => {
+          const previews = Array.from(
+            document.querySelectorAll('[data-slot="preview"]'),
+          );
+          for (let i = 0; i < previews.length; i++) {
+            const target = previews[i].querySelector(criteria.targetSelector);
+            if (!target) continue;
+
+            if (criteria.buttonTextsAll && criteria.buttonTextsAll.length > 0) {
+              const texts = Array.from(target.querySelectorAll("button")).map(
+                (el) => (el.textContent || "").trim(),
+              );
+              if (
+                !criteria.buttonTextsAll.every((text) => texts.includes(text))
+              ) {
+                continue;
+              }
+            }
+
+            if (criteria.selectorCounts) {
+              const countsSatisfied = criteria.selectorCounts.every((entry) => {
+                const count = target.querySelectorAll(entry.selector).length;
+                if (entry.equals !== undefined && count !== entry.equals) {
+                  return false;
+                }
+                if (entry.atLeast !== undefined && count < entry.atLeast) {
+                  return false;
+                }
+                return true;
+              });
+              if (!countsSatisfied) continue;
+            }
+
+            return i;
+          }
+          return null;
+        }, match);
+
+  if (index === null) {
+    const hint =
+      typeof match === "string"
+        ? `innerSelector: ${match}`
+        : `targetSelector: ${match.targetSelector}`;
+    throw new Error(`No [data-slot="preview"] matched — ${hint}`);
+  }
+
+  return index;
+}
+
 export async function humanHover(
   ctx: TestContext,
   point: { x: number; y: number },
