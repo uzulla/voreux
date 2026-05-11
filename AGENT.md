@@ -232,6 +232,9 @@ If a suggestion is not adopted:
 This repo uses Biome, and formatting misses have already caused CI failures.
 Treat formatting and static checks as mandatory, not optional cleanup.
 
+Do not work directly on the default branch (`main`).
+Create a topic branch first, then commit and open a PR from that branch.
+
 Before push, and ideally before commit, run the repo checks that matter for the files you changed.
 At minimum, if you touched code or docs that Biome checks, run:
 
@@ -261,6 +264,14 @@ Prefer including:
 - which sample or scenario was used
 - what files were selected or excluded
 - what visibly happened or what the test result was
+
+If the PR contains a breaking change, make that impossible to miss.
+At minimum:
+
+- put `BREAKING CHANGE:` near the top of the PR body
+- describe the impact scope clearly
+- describe the migration path or required caller changes
+- prefer a PR title that also signals the breaking nature of the change
 
 In other words, include not only "what was implemented" but also "how it actually behaved when run".
 This makes review easier and fits this repo's nature as an executable example/testing library.
