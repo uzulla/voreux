@@ -2,6 +2,7 @@ import {
   findPreviewIndex,
   getCenterPoint,
   humanHover,
+  readElementVisualState,
   type TestContext,
   waitUntil,
 } from "@uzulla/voreux";
@@ -139,7 +140,7 @@ export async function getButtonVisualState(
   matchesHover: boolean;
 }> {
   const previewIndex = await findButtonGroupPreviewIndex(page);
-  return page.evaluate(
+  const state = await page.evaluate(
     (args: { previewIndex: number; targetLabel: string }) => {
       const preview = document.querySelectorAll('[data-slot="preview"]')[
         args.previewIndex
@@ -150,16 +151,32 @@ export async function getButtonVisualState(
       const button = Array.from(group?.querySelectorAll("button") ?? []).find(
         (el) => (el.textContent || "").trim() === args.targetLabel,
       ) as HTMLElement | undefined;
-      if (!button) throw new Error(`button not found: ${args.targetLabel}`);
-      const cs = getComputedStyle(button);
+      if (!button) return null;
+      const buttons = Array.from(group?.querySelectorAll("button") ?? []);
+      const targetIndex = buttons.indexOf(button);
       return {
-        backgroundColor: cs.backgroundColor,
-        color: cs.color,
-        matchesHover: button.matches(":hover"),
+        previewIndex: args.previewIndex,
+        targetIndex,
       };
     },
     { previewIndex, targetLabel: label },
   );
+  if (!state) throw new Error(`button not found: ${label}`);
+
+  const visual = await readElementVisualState(page, {
+    rootSelector: '[data-slot="preview"]',
+    rootIndex: state.previewIndex,
+    selector: `[data-slot="button-group"] button:nth-of-type(${state.targetIndex + 1})`,
+    css: ["background-color", "color"],
+    matches: [":hover"],
+  });
+  if (!visual.found) throw new Error(`button visual state not found: ${label}`);
+
+  return {
+    backgroundColor: visual.css["background-color"] ?? "",
+    color: visual.css.color ?? "",
+    matchesHover: visual.matches[":hover"] ?? false,
+  };
 }
 
 export async function waitForMenuVisible(page: any): Promise<void> {

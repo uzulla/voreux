@@ -4,6 +4,7 @@ import {
   createArtifactPath,
   ensureDir,
   getClosestToContainerCenter,
+  readElementVisualState,
   screenshotClipAroundBox,
   waitUntil,
 } from "@uzulla/voreux";
@@ -141,26 +142,19 @@ export async function getButtonVisualState(
   slot: "carousel-next" | "carousel-previous",
 ): Promise<{ disabled: boolean; opacity: string; pointerEvents: string }> {
   const index = await getTargetCarousel(page);
-  const state = await page.evaluate(
-    (args: { i: number; slot: string }) => {
-      const carousel = document.querySelectorAll('[data-slot="carousel"]')[
-        args.i
-      ] as HTMLElement | undefined;
-      const button = carousel?.querySelector(
-        `[data-slot="${args.slot}"]`,
-      ) as HTMLButtonElement | null;
-      if (!button) return null;
-      const cs = getComputedStyle(button);
-      return {
-        disabled: button.hasAttribute("disabled"),
-        opacity: cs.opacity,
-        pointerEvents: cs.pointerEvents,
-      };
-    },
-    { i: index, slot },
-  );
-  if (!state) throw new Error(`button state not found: ${slot}`);
-  return state;
+  const state = await readElementVisualState(page, {
+    rootSelector: '[data-slot="carousel"]',
+    rootIndex: index,
+    selector: `[data-slot="${slot}"]`,
+    css: ["opacity", "pointer-events"],
+    attributes: ["disabled"],
+  });
+  if (!state.found) throw new Error(`button state not found: ${slot}`);
+  return {
+    disabled: state.attributes.disabled !== null,
+    opacity: state.css.opacity ?? "",
+    pointerEvents: state.css["pointer-events"] ?? "",
+  };
 }
 
 /**

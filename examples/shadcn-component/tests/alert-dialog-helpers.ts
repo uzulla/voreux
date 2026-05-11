@@ -4,6 +4,7 @@ import {
   createArtifactPath,
   ensureDir,
   getCenterPoint,
+  readElementVisualState,
   waitUntil,
 } from "@uzulla/voreux";
 
@@ -148,7 +149,7 @@ export async function getOverlayVisualState(page: any): Promise<{
   backdropFilter: string;
   backgroundColor: string;
 }> {
-  return page.evaluate(() => {
+  const index = await page.evaluate(() => {
     const isVisible = (el: HTMLElement) => {
       const cs = getComputedStyle(el);
       const rect = el.getBoundingClientRect();
@@ -161,19 +162,26 @@ export async function getOverlayVisualState(page: any): Promise<{
       );
     };
 
-    const overlay = Array.from(
+    return Array.from(
       document.querySelectorAll('[data-slot="alert-dialog-overlay"]'),
-    ).find((el) => isVisible(el as HTMLElement)) as HTMLElement | undefined;
-    if (!overlay) {
-      return { visible: false, backdropFilter: "", backgroundColor: "" };
-    }
-    const cs = getComputedStyle(overlay);
-    return {
-      visible: true,
-      backdropFilter: cs.backdropFilter,
-      backgroundColor: cs.backgroundColor,
-    };
+    ).findIndex((el) => isVisible(el as HTMLElement));
   });
+  if (index < 0) {
+    return { visible: false, backdropFilter: "", backgroundColor: "" };
+  }
+
+  const state = await readElementVisualState(page, {
+    rootSelector: '[data-slot="alert-dialog-overlay"]',
+    rootIndex: index,
+    selector: ":scope",
+    css: ["backdrop-filter", "background-color"],
+  });
+
+  return {
+    visible: state.visible,
+    backdropFilter: state.css["backdrop-filter"] ?? "",
+    backgroundColor: state.css["background-color"] ?? "",
+  };
 }
 
 /**

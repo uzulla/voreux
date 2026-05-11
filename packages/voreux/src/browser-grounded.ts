@@ -117,6 +117,86 @@ export async function isPerceivablyVisible(
   }, selector);
 }
 
+export async function readElementVisualState(
+  page: any,
+  opts: {
+    selector: string;
+    rootSelector?: string;
+    rootIndex?: number;
+    css?: string[];
+    attributes?: string[];
+    matches?: string[];
+  },
+): Promise<{
+  found: boolean;
+  visible: boolean;
+  css: Record<string, string>;
+  attributes: Record<string, string | null>;
+  matches: Record<string, boolean>;
+}> {
+  return page.evaluate(
+    (args: {
+      selector: string;
+      rootSelector?: string;
+      rootIndex?: number;
+      css: string[];
+      attributes: string[];
+      matches: string[];
+    }) => {
+      const root = args.rootSelector
+        ? ((document.querySelectorAll(args.rootSelector)[args.rootIndex ?? 0] as
+            | HTMLElement
+            | undefined) ?? null)
+        : document;
+      const target = root?.querySelector(args.selector) as HTMLElement | null;
+      if (!target) {
+        return {
+          found: false,
+          visible: false,
+          css: {},
+          attributes: {},
+          matches: {},
+        };
+      }
+
+      const computed = getComputedStyle(target);
+      const rect = target.getBoundingClientRect();
+      const visible =
+        computed.display !== "none" &&
+        computed.visibility !== "hidden" &&
+        computed.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0;
+
+      const css = Object.fromEntries(
+        args.css.map((name) => [name, computed.getPropertyValue(name)]),
+      );
+      const attributes = Object.fromEntries(
+        args.attributes.map((name) => [name, target.getAttribute(name)]),
+      );
+      const matches = Object.fromEntries(
+        args.matches.map((selector) => [selector, target.matches(selector)]),
+      );
+
+      return {
+        found: true,
+        visible,
+        css,
+        attributes,
+        matches,
+      };
+    },
+    {
+      selector: opts.selector,
+      rootSelector: opts.rootSelector,
+      rootIndex: opts.rootIndex,
+      css: opts.css ?? [],
+      attributes: opts.attributes ?? [],
+      matches: opts.matches ?? [],
+    },
+  );
+}
+
 export async function getClosestToContainerCenter(
   page: any,
   opts: {
