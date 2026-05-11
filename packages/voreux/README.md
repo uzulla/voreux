@@ -66,6 +66,14 @@ Recorder JSON には主に操作手順が入っており、
 現在の DevTools Recorder JSON entrypoint の使い方:
 
 ```bash
+voreux scaffold from devtools-recorder-json recording.json > scaffold.draft.test.ts
+# または
+cat recording.json | voreux scaffold from devtools-recorder-json > scaffold.draft.test.ts
+```
+
+互換用の個別バイナリも残しています:
+
+```bash
 voreux-scaffold-from-devtools-recorder-json < recording.json > scaffold.draft.test.ts
 # または
 node ./dist/scaffold-generation/from-devtools-recorder-json-cli.js recording.json > scaffold.draft.test.ts
