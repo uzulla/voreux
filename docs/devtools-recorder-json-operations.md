@@ -3,6 +3,29 @@
 このドキュメントは、`packages/voreux/src/scaffold-generation/from-devtools-recorder-json.ts` が
 Chrome DevTools Recorder / Puppeteer Replay 由来の JSON でどの operation (`step.type`) を扱えるかを整理したものです。
 
+## 対応表
+
+以下は Puppeteer Replay schema の `Schema.Step` / `Schema.UserStep` / `Schema.AssertionStep` を基準にした一覧です。
+
+| operation | 現在の対応 | 備考 |
+|---|---|---|
+| `setViewport` | 対応 | width/height を scaffold に反映 |
+| `navigate` | 対応 | originUrl 決定にも使用 |
+| `click` | 対応 | selector ベースの click scaffold を生成 |
+| `change` | 対応 | input/textarea への値設定 |
+| `select` | 対応 | select 要素への値設定 |
+| `waitForElement` | 対応 | 単純な wait scaffold として対応 |
+| `type` | 対応（互換入力） | schema の主要一覧には見えないが実装では受理 |
+| `hover` | 非対応 | `Unsupported DevTools Recorder step type` |
+| `close` | 非対応 | 同上 |
+| `doubleClick` | 非対応 | テストで unsupported 扱いを確認済み |
+| `emulateNetworkConditions` | 非対応 | 同上 |
+| `keyDown` | 非対応 | 同上 |
+| `keyUp` | 非対応 | 同上 |
+| `scroll` | 非対応 | page / element scroll とも未対応 |
+| `waitForExpression` | 非対応 | assertion 系だが未対応 |
+| `customStep` | 非対応 | custom step 未対応 |
+
 ## 前提
 
 - 入力 JSON は `title` と `steps` を持つ object を想定します
@@ -82,29 +105,6 @@ Chrome DevTools Recorder / Puppeteer Replay 由来の JSON でどの operation (
 - 備考:
   - assertion というより最小限の wait scaffold として出力
   - `operator`, `count`, `visible`, `attributes`, `properties` は現在未反映
-
-## JSON でありえる operation の一覧と対応状況
-
-以下は Puppeteer Replay schema の `Schema.Step` / `Schema.UserStep` / `Schema.AssertionStep` を基準にした一覧です。
-
-| operation | 現在の対応 | 備考 |
-|---|---|---|
-| `setViewport` | 対応 | width/height を scaffold に反映 |
-| `navigate` | 対応 | originUrl 決定にも使用 |
-| `click` | 対応 | selector ベースの click scaffold を生成 |
-| `change` | 対応 | input/textarea への値設定 |
-| `select` | 対応 | select 要素への値設定 |
-| `waitForElement` | 対応 | 単純な wait scaffold として対応 |
-| `type` | 対応（互換入力） | schema の主要一覧には見えないが実装では受理 |
-| `hover` | 非対応 | `Unsupported DevTools Recorder step type` |
-| `close` | 非対応 | 同上 |
-| `doubleClick` | 非対応 | テストで unsupported 扱いを確認済み |
-| `emulateNetworkConditions` | 非対応 | 同上 |
-| `keyDown` | 非対応 | 同上 |
-| `keyUp` | 非対応 | 同上 |
-| `scroll` | 非対応 | page / element scroll とも未対応 |
-| `waitForExpression` | 非対応 | assertion 系だが未対応 |
-| `customStep` | 非対応 | custom step 未対応 |
 
 ## 実装上の補足
 
