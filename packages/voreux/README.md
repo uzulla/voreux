@@ -71,6 +71,9 @@ voreux scaffold from devtools-recorder-json recording.json > scaffold.draft.test
 cat recording.json | voreux scaffold from devtools-recorder-json > scaffold.draft.test.ts
 ```
 
+`[file]` を省略した場合は、標準入力から JSON が渡される前提です。
+TTY から入力なしで実行した場合は、入力待ちで止まらないよう usage error を返します。
+
 互換用の個別バイナリも残しています:
 
 ```bash

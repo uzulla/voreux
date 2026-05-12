@@ -78,4 +78,19 @@ describe("voreux cli", () => {
     expect(generated).toContain('suiteName: "Recorder import"');
     expect(generated).toContain('await ctx.page.goto("https://example.com/")');
   });
+
+  it("throws on unsupported recorder steps", async () => {
+    const { generateDraftScenarioFromRecorderSource } = await import(
+      "../src/cli.js"
+    );
+
+    await expect(
+      generateDraftScenarioFromRecorderSource(
+        JSON.stringify({
+          title: "Unsupported",
+          steps: [{ type: "setViewport", width: 1280, height: 720 }],
+        }),
+      ),
+    ).rejects.toThrow();
+  });
 });

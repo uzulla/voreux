@@ -335,6 +335,13 @@ async function cmdScaffold(rest: string[]): Promise<void> {
   }
 
   const sourcePath = rest[2];
+  if (!sourcePath && input.isTTY) {
+    errorOutput.write(
+      "voreux scaffold: no input. pass [file] or pipe JSON via stdin.\n",
+    );
+    process.exit(1);
+  }
+
   const source = sourcePath
     ? fs.readFileSync(sourcePath, "utf8")
     : await readStdin();
@@ -395,8 +402,14 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(`voreux: fatal error: ${message}`);
-  process.exit(1);
-});
+const isDirectCliInvocation =
+  process.argv[1] != null &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`voreux: fatal error: ${message}`);
+    process.exit(1);
+  });
+}
