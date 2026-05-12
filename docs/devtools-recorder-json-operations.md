@@ -3,6 +3,17 @@
 このドキュメントは、`packages/voreux/src/scaffold-generation/from-devtools-recorder-json.ts` が
 Chrome DevTools Recorder / Puppeteer Replay 由来の JSON でどの operation (`step.type`) を扱えるかを整理したものです。
 
+JSON フォーマット仕様の参照元としては、次を起点に見るのが分かりやすいです。
+
+- Chrome DevTools Recorder reference
+  - <https://developer.chrome.com/docs/devtools/recorder/reference>
+- Puppeteer Replay schema docs
+  - <https://github.com/puppeteer/replay/blob/main/docs/api/modules/Schema.md>
+- Puppeteer Replay `UserFlow` interface
+  - <https://github.com/puppeteer/replay/blob/main/docs/api/interfaces/Schema.UserFlow.md>
+
+※ DevTools Recorder の JSON は実質的に Puppeteer Replay schema を前提に見たほうが追いやすいです。
+
 ## 対応表
 
 以下は Puppeteer Replay schema の `Schema.Step` / `Schema.UserStep` / `Schema.AssertionStep` を基準にした一覧です。
@@ -148,3 +159,4 @@ step 自体は受け付けても、次のような追加フィールドは今の
 - 参考 schema: Puppeteer Replay `Schema.UserFlow` / `Schema.Step`
 - Chrome DevTools Recorder reference: <https://developer.chrome.com/docs/devtools/recorder/reference>
 - Puppeteer Replay schema docs: <https://github.com/puppeteer/replay/blob/main/docs/api/modules/Schema.md>
+- Puppeteer Replay `UserFlow` interface: <https://github.com/puppeteer/replay/blob/main/docs/api/interfaces/Schema.UserFlow.md>
