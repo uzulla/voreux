@@ -2,8 +2,17 @@
 import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import {
+  stderr as errorOutput,
+  stdin as input,
+  stdout as output,
+} from "process";
 import { fileURLToPath } from "url";
 import { parseArgs } from "util";
+import {
+  generateDraftScenarioFromRecorder,
+  parseDevToolsRecorderJson,
+} from "./scaffold-generation/from-devtools-recorder-json.js";
 
 const PKG_VERSION = JSON.parse(
   fs.readFileSync(
@@ -19,11 +28,12 @@ const PKG_VERSION = JSON.parse(
 const HELP_TEXT = `Voreux, Stagehand + Vitest E2E testing framework
 
 Usage:
-  voreux init [dir] [--force]                         Scaffold a project (default: skips existing files)
+  voreux init [dir] [--force]                                Scaffold a project (default: skips existing files)
   voreux test [pattern] [--include-drafts] [--only-drafts]  Run vitest tests
   voreux run [pattern] [--include-drafts] [--only-drafts]   Alias of test
-  voreux --help                                      Show this help
-  voreux --version                                   Show version
+  voreux scaffold from devtools-recorder-json [file]        Generate a draft scenario from Recorder JSON
+  voreux --help                                             Show this help
+  voreux --version                                          Show version
 
 Options:
   --force, -f         Overwrite existing files during init
@@ -42,6 +52,8 @@ Examples:
   voreux test --include-drafts
   voreux test --only-drafts
   VOREUX_INCLUDE_DRAFTS=1 voreux test
+  voreux scaffold from devtools-recorder-json recording.json > scaffold.draft.test.ts
+  cat recording.json | voreux scaffold from devtools-recorder-json > scaffold.draft.test.ts
 
 For more details, see: https://github.com/uzulla/voreux`;
 
@@ -242,6 +254,21 @@ async function cmdInit(targetDir?: string, force?: boolean): Promise<void> {
   );
 }
 
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of input) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+export async function generateDraftScenarioFromRecorderSource(
+  source: string,
+): Promise<string> {
+  const parsed = parseDevToolsRecorderJson(source);
+  return generateDraftScenarioFromRecorder(parsed);
+}
+
 async function cmdTest(options: {
   pattern?: string;
   includeDrafts?: boolean;
@@ -288,6 +315,40 @@ async function cmdTest(options: {
   }
 }
 
+async function cmdScaffold(rest: string[]): Promise<void> {
+  if (
+    rest.length < 2 ||
+    rest[0] !== "from" ||
+    rest[1] !== "devtools-recorder-json"
+  ) {
+    errorOutput.write(
+      "voreux scaffold: expected `voreux scaffold from devtools-recorder-json [file]`\n",
+    );
+    process.exit(1);
+  }
+
+  if (rest.length > 3) {
+    errorOutput.write(
+      "voreux scaffold: too many arguments for `devtools-recorder-json`\n",
+    );
+    process.exit(1);
+  }
+
+  const sourcePath = rest[2];
+  if (!sourcePath && input.isTTY) {
+    errorOutput.write(
+      "voreux scaffold: no input. pass [file] or pipe JSON via stdin.\n",
+    );
+    process.exit(1);
+  }
+
+  const source = sourcePath
+    ? fs.readFileSync(sourcePath, "utf8")
+    : await readStdin();
+  const generated = await generateDraftScenarioFromRecorderSource(source);
+  output.write(generated);
+}
+
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({
     options: {
@@ -326,6 +387,10 @@ async function main(): Promise<void> {
       });
       break;
 
+    case "scaffold":
+      await cmdScaffold(rest);
+      break;
+
     case undefined:
       console.log(HELP_TEXT);
       break;
@@ -337,8 +402,14 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(`voreux: fatal error: ${message}`);
-  process.exit(1);
-});
+const isDirectCliInvocation =
+  process.argv[1] != null &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`voreux: fatal error: ${message}`);
+    process.exit(1);
+  });
+}

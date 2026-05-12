@@ -32,7 +32,7 @@
 PoC ツールは標準入力またはファイル入力から JSON を受け取り、標準出力に Draft scenario を出します。
 
 ```bash
-node ./packages/voreux/dist/scaffold-generation/from-devtools-recorder-json-cli.js \
+voreux scaffold from devtools-recorder-json \
   ./examples/devtools-recorder-cfe-jp/recorder/cfe-github-link.json \
   > ./examples/devtools-recorder-cfe-jp/tests/cfe-github-link.generated.draft.test.ts
 ```
@@ -41,9 +41,13 @@ node ./packages/voreux/dist/scaffold-generation/from-devtools-recorder-json-cli.
 
 ```bash
 cat ./examples/devtools-recorder-cfe-jp/recorder/cfe-github-link.json \
-  | node ./packages/voreux/dist/scaffold-generation/from-devtools-recorder-json-cli.js \
+  | voreux scaffold from devtools-recorder-json \
   > ./examples/devtools-recorder-cfe-jp/tests/cfe-github-link.generated.draft.test.ts
 ```
+
+`[file]` を省略した場合は標準入力が必要です。入力なしの TTY 実行は usage error になります。
+
+互換用の個別 CLI (`from-devtools-recorder-json-cli.js`) や `node ./packages/voreux/dist/cli.js ...` も引き続き利用できます。
 
 ## この後に人間がやること
 

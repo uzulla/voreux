@@ -24,7 +24,7 @@ afterEach(() => {
   }
 });
 
-describe("voreux cli draft scenario selection", () => {
+describe("voreux cli", () => {
   it("excludes draft scenarios by default", async () => {
     const { resolveScenarioTargets } = await import("../src/cli.js");
     const dir = makeTempProject();
@@ -62,5 +62,35 @@ describe("voreux cli draft scenario selection", () => {
     const result = resolveScenarioTargets(dir, "beta", true, false);
     expect(result.selected).toEqual(["tests/beta.draft.test.ts"]);
     expect(result.excludedDrafts).toEqual([]);
+  });
+
+  it("generates recorder scaffolds through the main cli module helper", async () => {
+    const { generateDraftScenarioFromRecorderSource } = await import(
+      "../src/cli.js"
+    );
+    const generated = await generateDraftScenarioFromRecorderSource(
+      JSON.stringify({
+        title: "Recorder import",
+        steps: [{ type: "navigate", url: "https://example.com/" }],
+      }),
+    );
+
+    expect(generated).toContain('suiteName: "Recorder import"');
+    expect(generated).toContain('await ctx.page.goto("https://example.com/")');
+  });
+
+  it("throws on unsupported recorder steps", async () => {
+    const { generateDraftScenarioFromRecorderSource } = await import(
+      "../src/cli.js"
+    );
+
+    await expect(
+      generateDraftScenarioFromRecorderSource(
+        JSON.stringify({
+          title: "Unsupported",
+          steps: [{ type: "setViewport", width: 1280, height: 720 }],
+        }),
+      ),
+    ).rejects.toThrow();
   });
 });
