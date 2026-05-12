@@ -2,7 +2,6 @@ import {
   findPreviewIndex,
   getCenterPoint,
   humanHover,
-  readElementVisualState,
   type TestContext,
   waitUntil,
 } from "@uzulla/voreux";
@@ -140,7 +139,7 @@ export async function getButtonVisualState(
   matchesHover: boolean;
 }> {
   const previewIndex = await findButtonGroupPreviewIndex(page);
-  const state = await page.evaluate(
+  const visual = await page.evaluate(
     (args: { previewIndex: number; targetLabel: string }) => {
       const preview = document.querySelectorAll('[data-slot="preview"]')[
         args.previewIndex
@@ -152,33 +151,18 @@ export async function getButtonVisualState(
         (el) => (el.textContent || "").trim() === args.targetLabel,
       ) as HTMLElement | undefined;
       if (!button) return null;
-      const buttons = Array.from(group?.querySelectorAll("button") ?? []);
-      const targetIndex = buttons.indexOf(button);
+      const computed = getComputedStyle(button);
       return {
-        previewIndex: args.previewIndex,
-        targetIndex,
+        backgroundColor: computed.backgroundColor,
+        color: computed.color,
+        matchesHover: button.matches(":hover"),
       };
     },
     { previewIndex, targetLabel: label },
   );
-  if (!state) throw new Error(`button not found: ${label}`);
+  if (!visual) throw new Error(`button visual state not found: ${label}`);
 
-  // Use nth-of-type here because the preview renders the button-group as
-  // flat sibling buttons; this would need revisiting if buttons became nested.
-  const visual = await readElementVisualState(page, {
-    rootSelector: '[data-slot="preview"]',
-    rootIndex: state.previewIndex,
-    selector: `[data-slot="button-group"] button:nth-of-type(${state.targetIndex + 1})`,
-    css: ["background-color", "color"],
-    matches: [":hover"],
-  });
-  if (!visual.found) throw new Error(`button visual state not found: ${label}`);
-
-  return {
-    backgroundColor: visual.css["background-color"] ?? "",
-    color: visual.css.color ?? "",
-    matchesHover: visual.matches[":hover"] ?? false,
-  };
+  return visual;
 }
 
 export async function waitForMenuVisible(page: any): Promise<void> {
